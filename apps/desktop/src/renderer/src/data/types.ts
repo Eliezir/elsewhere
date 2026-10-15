@@ -1,26 +1,4 @@
-export type Location = "mac" | "vm";
-
-export interface ClaudeSession {
-  id: string;
-  title: string;
-  messages: number;
-  lastActive: string;
-}
-
-export interface Worktree {
-  id: string;
-  name: string;
-  branch: string;
-  location: Location;
-  path: string;
-  modified: number;
-  ahead: number;
-  behind: number;
-  lastActive: string;
-  sessions: readonly ClaudeSession[];
-  hasEnv: boolean;
-  largeDir: { name: string; size: string } | null;
-}
+export type { ClaudeSession, Location, VmHealth, VmSnapshot, Worktree } from "@vmc/shared";
 
 export interface DayUsage {
   day: string;
@@ -55,17 +33,6 @@ export interface UsageData {
   sampleCount: number;
   scoped: readonly ScopedUsage[];
   source: UsageSource;
-}
-
-export interface VmHealth {
-  cpu: number;
-  cores: number;
-  memUsedGb: number;
-  memTotalGb: number;
-  diskUsedGb: number;
-  diskTotalGb: number;
-  load12h: readonly number[];
-  latencyMs: number;
 }
 
 export interface IdleHealth {

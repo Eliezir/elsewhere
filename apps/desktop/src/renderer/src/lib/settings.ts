@@ -4,6 +4,8 @@ export interface Settings {
   host: string;
   user: string;
   daemonPort: number;
+  macRepos: string;
+  vmRepos: string;
   diskWarn: number;
   idleLine: number;
   pacerCap: number;
@@ -20,6 +22,8 @@ export const DEFAULT_SETTINGS: Settings = {
   host: "adt-dev.tail6ccfa6.ts.net",
   user: "dev",
   daemonPort: 7420,
+  macRepos: "~/Developer/NEES/unicef/adt-studio\n~/Developer/vm-companion",
+  vmRepos: "~/Developer/adt-studio",
   diskWarn: 80,
   idleLine: 20,
   pacerCap: 80,
@@ -31,6 +35,13 @@ export const DEFAULT_SETTINGS: Settings = {
   startAtLogin: false,
   showInMenuBar: true,
 };
+
+export function splitLines(value: string): string[] {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+}
 
 const KEY = "vmc:settings";
 const listeners = new Set<() => void>();

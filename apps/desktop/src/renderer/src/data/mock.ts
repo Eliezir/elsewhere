@@ -1,85 +1,8 @@
-import type { IdleHealth, PacerStatus, QueueTask, VmHealth, Worktree } from "./types";
+import type { IdleHealth, PacerStatus, QueueTask } from "./types";
 
 export const IS_SAMPLE_DATA = true;
 
 export const REPOS = ["adt-studio", "vm-companion", "claude-companion"] as const;
-
-export const SAMPLE_WORKTREES: readonly Worktree[] = [
-  {
-    id: "mac-dev-port-conflicts",
-    name: "dev-port-conflicts",
-    branch: "eliezir/dev-port-conflicts",
-    location: "mac",
-    path: "~/conductor/workspaces/adt-studio/dev-port-conflicts",
-    modified: 1,
-    ahead: 3,
-    behind: 0,
-    lastActive: "12 min ago",
-    sessions: [
-      { id: "s1", title: "Fix dev server port conflicts across worktrees", messages: 84, lastActive: "12 min ago" },
-      { id: "s2", title: "Workspace name handling in dev", messages: 31, lastActive: "2 h ago" },
-    ],
-    hasEnv: true,
-    largeDir: null,
-  },
-  {
-    id: "mac-kids-mode",
-    name: "kids-mode",
-    branch: "eliezir/kids-mode-ui",
-    location: "mac",
-    path: "~/conductor/workspaces/adt-studio/kids-mode",
-    modified: 0,
-    ahead: 0,
-    behind: 4,
-    lastActive: "yesterday",
-    sessions: [{ id: "s3", title: "Layered SVG buddies and roster", messages: 212, lastActive: "yesterday" }],
-    hasEnv: true,
-    largeDir: { name: "books/", size: "1.2 GB" },
-  },
-  {
-    id: "mac-landing-v3",
-    name: "landing-v3",
-    branch: "eliezir/landing-page-v3",
-    location: "mac",
-    path: "~/conductor/workspaces/adt-studio/landing-v3",
-    modified: 4,
-    ahead: 2,
-    behind: 1,
-    lastActive: "3 days ago",
-    sessions: [
-      { id: "s4", title: "Wise-style nav sheets", messages: 57, lastActive: "3 days ago" },
-      { id: "s5", title: "Hero animation settle", messages: 22, lastActive: "4 days ago" },
-      { id: "s6", title: "Real screenshots pass", messages: 40, lastActive: "5 days ago" },
-    ],
-    hasEnv: false,
-    largeDir: null,
-  },
-  {
-    id: "vm-adt-studio",
-    name: "adt-studio",
-    branch: "develop",
-    location: "vm",
-    path: "~/Developer/adt-studio",
-    modified: 0,
-    ahead: 0,
-    behind: 0,
-    lastActive: "6 h ago",
-    sessions: [{ id: "s7", title: "Review translation gaps", messages: 19, lastActive: "6 h ago" }],
-    hasEnv: false,
-    largeDir: null,
-  },
-];
-
-export const SAMPLE_VM: VmHealth = {
-  cpu: 18,
-  cores: 2,
-  memUsedGb: 1.2,
-  memTotalGb: 11,
-  diskUsedGb: 6,
-  diskTotalGb: 96,
-  load12h: [14, 12, 16, 22, 18, 30, 52, 44, 26, 20, 18, 24, 38, 61, 48, 32, 22, 18, 16, 20, 28, 24, 18, 18],
-  latencyMs: 38,
-};
 
 export const SAMPLE_IDLE: IdleHealth = {
   sevenDayCpu: 34,

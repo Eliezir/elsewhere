@@ -1,5 +1,7 @@
 import type { TailscaleStatus } from "./status";
+import type { MoveProgress, MoveRequest, MoveResult } from "./move";
 import type { UsageSnapshot } from "./usage";
+import type { VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
   tailscaleStatus: "tailscale:status",
@@ -7,12 +9,22 @@ export const IPC = {
   navigate: "window:navigate",
   usage: "usage:get",
   usageRefresh: "usage:refresh",
+  macWorktrees: "worktrees:mac",
+  vmSnapshot: "vm:snapshot",
+  moveStart: "move:start",
+  moveProgress: "move:progress",
+  openTerminal: "vm:open-terminal",
 } as const;
 
 export interface Api {
   getTailscaleStatus(): Promise<TailscaleStatus>;
   getUsage(): Promise<UsageSnapshot>;
   refreshUsage(): Promise<UsageSnapshot>;
+  getMacWorktrees(repos: string[]): Promise<Worktree[]>;
+  getVmSnapshot(input: VmInput): Promise<VmSnapshot>;
+  startMove(request: MoveRequest): Promise<MoveResult>;
+  onMoveProgress(listener: (progress: MoveProgress) => void): () => void;
+  openVmTerminal(input: TerminalInput): Promise<string | null>;
   openMainWindow(section?: string): Promise<void>;
   onNavigate(listener: (section: string) => void): () => void;
 }

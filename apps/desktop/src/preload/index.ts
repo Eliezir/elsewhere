@@ -5,6 +5,17 @@ const api: Api = {
   getTailscaleStatus: () => ipcRenderer.invoke(IPC.tailscaleStatus),
   getUsage: () => ipcRenderer.invoke(IPC.usage),
   refreshUsage: () => ipcRenderer.invoke(IPC.usageRefresh),
+  getMacWorktrees: (repos) => ipcRenderer.invoke(IPC.macWorktrees, { repos }),
+  getVmSnapshot: (input) => ipcRenderer.invoke(IPC.vmSnapshot, input),
+  startMove: (request) => ipcRenderer.invoke(IPC.moveStart, request),
+  onMoveProgress: (listener) => {
+    const handler = (_event: Electron.IpcRendererEvent, progress: Parameters<typeof listener>[0]) => listener(progress);
+    ipcRenderer.on(IPC.moveProgress, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC.moveProgress, handler);
+    };
+  },
+  openVmTerminal: (input) => ipcRenderer.invoke(IPC.openTerminal, input),
   openMainWindow: (section) => ipcRenderer.invoke(IPC.openMainWindow, section),
   onNavigate: (listener) => {
     const handler = (_event: Electron.IpcRendererEvent, section: string) => listener(section);

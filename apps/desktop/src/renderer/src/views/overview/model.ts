@@ -1,4 +1,4 @@
-import { useIdleHealth, useQueueTasks, useUsage, useVmHealth, useWorktrees } from "@/data/hooks";
+import { useIdleHealth, useQueueTasks, useUsage, useWorktrees } from "@/data/hooks";
 import type { IdleHealth, Location, UsageData, VmHealth } from "@/data/types";
 import { useTailscaleStatus } from "@/lib/queries";
 import { describe, healthOf, type Health } from "@/lib/status";
@@ -37,13 +37,12 @@ export interface OverviewModel {
 export function useOverviewModel(): OverviewModel {
   const { data: status } = useTailscaleStatus();
   const { data: usage } = useUsage();
-  const { data: vm } = useVmHealth();
+  const { worktrees: trees, vm: snapshot } = useWorktrees();
   const { data: idle } = useIdleHealth();
-  const { data: trees = [] } = useWorktrees();
   const { data: tasks = [] } = useQueueTasks();
 
   const health = healthOf(status);
-  const reachable = health === "ok";
+  const vm = snapshot.data;
 
   return {
     phase: status === undefined ? "loading" : "ready",
@@ -53,19 +52,17 @@ export function useOverviewModel(): OverviewModel {
       selfName: status?.selfName ?? null,
       dnsName: status?.vm?.dnsName ?? null,
       ip: status?.vm?.ip ?? null,
-      latencyMs: reachable ? (vm?.latencyMs ?? null) : null,
+      latencyMs: vm?.latencyMs ?? null,
     },
     usage: usage ?? null,
-    vm: reachable ? (vm ?? null) : null,
-    idle: reachable ? (idle ?? null) : null,
-    worktrees: trees
-      .filter((tree) => reachable || tree.location === "mac")
-      .map((tree) => ({
+    vm: vm?.health ?? null,
+    idle: vm?.reachable ? (idle ?? null) : null,
+    worktrees: trees.map((tree) => ({
         name: tree.name,
-        detail: `${tree.branch} · ${tree.modified > 0 ? `${tree.modified} modified` : "clean"}`,
+        detail: `${tree.branch ?? "detached"} · ${tree.modified > 0 ? `${tree.modified} modified` : "clean"}`,
         location: tree.location,
       })),
-    queue: reachable
+    queue: vm?.reachable
       ? tasks
           .filter((task) => task.state === "running" || task.state === "waiting")
           .map((task) => ({

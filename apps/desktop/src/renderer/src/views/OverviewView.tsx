@@ -37,7 +37,7 @@ export function OverviewView() {
               <div className="flex min-h-0 flex-1 flex-col justify-between">
                 <BigNumber value={String(vm.cpu)} unit="%" />
                 <div className="my-3 min-h-0 flex-1">
-                  <AreaChart values={vm.load12h.slice(-12)} />
+                  {vm.loadSeries.length >= 2 ? <AreaChart values={vm.loadSeries.slice(-12)} /> : <p className="text-xs text-[var(--text-muted)]">Collecting samples…</p>}
                 </div>
                 <div>
                   <Meter value={vm.cpu} color="var(--ok)" />
@@ -69,16 +69,16 @@ export function OverviewView() {
             )}
           </Loadable>
         </Tile>
-        <Tile index={3} title="VM load · last 12 hours" className="col-span-2" action={model.connection.latencyMs !== null && <Pill>{`${model.connection.latencyMs} ms`}</Pill>}>
+        <Tile index={3} title="VM load · recent samples" className="col-span-2" action={model.connection.latencyMs !== null && <Pill>{`${model.connection.latencyMs} ms`}</Pill>}>
           <Loadable model={model}>
             {vm ? (
               <div className="flex min-h-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1">
-                  <AreaChart values={vm.load12h} />
+                  {vm.loadSeries.length >= 2 ? <AreaChart values={vm.loadSeries} /> : <p className="text-xs text-[var(--text-muted)]">Collecting samples, one every five minutes.</p>}
                 </div>
                 <div className="mt-2 flex justify-between text-[11px] text-[var(--text-muted)]">
-                  <span>12h ago</span>
-                  <span>6h</span>
+                  <span>oldest</span>
+                  <span></span>
                   <span>now</span>
                 </div>
               </div>
