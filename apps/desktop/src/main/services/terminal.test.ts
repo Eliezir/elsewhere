@@ -19,6 +19,12 @@ describe("remoteScript", () => {
     expect(remoteScript({ mode: "claude", path: "/p" })).toBe(`cd '/p' && { claude --continue || claude; }; exec "\${SHELL:-bash}" -l`);
   });
 
+  it("resumes the named conversation when given its id", () => {
+    expect(remoteScript({ mode: "claude", path: "/p", sessionId: "7096db01-7391-4fd4-9445-a2ae3f42c53f" })).toBe(
+      `cd '/p' && { claude --resume '7096db01-7391-4fd4-9445-a2ae3f42c53f' || claude --continue || claude; }; exec "\${SHELL:-bash}" -l`,
+    );
+  });
+
   it("quotes hostile folder names", () => {
     expect(remoteScript({ mode: "shell", path: "/tmp/a'; rm -rf / #" })).toContain("'/tmp/a'\\''; rm -rf / #'");
   });

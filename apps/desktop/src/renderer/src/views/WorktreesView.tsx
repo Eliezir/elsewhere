@@ -182,7 +182,7 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
   };
 
   const openTerminal = (mode: "shell" | "claude") => {
-    if (vmTree) void window.api.openVmTerminal({ target, path: vmTree.path, mode });
+    if (vmTree) void window.api.openVmTerminal({ target, path: vmTree.path, mode, sessionId: vmTree.sessions[0]?.id });
   };
 
   const canOpen = vmTree !== null && vm?.reachable === true;
@@ -355,7 +355,14 @@ export function WorktreesView() {
               {selected.sessions.map((session) => (
                 <div key={session.id} className="flex items-center justify-between gap-3 rounded-xl bg-[var(--inset)] px-3 py-2">
                   <span className="truncate">{session.title}</span>
-                  <span className="shrink-0 text-[11px] text-[var(--text-secondary)]">{`${session.messages} lines · ${timeAgo(session.lastActive)}`}</span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="text-[11px] text-[var(--text-secondary)]">{`${session.messages} lines · ${timeAgo(session.lastActive)}`}</span>
+                    {selected.location === "vm" && vm.data?.reachable === true && (
+                      <Button onClick={() => void window.api.openVmTerminal({ target: { host: settings.host.trim(), user: settings.user.trim() }, path: selected.path, mode: "claude", sessionId: session.id })} title="Open this conversation in a terminal on the VM" className="!px-3 !py-0.5 text-[11px]">
+                        Resume
+                      </Button>
+                    )}
+                  </span>
                 </div>
               ))}
             </div>

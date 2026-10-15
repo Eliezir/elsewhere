@@ -103,6 +103,7 @@ export const TerminalInputSchema = z.object({
   target: VmTargetSchema,
   path: z.string().min(2).max(1024).startsWith("/").nullable(),
   mode: z.enum(["shell", "claude"]),
+  sessionId: z.string().regex(/^[0-9a-fA-F-]{8,64}$/).optional(),
 });
 
 export const MacTerminalInputSchema = z.object({

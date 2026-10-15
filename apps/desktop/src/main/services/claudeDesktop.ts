@@ -1,4 +1,4 @@
-import { shell } from "electron";
+import { clipboard, shell } from "electron";
 import type { ClaudeDesktopOpenResult, VmTarget } from "@vmc/shared";
 
 const HOST_PART = /^[A-Za-z0-9._:-]+$/;
@@ -15,6 +15,7 @@ export async function openInClaudeDesktop(target: VmTarget, path: string): Promi
   const url = claudeDesktopSshUrl(target, path);
   if (url === null) return { ok: false, error: "That host or folder can't be put in a link." };
   try {
+    clipboard.writeText(path);
     await shell.openExternal(url);
     return { ok: true, error: null };
   } catch {

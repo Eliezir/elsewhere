@@ -5,8 +5,9 @@ import { shell } from "electron";
 import type { TerminalInput } from "@vmc/shared";
 import { runLocal, shq } from "./ssh";
 
-export function remoteScript(input: Pick<TerminalInput, "mode" | "path">): string {
+export function remoteScript(input: Pick<TerminalInput, "mode" | "path" | "sessionId">): string {
   const enter = input.path ? `cd ${shq(input.path)} && ` : "";
+  if (input.mode === "claude" && input.sessionId) return `${enter}{ claude --resume ${shq(input.sessionId)} || claude --continue || claude; }; exec "\${SHELL:-bash}" -l`;
   if (input.mode === "claude") return `${enter}{ claude --continue || claude; }; exec "\${SHELL:-bash}" -l`;
   return `${enter}exec "\${SHELL:-bash}" -l`;
 }

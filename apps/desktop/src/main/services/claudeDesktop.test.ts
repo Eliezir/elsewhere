@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("electron", () => ({ shell: { openExternal: vi.fn() } }));
+vi.mock("electron", () => ({ shell: { openExternal: vi.fn() }, clipboard: { writeText: vi.fn() } }));
 
 const { claudeDesktopSshUrl } = await import("./claudeDesktop");
 
