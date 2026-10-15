@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
-import { Button, FIELD, Segmented, ToggleRow } from "@/components/controls";
+import { Button, Segmented, ToggleRow } from "@/components/controls";
+import { HoldButton } from "@/components/HoldButton";
 import type { Worktree } from "@/data/types";
 import { buildDeleteRequest } from "@/lib/delete";
 import { formatBytes } from "@/lib/format";
@@ -31,7 +32,6 @@ export function DeleteWorktreePanel({ tree, twin, vmReachable, sizes, onDeleted 
   const [scope, setScope] = useState<Scope>(tree.location);
   const [deleteBranch, setDeleteBranch] = useState(false);
   const [deleteSessions, setDeleteSessions] = useState(false);
-  const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
@@ -86,7 +86,6 @@ export function DeleteWorktreePanel({ tree, twin, vmReachable, sizes, onDeleted 
           setPending(remaining);
           setDeleted((previous) => [...previous, ...doneNow]);
           setNotes((previous) => [...previous, ...collected]);
-          setTyped("");
           setStep("force");
           return;
         } else {
@@ -159,10 +158,6 @@ export function DeleteWorktreePanel({ tree, twin, vmReachable, sizes, onDeleted 
         {step === "force" && current && (
           <motion.div key="force" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <p className="text-xs leading-relaxed text-[var(--warn)]">{`The ${PLACE[current.location]} copy of ${current.name} has ${current.modified > 0 ? `${current.modified} uncommitted ${current.modified === 1 ? "change" : "changes"}` : "uncommitted changes"}. Deleting it now loses them for good.`}</p>
-            <label className="mt-3 block">
-              <span className="mb-1 block text-xs text-[var(--text-secondary)]">{`Type ${current.name} to delete it anyway`}</span>
-              <input value={typed} onChange={(event) => setTyped(event.target.value)} spellCheck={false} className={`${FIELD} !py-2`} />
-            </label>
             {error && <p className="mt-2 text-xs text-[var(--down)]">{error}</p>}
             <div className="mt-3 flex gap-2">
               <Button
@@ -176,9 +171,9 @@ export function DeleteWorktreePanel({ tree, twin, vmReachable, sizes, onDeleted 
               >
                 Keep it
               </Button>
-              <Button variant="danger" onClick={() => void runQueue(pending, true)} disabled={busy || typed !== current.name} className="flex-1 !py-1.5">
-                {busy ? "Deleting…" : "Delete anyway"}
-              </Button>
+              <HoldButton onConfirm={() => void runQueue(pending, true)} disabled={busy} holdingLabel="Keep holding…" className="flex-1 !py-1.5">
+                {busy ? "Deleting…" : "Hold to delete anyway"}
+              </HoldButton>
             </div>
           </motion.div>
         )}
