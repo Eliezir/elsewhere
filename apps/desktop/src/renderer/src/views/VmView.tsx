@@ -16,7 +16,25 @@ const STATE_LABEL = {
   failed: "Forward failed",
 } as const;
 
-function PortRow({ port, root, busy, onToggle }: { port: VmPort; root: string | null; busy: boolean; onToggle: (enabled: boolean) => void }) {
+type KillPhase = "confirm" | "working" | "force";
+type KillAction = "ask" | "stop" | "force" | "cancel";
+
+interface KillState {
+  port: number;
+  phase: KillPhase;
+  message: string | null;
+}
+
+interface PortRowProps {
+  port: VmPort;
+  root: string | null;
+  busy: boolean;
+  kill: KillState | null;
+  onToggle: (enabled: boolean) => void;
+  onKill: (action: KillAction) => void;
+}
+
+function PortRow({ port, root, busy, kill, onToggle, onKill }: PortRowProps) {
   const forwarded = port.state === "active" || port.state === "remapped";
   const where =
     forwarded && port.localPort !== null
@@ -24,22 +42,41 @@ function PortRow({ port, root, busy, onToggle }: { port: VmPort; root: string | 
         ? `localhost:${port.localPort} · ${port.port} is busy on this Mac`
         : `localhost:${port.localPort} on this Mac`
       : "Not reachable from this Mac";
+  const killing = kill?.port === port.port ? kill : null;
   return (
     <li className="flex items-center gap-4 rounded-2xl bg-white/[0.04] px-4 py-3">
       <div className="w-16 text-2xl font-medium tabular-nums">{port.port}</div>
       <div className="min-w-0 flex-1">
         <div className="truncate">{relativeTo(port.cwd, root) ?? port.process}</div>
-        <div className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">{where}</div>
+        <div className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">
+          {killing?.message ?? (killing?.phase === "confirm" ? "This stops the server on the VM." : killing?.phase === "force" ? "It did not exit. Force it?" : where)}
+        </div>
       </div>
-      <Pill tone={port.state === "failed" ? "warn" : forwarded ? "ok" : "neutral"}>{STATE_LABEL[port.state]}</Pill>
-      {forwarded && port.localPort !== null && (
-        <Button onClick={() => void window.api.openLocalPort(port.localPort ?? 0)} className="!py-1.5">
-          Open
-        </Button>
+      {killing ? (
+        <>
+          <Button disabled={killing.phase === "working"} onClick={() => onKill("cancel")} className="!py-1.5">
+            Cancel
+          </Button>
+          <Button variant="danger" disabled={killing.phase === "working"} onClick={() => onKill(killing.phase === "force" ? "force" : "stop")} className="!py-1.5">
+            {killing.phase === "working" ? "Stopping…" : killing.phase === "force" ? "Force kill" : "Stop server"}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Pill tone={port.state === "failed" ? "warn" : forwarded ? "ok" : "neutral"}>{STATE_LABEL[port.state]}</Pill>
+          {forwarded && port.localPort !== null && (
+            <Button onClick={() => void window.api.openLocalPort(port.localPort ?? 0)} className="!py-1.5">
+              Open
+            </Button>
+          )}
+          <Button disabled={busy} onClick={() => onToggle(!forwarded)} title={forwarded ? "Closes the tunnel to this Mac. The server keeps running on the VM." : "Opens a tunnel from this Mac to the VM"} className="!py-1.5">
+            {forwarded ? "Stop forwarding" : "Forward"}
+          </Button>
+          <Button onClick={() => onKill("ask")} title="Stops the server process on the VM" className="!py-1.5 hover:!bg-[var(--down)]/25">
+            Kill
+          </Button>
+        </>
       )}
-      <Button disabled={busy} onClick={() => onToggle(!forwarded)} title={forwarded ? "Closes the tunnel to this Mac. The server keeps running on the VM." : "Opens a tunnel from this Mac to the VM"} className="!py-1.5">
-        {forwarded ? "Stop forwarding" : "Forward"}
-      </Button>
     </li>
   );
 }
@@ -59,6 +96,7 @@ function PortsTile({ className }: { className: string }) {
   const ports = useVmPorts();
   const snapshot = useVmSnapshot();
   const [busyPort, setBusyPort] = useState<number | null>(null);
+  const [kill, setKill] = useState<KillState | null>(null);
   const trees = useMemo(() => snapshot.data?.worktrees ?? [], [snapshot.data]);
   const icons = useProjectIcons().data ?? {};
   const target = { host: settings.host.trim(), user: settings.user.trim() };
@@ -71,6 +109,25 @@ function PortsTile({ className }: { className: string }) {
       setBusyPort(null);
       void ports.refetch();
     }
+  };
+
+  const runKill = async (port: number, force: boolean) => {
+    setKill({ port, phase: "working", message: null });
+    const result = await window.api.killVmPort({ target, port, force });
+    if (!result.ok) {
+      setKill({ port, phase: "confirm", message: result.message });
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const fresh = await ports.refetch();
+    const stillThere = fresh.data?.ports.some((item) => item.port === port) ?? false;
+    setKill(stillThere ? { port, phase: "force", message: null } : null);
+  };
+
+  const handleKill = (port: number, action: KillAction) => {
+    if (action === "cancel") setKill(null);
+    else if (action === "ask") setKill({ port, phase: "confirm", message: null });
+    else void runKill(port, action === "force");
   };
 
   const all = ports.data?.ports ?? [];
@@ -99,7 +156,7 @@ function PortsTile({ className }: { className: string }) {
                 </header>
                 <ul className="space-y-2">
                   {group.ports.map((port) => (
-                    <PortRow key={port.port} port={port} root={group.root} busy={busyPort === port.port} onToggle={(enabled) => void toggle(port.port, enabled)} />
+                    <PortRow key={port.port} port={port} root={group.root} busy={busyPort === port.port} kill={kill} onToggle={(enabled) => void toggle(port.port, enabled)} onKill={(action) => handleKill(port.port, action)} />
                   ))}
                 </ul>
               </section>

@@ -1,4 +1,4 @@
-import type { VmPorts, VmTarget } from "@vmc/shared";
+import type { KillPortResult, VmPorts, VmTarget } from "@vmc/shared";
 import { forwardState, reconcileForwards } from "./forwards";
 import { describeSshFailure, runSsh } from "./ssh";
 
@@ -68,4 +68,20 @@ export async function getVmPorts(target: VmTarget, autoForward: boolean): Promis
   const listeners = parseListeners(result.stdout);
   await reconcileForwards(target, listeners.filter((listener) => listener.kind === "project").map((listener) => listener.port), autoForward);
   return { reachable: true, error: null, ports: listeners.map((listener) => ({ ...listener, ...forwardState(listener.port) })) };
+}
+
+export function pickKillable(listeners: readonly Listener[], port: number): { pid: number } | { error: string } {
+  const listener = listeners.find((item) => item.port === port);
+  if (!listener) return { error: "Nothing is listening on that port any more." };
+  if (listener.kind !== "project" || listener.pid === null) return { error: "That is a system service, not a project server. Elsewhere won't stop it." };
+  return { pid: listener.pid };
+}
+
+export async function killVmPort(target: VmTarget, port: number, force: boolean): Promise<KillPortResult> {
+  const listing = await runSsh(target, PORTS_SCRIPT, { timeout: 20000 });
+  if (listing.code !== 0) return { ok: false, message: describeSshFailure(listing) };
+  const picked = pickKillable(parseListeners(listing.stdout), port);
+  if ("error" in picked) return { ok: false, message: picked.error };
+  const result = await runSsh(target, `kill -${force ? "KILL" : "TERM"} ${picked.pid}`, { timeout: 15000 });
+  return result.code === 0 ? { ok: true, message: null } : { ok: false, message: describeSshFailure(result) };
 }

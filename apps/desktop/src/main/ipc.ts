@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, IPC, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, VmT3InputSchema, VmT3OpenSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, IPC, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, VmT3InputSchema, VmT3OpenSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -11,7 +11,7 @@ import { openMacTerminal, openVmTerminal } from "./services/terminal";
 import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
 import { setForward } from "./services/forwards";
-import { getVmPorts } from "./services/vmPorts";
+import { getVmPorts, killVmPort } from "./services/vmPorts";
 import { getVmStorage } from "./services/vmStorage";
 import { deleteWorktree, prune } from "./services/cleanup";
 import { clearCustomIcon, getProjectIcons, saveCustomIcon } from "./services/projectIcon";
@@ -64,6 +64,10 @@ export function registerIpc(actions: IpcActions): void {
     const parsed = PortForwardToggleSchema.parse(input);
     await setForward(parsed.target, parsed.port, parsed.enabled);
     return getVmPorts(parsed.target, false);
+  });
+  ipcMain.handle(IPC.vmPortKill, (_event, input: unknown) => {
+    const parsed = KillPortSchema.parse(input);
+    return killVmPort(parsed.target, parsed.port, parsed.force);
   });
   ipcMain.handle(IPC.openLocalPort, async (_event, port: unknown) => {
     const parsed = LocalPortSchema.safeParse(port);

@@ -38,6 +38,19 @@ export const PortForwardToggleSchema = z.object({
 });
 export type PortForwardToggle = z.infer<typeof PortForwardToggleSchema>;
 
+export const KillPortSchema = z.object({
+  target: VmTargetSchema,
+  port: PortNumber,
+  force: z.boolean(),
+});
+export type KillPortInput = z.infer<typeof KillPortSchema>;
+
+export const KillPortResultSchema = z.object({
+  ok: z.boolean(),
+  message: z.string().nullable(),
+});
+export type KillPortResult = z.infer<typeof KillPortResultSchema>;
+
 export const LocalPortSchema = z.number().int().min(1024).max(65535);
 
 export const VmStorageInputSchema = z.object({ target: VmTargetSchema });

@@ -9,6 +9,7 @@ const api: Api = {
   getMacWorktrees: (repos) => ipcRenderer.invoke(IPC.macWorktrees, { repos }),
   getVmPorts: (input) => ipcRenderer.invoke(IPC.vmPorts, input),
   setPortForward: (input) => ipcRenderer.invoke(IPC.vmPortForward, input),
+  killVmPort: (input) => ipcRenderer.invoke(IPC.vmPortKill, input),
   openLocalPort: (port) => ipcRenderer.invoke(IPC.openLocalPort, port),
   getVmStorage: (input) => ipcRenderer.invoke(IPC.vmStorage, input),
   getVmSnapshot: (input) => ipcRenderer.invoke(IPC.vmSnapshot, input),
