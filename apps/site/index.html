@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elsewhere</title>
+  <meta name="description" content="Work on a remote dev VM as if it were next to you. Worktrees, project moves, port forwarding, storage and Claude usage in one macOS app." />
+  <meta name="theme-color" content="#0b0716" />
+  <meta property="og:title" content="Elsewhere" />
+  <meta property="og:description" content="Work on a remote dev VM as if it were next to you." />
+  <meta property="og:image" content="assets/icon.png" />
+  <link rel="icon" href="assets/icon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="assets/icon.png" alt="" />Elsewhere</a>
+      <nav class="nav-links">
+        <a class="hide-sm" href="#features">Features</a>
+        <a class="hide-sm" href="#how">How it works</a>
+        <a href="https://github.com/Eliezir/elsewhere">GitHub</a>
+        <a class="btn primary small" href="https://github.com/Eliezir/elsewhere/releases/latest">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero wrap">
+      <img class="icon" src="assets/icon.png" alt="Elsewhere app icon" />
+      <h1>Work <span>somewhere else</span>,<br />stay right here.</h1>
+      <p class="lead">A macOS app for running your projects on a remote dev VM. Send a project over with its Claude sessions, forward its ports automatically, and keep an eye on storage and usage.</p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/Eliezir/elsewhere/releases/latest">Download for macOS</a>
+        <a class="btn" href="https://github.com/Eliezir/elsewhere">View on GitHub</a>
+      </div>
+      <p class="note">Free and open source. Apple Silicon and Intel. Works over Tailscale, no public ports.</p>
+
+      <div class="window reveal" aria-label="Elsewhere app preview">
+        <div class="window-bar">
+          <i class="dot r"></i><i class="dot y"></i><i class="dot g"></i>
+          <div class="tabs"><span>Overview</span><span>Worktrees</span><span class="on">VM</span><span>Usage</span><span>Queue</span><span>Settings</span></div>
+        </div>
+        <div class="window-body">
+          <div class="tile span7">
+            <h3>Running on the VM <span class="pill">3 listening</span></h3>
+            <div class="row"><b>5173</b><div>web · feature-login<span>localhost:5173 on this Mac</span></div><span class="pill ok">Forwarded</span></div>
+            <div class="row"><b>3001</b><div>api · feature-login<span>localhost:3001 on this Mac</span></div><span class="pill ok">Forwarded</span></div>
+            <div class="row"><b>3773</b><div>editor server<span>localhost:23773 · 3773 is busy on this Mac</span></div><span class="pill ok">Forwarded</span></div>
+          </div>
+          <div class="tile span5">
+            <h3>Storage <span class="pill">Rescan</span></h3>
+            <div class="muted" style="margin:0">7.5 GB used of 96 GB</div>
+            <div class="meter"><i style="width: 8%"></i></div>
+            <div class="row" style="margin-top:16px"><div>~/Developer/worktrees/app/login<span>55 MB</span></div></div>
+            <div class="row"><div>~/Developer/worktrees/app/billing<span>55 MB</span></div></div>
+            <div class="row"><div>~/Developer/.vmc/app.git<span>50 MB</span></div></div>
+          </div>
+          <div class="tile span4">
+            <h3>5-hour usage <span class="pill">resets in 3h 12m</span></h3>
+            <div class="big">42<small>%</small></div>
+            <div class="meter"><i style="width: 42%"></i></div>
+          </div>
+          <div class="tile span4">
+            <h3>Weekly capacity <span class="pill">resets in 1d 6h</span></h3>
+            <div class="big">47<small>%</small></div>
+            <div class="meter"><i style="width: 47%"></i></div>
+            <div class="muted">45% likely unused</div>
+          </div>
+          <div class="tile span4">
+            <h3>Idle health <span class="pill ok">healthy</span></h3>
+            <div class="big">34<small>%</small></div>
+            <div class="muted">7-day CPU against the 20% line</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block wrap" id="features">
+      <div class="eyebrow">What it does</div>
+      <h2 class="reveal">Everything about your VM, in one calm window.</h2>
+      <p class="sub reveal">Elsewhere talks to your VM over the SSH connection you already have. No agent to install and nothing exposed to the internet.</p>
+      <div class="grid3">
+        <div class="feature reveal"><div class="ico">⇄</div><h3>Send and bring back</h3><p>Move a worktree to the VM with its branch, uncommitted work and Claude sessions. Bring it back whenever you like. It is always a copy first.</p></div>
+        <div class="feature reveal"><div class="ico">⌁</div><h3>Ports that just work</h3><p>See every dev server listening on the VM and forward each project's ports to this Mac automatically, with a clear note when a port is already taken.</p></div>
+        <div class="feature reveal"><div class="ico">◧</div><h3>Storage you can read</h3><p>Disk use by project and by folder, so you know what is worth cleaning up before the VM fills up.</p></div>
+        <div class="feature reveal"><div class="ico">✦</div><h3>Claude usage</h3><p>Your 5-hour and weekly limits, reset timers and how much capacity is likely to go unused.</p></div>
+        <div class="feature reveal"><div class="ico">❖</div><h3>Every worktree, labelled</h3><p>See where each one came from, whether Conductor, T3 Code, a Claude agent or by hand, and open it in the right tool.</p></div>
+        <div class="feature reveal"><div class="ico">◐</div><h3>Tailscale built in</h3><p>Connection state, approval prompts and reconnecting without leaving the app. Sits in the menu bar when you want it quiet.</p></div>
+      </div>
+    </section>
+
+    <section class="block wrap" id="how">
+      <div class="eyebrow">How it works</div>
+      <h2 class="reveal">From your laptop to the VM in four steps.</h2>
+      <div class="steps">
+        <div class="step reveal"><h3>Connect</h3><p>Enter your VM's Tailscale host name and user in Settings.</p></div>
+        <div class="step reveal"><h3>Send</h3><p>Pick a worktree and send it. Elsewhere pushes the branch and copies the Claude sessions.</p></div>
+        <div class="step reveal"><h3>Work</h3><p>Open it in T3 Code or a terminal on the VM. Ports forward on their own.</p></div>
+        <div class="step reveal"><h3>Bring back</h3><p>Pull the result home with a fast-forward only merge. Nothing is overwritten.</p></div>
+      </div>
+    </section>
+
+    <section class="wrap">
+      <div class="final reveal">
+        <h2>Ready to work elsewhere?</h2>
+        <p>The build is not signed yet. Right-click the app and choose Open the first time.</p>
+        <div class="cta" style="margin:0">
+          <a class="btn primary" href="https://github.com/Eliezir/elsewhere/releases/latest">Download for macOS</a>
+          <a class="btn" href="https://github.com/Eliezir/elsewhere#readme">Read the docs</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>Elsewhere · MIT license</span>
+      <span><a href="https://github.com/Eliezir/elsewhere">GitHub</a> · <a href="https://github.com/Eliezir/elsewhere/releases">Releases</a></span>
+    </div>
+  </footer>
+
+  <script>
+    const items = document.querySelectorAll(".reveal");
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      items.forEach((el) => io.observe(el));
+    } else {
+      items.forEach((el) => el.classList.add("in"));
+    }
+  </script>
+</body>
+</html>
