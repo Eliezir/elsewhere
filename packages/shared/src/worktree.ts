@@ -198,3 +198,18 @@ export type ToolsInfo = Record<Tool, ToolInfo>;
 export type T3Threads = Record<string, { url: string; title: string }>;
 export type ToolOpenInput = z.infer<typeof ToolOpenInputSchema>;
 export type ToolOpenResult = z.infer<typeof ToolOpenResultSchema>;
+
+export const VmT3InputSchema = z.object({
+  target: VmTargetSchema,
+  paths: z.array(z.string().min(2).max(1024).startsWith("/")).min(1).max(100),
+});
+
+export const VmT3OpenSchema = z.object({
+  target: VmTargetSchema,
+  path: z.string().min(2).max(1024).startsWith("/"),
+});
+
+export type VmT3Input = z.infer<typeof VmT3InputSchema>;
+export type VmT3Project = { projectTitle: string; threads: { id: string; title: string }[] };
+export type VmT3Info = { reachable: boolean; hasDatabase: boolean; environmentId: string | null; projects: Record<string, VmT3Project> };
+export type VmT3OpenResult = { ok: boolean; opened: "thread" | "app" | null; copied: boolean; projectExists: boolean; error: string | null };

@@ -74,7 +74,7 @@ export async function getT3Threads(paths: readonly string[]): Promise<T3Threads>
   return loaded ? pickThreads(loaded.rows, loaded.environmentId, paths) : {};
 }
 
-async function findApp(tool: Tool): Promise<string | null> {
+export async function findApp(tool: Tool): Promise<string | null> {
   for (const dir of APP_DIRS) {
     const names = await readdir(dir).catch(() => [] as string[]);
     const match = names.filter((name) => name.endsWith(".app") && name.startsWith(APP_PREFIX[tool])).sort()[0];
@@ -131,4 +131,14 @@ export async function openInTool(tool: Tool, path: string, deps: OpenDeps = real
   }
   const error = await deps.openApp(appPath);
   return error === "" ? { ok: true, opened: "app", error: null } : { ok: false, opened: null, error };
+}
+
+export async function openUrlWithShell(url: string): Promise<void> {
+  const { shell } = await import("electron");
+  await shell.openExternal(url);
+}
+
+export async function openAppPath(path: string): Promise<string> {
+  const { shell } = await import("electron");
+  return shell.openPath(path);
 }

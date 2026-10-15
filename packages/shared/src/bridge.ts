@@ -2,7 +2,8 @@ import type { TailscaleStatus } from "./status";
 import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult } from "./move";
 import type { UsageSnapshot } from "./usage";
-import type { T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
+import type { VmTarget } from "./worktree";
+import type { VmT3Info, VmT3Input, VmT3OpenResult, T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
   tailscaleStatus: "tailscale:status",
@@ -21,6 +22,8 @@ export const IPC = {
   projectIcons: "icons:get",
   sizes: "worktrees:sizes",
   toolsInfo: "tools:info",
+  vmT3: "tools:vm-t3",
+  vmT3Open: "tools:vm-t3-open",
   t3Threads: "tools:t3-threads",
   toolOpen: "tools:open",
   reveal: "tools:reveal",
@@ -48,6 +51,8 @@ export interface Api {
   getProjectIcons(input: IconInput): Promise<ProjectIcons>;
   getTools(): Promise<ToolsInfo>;
   getT3Threads(paths: string[]): Promise<T3Threads>;
+  getVmT3(input: VmT3Input): Promise<VmT3Info>;
+  openVmInT3(input: { target: VmTarget; path: string }): Promise<VmT3OpenResult>;
   openInTool(input: ToolOpenInput): Promise<ToolOpenResult>;
   revealInFinder(path: string): Promise<boolean>;
   getWorktreeSizes(input: SizeInput): Promise<SizeResult>;
