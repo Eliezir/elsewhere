@@ -1,9 +1,11 @@
 import { Tabs } from "@base-ui/react/tabs";
+import { VmTargetSchema } from "@vmc/shared";
 import { MotionConfig } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { TopBar } from "@/components/TopBar";
 import { NAV_ITEMS, isNavId, type NavId } from "@/lib/nav";
 import { NavProvider } from "@/lib/nav-context";
+import { useSettings } from "@/lib/settings";
 import { OverviewView } from "@/views/OverviewView";
 import { PopoverView } from "@/views/PopoverView";
 import { QueueView } from "@/views/QueueView";
@@ -23,6 +25,12 @@ const VIEWS: Record<NavId, ReactNode> = {
 
 function MainWindow() {
   const [active, setActive] = useState<NavId>("overview");
+  const [settings] = useSettings();
+
+  useEffect(() => {
+    const target = VmTargetSchema.safeParse({ host: settings.host.trim(), user: settings.user.trim() });
+    void window.api.setForwardConfig({ target: target.success ? target.data : null, autoForward: settings.autoForward });
+  }, [settings.host, settings.user, settings.autoForward]);
 
   useEffect(
     () =>

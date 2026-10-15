@@ -39,7 +39,7 @@ function PortRow({ port, root, busy, kill, onToggle, onKill }: PortRowProps) {
   const where =
     forwarded && port.localPort !== null
       ? port.state === "remapped"
-        ? `localhost:${port.localPort} · ${port.port} is busy on this Mac`
+        ? `localhost:${port.localPort} · ${port.port} is busy on this Mac${port.busyBy ? ` (${port.busyBy})` : ""}`
         : `localhost:${port.localPort} on this Mac`
       : "Not reachable from this Mac";
   const killing = kill?.port === port.port ? kill : null;

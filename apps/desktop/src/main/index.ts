@@ -1,4 +1,5 @@
 import { stopAllForwards } from "./services/forwards";
+import { startForwardLoop, stopForwardLoop } from "./services/forwardLoop";
 import { join } from "node:path";
 import { app, BrowserWindow, nativeImage, nativeTheme, Tray } from "electron";
 import { IPC } from "@vmc/shared";
@@ -45,6 +46,7 @@ function showMainWindow(section?: string): void {
 void app.whenReady().then(() => {
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
   registerIpc({ openMainWindow: showMainWindow });
+  startForwardLoop();
   if (screenshotPath === undefined) {
     void refreshUsage();
     setInterval(() => void refreshUsage(), USAGE_POLL_MS);
@@ -67,4 +69,7 @@ void app.whenReady().then(() => {
 
 app.on("activate", () => showMainWindow());
 app.on("window-all-closed", () => undefined);
-app.on("before-quit", () => stopAllForwards());
+app.on("before-quit", () => {
+  stopForwardLoop();
+  stopAllForwards();
+});

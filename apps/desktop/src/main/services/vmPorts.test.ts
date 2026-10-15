@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseListeners, pickKillable } from "./vmPorts";
+import { PORTS_SCRIPT, parseListeners, pickKillable } from "./vmPorts";
 
 const OUTPUT = `LISTEN 0 511 127.0.0.1:5173 0.0.0.0:* users:(("node",pid=4321,fd=20))
 LISTEN 0 511 [::1]:3001 [::]:* users:(("node",pid=4400,fd=18))
@@ -33,5 +33,11 @@ describe("pickKillable", () => {
   it("refuses services and ports that are gone", () => {
     expect(pickKillable(listeners, 3773)).toHaveProperty("error");
     expect(pickKillable(listeners, 9999)).toHaveProperty("error");
+  });
+});
+
+describe("PORTS_SCRIPT", () => {
+  it("always exits cleanly, even when the last listener is not in a git repo", () => {
+    expect(PORTS_SCRIPT.trim().endsWith("exit 0")).toBe(true);
   });
 });

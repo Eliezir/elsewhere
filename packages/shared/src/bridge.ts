@@ -3,7 +3,7 @@ import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
 import type { UsageSnapshot } from "./usage";
 import type { VmTarget } from "./worktree";
-import type { KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput } from "./ports";
+import type { ForwardConfig, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput } from "./ports";
 import type { ClaudeDesktopOpenResult, T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
@@ -38,6 +38,7 @@ export const IPC = {
   vmPorts: "vm:ports",
   vmPortForward: "vm:port-forward",
   vmPortKill: "vm:port-kill",
+  forwardConfig: "vm:forward-config",
   openLocalPort: "app:open-local-port",
   vmStorage: "vm:storage",
 } as const;
@@ -73,6 +74,7 @@ export interface Api {
   getVmPorts(input: VmPortsInput): Promise<VmPorts>;
   setPortForward(input: PortForwardToggle): Promise<VmPorts>;
   killVmPort(input: KillPortInput): Promise<KillPortResult>;
+  setForwardConfig(input: ForwardConfig): Promise<void>;
   openLocalPort(port: number): Promise<boolean>;
   getVmStorage(input: VmStorageInput): Promise<VmStorage>;
   openMainWindow(section?: string): Promise<void>;

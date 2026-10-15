@@ -1,12 +1,13 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import type { PortForwardState, VmTarget } from "@vmc/shared";
-import { sshBaseArgs } from "./ssh";
+import { runLocal, sshBaseArgs } from "./ssh";
 
 interface Forward {
   child: ChildProcess;
   localPort: number;
   state: PortForwardState;
+  busyBy: string | null;
 }
 
 const FALLBACK_START = 20000;
@@ -36,6 +37,23 @@ async function pickLocalPort(remote: number, taken: ReadonlySet<number>): Promis
   return null;
 }
 
+export function parseOwner(lsofOutput: string, cwdOutput: string): string | null {
+  const command = /^c(.+)$/m.exec(lsofOutput)?.[1];
+  if (!command) return null;
+  const cwd = /^n(\/.+)$/m.exec(cwdOutput)?.[1];
+  const place = cwd ? cwd.split("/").filter(Boolean).slice(-1)[0] : null;
+  return place ? `${command} in ${place}` : command;
+}
+
+async function localOwner(port: number): Promise<string | null> {
+  if (process.platform === "win32") return null;
+  const listing = await runLocal("lsof", ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN", "-Fpc"], { timeout: 5000 });
+  const pid = /^p(\d+)$/m.exec(listing.stdout)?.[1];
+  if (!pid) return null;
+  const cwd = await runLocal("lsof", ["-a", "-p", pid, "-d", "cwd", "-Fn"], { timeout: 5000 });
+  return parseOwner(listing.stdout, cwd.stdout);
+}
+
 async function start(target: VmTarget, remote: number): Promise<void> {
   const taken = new Set([...forwards.values()].map((forward) => forward.localPort));
   const local = await pickLocalPort(remote, taken);
@@ -48,7 +66,7 @@ async function start(target: VmTarget, remote: number): Promise<void> {
     [...sshBaseArgs(target), "-N", "-o", "ExitOnForwardFailure=yes", "-L", `127.0.0.1:${local}:127.0.0.1:${remote}`],
     { stdio: "ignore" },
   );
-  const forward: Forward = { child, localPort: local, state: local === remote ? "active" : "remapped" };
+  const forward: Forward = { child, localPort: local, state: local === remote ? "active" : "remapped", busyBy: local === remote ? null : await localOwner(remote) };
   forwards.set(remote, forward);
   failed.delete(remote);
   const release = () => {
@@ -98,10 +116,10 @@ export async function setForward(target: VmTarget, port: number, enabled: boolea
   }
 }
 
-export function forwardState(port: number): { state: PortForwardState; localPort: number | null } {
+export function forwardState(port: number): { state: PortForwardState; localPort: number | null; busyBy: string | null } {
   const forward = forwards.get(port);
-  if (forward) return { state: forward.state, localPort: forward.localPort };
-  return { state: failed.has(port) ? "failed" : "off", localPort: null };
+  if (forward) return { state: forward.state, localPort: forward.localPort, busyBy: forward.busyBy };
+  return { state: failed.has(port) ? "failed" : "off", localPort: null, busyBy: null };
 }
 
 export function stopAllForwards(): void {

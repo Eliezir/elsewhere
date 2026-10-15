@@ -21,6 +21,7 @@ export const VmPortSchema = z.object({
   kind: z.enum(["project", "service"]),
   state: PortForwardStateSchema,
   localPort: PortNumber.nullable(),
+  busyBy: z.string().nullable(),
 });
 export type VmPort = z.infer<typeof VmPortSchema>;
 
@@ -50,6 +51,12 @@ export const KillPortResultSchema = z.object({
   message: z.string().nullable(),
 });
 export type KillPortResult = z.infer<typeof KillPortResultSchema>;
+
+export const ForwardConfigSchema = z.object({
+  target: VmTargetSchema.nullable(),
+  autoForward: z.boolean(),
+});
+export type ForwardConfig = z.infer<typeof ForwardConfigSchema>;
 
 export const LocalPortSchema = z.number().int().min(1024).max(65535);
 

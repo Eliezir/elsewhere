@@ -27,6 +27,7 @@ for pid in $pids; do
   b=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null)
   [ -n "$b" ] && echo "$pid $b"
 done
+exit 0
 `;
 
 function portOf(address: string): number | null {

@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, IPC, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, ClaudeDesktopOpenSchema, ForwardConfigSchema, IPC, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -12,6 +12,7 @@ import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
 import { compareTwins } from "./services/move/twin";
 import { setForward } from "./services/forwards";
+import { setForwardConfig } from "./services/forwardLoop";
 import { openInClaudeDesktop } from "./services/claudeDesktop";
 import { getVmPorts, killVmPort } from "./services/vmPorts";
 import { getVmStorage } from "./services/vmStorage";
@@ -70,6 +71,7 @@ export function registerIpc(actions: IpcActions): void {
     const parsed = ClaudeDesktopOpenSchema.parse(input);
     return openInClaudeDesktop(parsed.target, parsed.path, parsed.sessionId);
   });
+  ipcMain.handle(IPC.forwardConfig, (_event, input: unknown) => setForwardConfig(ForwardConfigSchema.parse(input)));
   ipcMain.handle(IPC.vmPortKill, (_event, input: unknown) => {
     const parsed = KillPortSchema.parse(input);
     return killVmPort(parsed.target, parsed.port, parsed.force);
