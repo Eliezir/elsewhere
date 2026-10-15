@@ -21,11 +21,11 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  host: "adt-dev.tail6ccfa6.ts.net",
+  host: "",
   user: "dev",
   daemonPort: 7420,
-  macRepos: "~/Developer/NEES/unicef/adt-studio\n~/Developer/vm-companion",
-  vmRepos: "~/Developer/adt-studio",
+  macRepos: "",
+  vmRepos: "",
   diskWarn: 80,
   idleLine: 20,
   pacerCap: 80,

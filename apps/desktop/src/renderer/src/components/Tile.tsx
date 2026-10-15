@@ -29,8 +29,8 @@ export function Tile({ title, icon, action, children, className = "", tone = "da
       className={`flex min-h-0 flex-col rounded-[22px] border border-[var(--hairline)] p-4 shadow-[inset_0_1px_0_oklch(1_0_0/0.06)] ${TONE[tone]} ${className}`}
     >
       {(title || action) && (
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs text-[var(--text-secondary)]">
             {icon}
             {to ? (
               <button
@@ -58,7 +58,7 @@ export function Tile({ title, icon, action, children, className = "", tone = "da
 export function Pill({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "warn" | "ok" }) {
   const color = { neutral: "text-[var(--text-secondary)]", warn: "text-[var(--warn)]", ok: "text-[var(--ok)]" }[tone];
   return (
-    <span className={`rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-2 py-0.5 text-[11px] ${color}`}>
+    <span className={`shrink-0 whitespace-nowrap rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-2 py-0.5 text-[11px] ${color}`}>
       {children}
     </span>
   );

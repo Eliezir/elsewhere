@@ -6,7 +6,7 @@ const tree: Worktree = {
   id: "mac:/Users/me/wt/feature",
   name: "feature",
   repo: "adt-studio",
-  branch: "eliezir/feature",
+  branch: "me/feature",
   head: "abc",
   location: "mac",
   path: "/Users/me/wt/feature",

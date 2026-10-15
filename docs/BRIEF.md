@@ -3,7 +3,7 @@
 Status: feature list agreed in discussion 2026-10-14; nothing built yet. Start in a FRESH session; read this file plus the memory note `oracle-remote-dev-vm`.
 
 ## Context
-- VM `adt-dev`: Oracle A1.Flex, 2 OCPU / 12 GB, Ubuntu 24.04 aarch64, reachable ONLY over Tailscale: `ssh dev@adt-dev.tail6ccfa6.ts.net` (100.105.56.61). Repo at ~/Developer/adt-studio. No GitHub credentials on the VM (public repo cloned over HTTPS).
+- VM `adt-dev`: Oracle A1.Flex, 2 OCPU / 12 GB, Ubuntu 24.04 aarch64, reachable ONLY over Tailscale: `ssh dev@<vm>.<tailnet>.ts.net`. Repo at ~/Developer/adt-studio. No GitHub credentials on the VM (public repo cloned over HTTPS).
 - Mac: MacBook Air M4, 16 GB. Tailscale app CLI: /Applications/Tailscale.app/Contents/MacOS/Tailscale (status --json).
 - Existing related project: ~/Developer/claude-companion (Swift menu-bar app, SwiftPM, no Xcode). Decide: separate Electron app vs. extending it.
 - Guards on the Oracle account: budget `free-tier-guard` (1, alert at 1%), quota policy `free-tier-compute-only`. Oracle reclaims an A1 instance idle for 7 days (CPU, network and memory all <20%), so idle time is a real risk.

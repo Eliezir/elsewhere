@@ -15,7 +15,7 @@ const RAYS = [
 
 export function ClaudeMark({ size = 14, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg viewBox="-10 -10 20 20" width={size} height={size} aria-hidden="true" className={className}>
+    <svg viewBox="-10 -10 20 20" width={size} height={size} aria-hidden="true" className={`shrink-0 ${className}`}>
       {RAYS.map(({ angle, length }) => (
         <line
           key={angle}

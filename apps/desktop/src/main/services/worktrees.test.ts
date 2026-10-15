@@ -8,7 +8,7 @@ import { countLines, encodeProjectPath, listSessions, titleFromTranscript } from
 describe("parseWorktreeList", () => {
   const text = [
     "worktree /Users/me/repo\nHEAD abc123\nbranch refs/heads/main",
-    "worktree /Users/me/wt/feature\nHEAD def456\nbranch refs/heads/eliezir/feature",
+    "worktree /Users/me/wt/feature\nHEAD def456\nbranch refs/heads/me/feature",
     "worktree /Users/me/wt/detached\nHEAD 111222\ndetached",
     "worktree /Users/me/wt/gone\nHEAD 333444\ndetached\nprunable gitdir file points to non-existent location",
     "",
@@ -16,7 +16,7 @@ describe("parseWorktreeList", () => {
 
   it("reads branches, detached heads and prunable entries", () => {
     const parsed = parseWorktreeList(text);
-    expect(parsed.map((entry) => entry.branch)).toEqual(["main", "eliezir/feature", null, null]);
+    expect(parsed.map((entry) => entry.branch)).toEqual(["main", "me/feature", null, null]);
     expect(parsed[2]?.head).toBe("111222");
     expect(parsed[3]?.prunable).toBe(true);
   });
@@ -35,7 +35,7 @@ describe("parseStatus", () => {
 
 describe("encodeProjectPath", () => {
   it("matches Claude's folder naming", () => {
-    expect(encodeProjectPath("/Users/eliezirmoreira/.t3/worktrees/x")).toBe("-Users-eliezirmoreira--t3-worktrees-x");
+    expect(encodeProjectPath("/Users/me/.t3/worktrees/x")).toBe("-Users-me--t3-worktrees-x");
   });
 });
 

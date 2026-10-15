@@ -14,7 +14,7 @@ import { vmPathsFor } from "./paths";
 import { sshRemote } from "./remote";
 
 const live = process.env.VMC_LIVE === "1";
-const target: VmTarget = { host: process.env.VMC_LIVE_HOST ?? "adt-dev.tail6ccfa6.ts.net", user: process.env.VMC_LIVE_USER ?? "dev" };
+const target: VmTarget = { host: process.env.VMC_LIVE_HOST ?? "", user: process.env.VMC_LIVE_USER ?? "dev" };
 
 process.env.GIT_AUTHOR_NAME = "Live Test";
 process.env.GIT_AUTHOR_EMAIL = "live@example.com";
