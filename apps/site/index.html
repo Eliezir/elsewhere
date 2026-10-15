@@ -8,7 +8,10 @@
   <meta name="theme-color" content="#0b0716" />
   <meta property="og:title" content="Elsewhere" />
   <meta property="og:description" content="Work on a remote dev VM as if it were next to you." />
-  <meta property="og:image" content="assets/icon.png" />
+  <meta property="og:image" content="https://eliezir.github.io/elsewhere/assets/social-preview.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://eliezir.github.io/elsewhere/" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" href="assets/icon.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -81,13 +84,114 @@
       <div class="eyebrow">What it does</div>
       <h2 class="reveal">Everything about your VM, in one calm window.</h2>
       <p class="sub reveal">Elsewhere talks to your VM over the SSH connection you already have. No agent to install and nothing exposed to the internet.</p>
-      <div class="grid3">
-        <div class="feature reveal"><div class="ico">⇄</div><h3>Send and bring back</h3><p>Move a worktree to the VM with its branch, uncommitted work and Claude sessions. Bring it back whenever you like. It is always a copy first.</p></div>
-        <div class="feature reveal"><div class="ico">⌁</div><h3>Ports that just work</h3><p>See every dev server listening on the VM and forward each project's ports to this Mac automatically, with a clear note when a port is already taken.</p></div>
-        <div class="feature reveal"><div class="ico">◧</div><h3>Storage you can read</h3><p>Disk use by project and by folder, so you know what is worth cleaning up before the VM fills up.</p></div>
-        <div class="feature reveal"><div class="ico">✦</div><h3>Claude usage</h3><p>Your 5-hour and weekly limits, reset timers and how much capacity is likely to go unused.</p></div>
-        <div class="feature reveal"><div class="ico">❖</div><h3>Every worktree, labelled</h3><p>See where each one came from, whether Conductor, T3 Code, a Claude agent or by hand, and open it in the right tool.</p></div>
-        <div class="feature reveal"><div class="ico">◐</div><h3>Tailscale built in</h3><p>Connection state, approval prompts and reconnecting without leaving the app. Sits in the menu bar when you want it quiet.</p></div>
+
+      <div class="rows">
+        <article class="frow reveal">
+          <div class="ftext">
+            <div class="kicker">Send and sync</div>
+            <h3>Move work to the VM and back, and see when a copy is stale.</h3>
+            <p>Send a worktree with its branch, unsaved changes and Claude sessions. When the Mac and VM copies drift apart, Elsewhere shows which side is ahead and offers a one-click sync in the safe direction. It only fast-forwards, so nothing is overwritten.</p>
+            <ul class="ticks">
+              <li>Unsaved work is committed as a WIP commit first</li>
+              <li>Refuses to guess when both sides changed</li>
+              <li>Claude sessions copied with their paths rewritten</li>
+            </ul>
+          </div>
+          <div class="fvisual">
+            <div class="tile mock">
+              <h3>lisbon <span class="pill">Mac</span></h3>
+              <div class="sync">
+                <div>The Mac copy is ahead of the VM copy by 21 unsaved changes.<span>Unsaved changes are saved as a WIP commit on the Mac first.</span></div>
+                <a class="mbtn primary">Sync to the VM</a>
+              </div>
+              <div class="steps-mini">
+                <div><i class="ok"></i>Check the VM connection</div>
+                <div><i class="ok"></i>Commit 21 modified files as a WIP commit</div>
+                <div><i class="ok"></i>Push the branch over SSH</div>
+                <div><i class="run"></i>Copy 1 Claude session, paths rewritten</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="frow flip reveal">
+          <div class="ftext">
+            <div class="kicker">Ports</div>
+            <h3>Every dev server on the VM, forwarded to your Mac on its own.</h3>
+            <p>Elsewhere watches what is listening on the VM, groups it by project and branch, and opens a tunnel for each one in the background. If a port is already taken on your Mac it picks another and tells you which link to use. Pin a number you want to keep.</p>
+            <ul class="ticks">
+              <li>Open, copy the link, pin a port, stop forwarding</li>
+              <li>Kill a server on the VM, with a confirm and a force step</li>
+              <li>System services are listed read only</li>
+            </ul>
+          </div>
+          <div class="fvisual">
+            <div class="tile mock">
+              <h3>Running on the VM <span class="pill">1 project</span></h3>
+              <div class="proj"><span class="avatar">A</span><div>app · lisbon<span>feature/new-pipeline-ui</span></div><span class="pill">2 ports</span></div>
+              <div class="row"><b>5173</b><div>apps/studio<span>localhost:25173 · use this link, not :5173, which is busy here (node in other-project)</span></div></div>
+              <div class="btnrow"><a class="mbtn">Open</a><a class="mbtn">Copy link</a><a class="mbtn">Pin port</a><a class="mbtn">Stop forwarding</a><a class="mbtn danger">Kill</a></div>
+              <div class="row"><b>3001</b><div>apps/api<span>localhost:3001 on this Mac</span></div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="frow reveal">
+          <div class="ftext">
+            <div class="kicker">Keep it running</div>
+            <h3>Close the laptop. The agent keeps going.</h3>
+            <p>Claude runs on the VM inside a named tmux session, so it keeps working when your Mac sleeps. Resume any copied conversation from a button, and reattach later from any device that can SSH in. Open a worktree in Claude Desktop over SSH with a catch-up prompt already filled in.</p>
+            <ul class="ticks">
+              <li>Resume a specific conversation, not just the latest</li>
+              <li>Reattach from a phone or another PC over Tailscale</li>
+              <li>Open in Claude Desktop with the folder path copied</li>
+            </ul>
+          </div>
+          <div class="fvisual">
+            <div class="tile mock">
+              <h3>Claude sessions</h3>
+              <div class="sess"><span>Pick up where the earlier conversation stopped</span><em>35 lines · 2 min ago</em><a class="mbtn">Resume</a></div>
+              <div class="sess"><span>Okay, lets start by looking into those issues</span><em>88,500 lines · 5 min ago</em><a class="mbtn">Resume</a></div>
+              <div class="term">
+                <div><b>$</b> tmux attach -t cc-lisbon</div>
+                <div class="dim">claude · feature/new-pipeline-ui · running</div>
+              </div>
+              <a class="mbtn wide">Open in Claude Desktop <em class="tag">Test</em></a>
+            </div>
+          </div>
+        </article>
+
+        <article class="frow flip reveal">
+          <div class="ftext">
+            <div class="kicker">Clean up safely</div>
+            <h3>Delete the right copy, with a deliberate press.</h3>
+            <p>When a worktree is on both machines you choose which copy to delete: the Mac, the VM or both. Git refuses if there are uncommitted changes, and forcing it takes a press and hold, not a stray click. See what each project costs on the VM before you decide.</p>
+            <ul class="ticks">
+              <li>Mac copy, VM copy or both, in one step</li>
+              <li>Hold to delete anyway when changes would be lost</li>
+              <li>Disk use by project and by folder</li>
+            </ul>
+          </div>
+          <div class="fvisual">
+            <div class="tile mock">
+              <h3>Delete a copy</h3>
+              <div class="seg"><span class="on">Mac copy</span><span>VM copy</span><span>Both</span></div>
+              <p class="mini">Delete lisbon from the Mac and free 5.1 GB?</p>
+              <div class="meter"><i style="width: 70%"></i></div>
+              <p class="mini dimmed">~/Developer/worktrees/app/lisbon · 1.7 GB on the VM</p>
+              <div class="holdrow"><a class="mbtn">Keep it</a><a class="mbtn hold"><i></i><span>Hold to delete anyway</span></a></div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="grid3 more">
+        <div class="feature reveal"><div class="ico">✦</div><h3>Claude usage</h3><p>Your 5-hour and weekly limits, reset timers and how much capacity is likely to go unused, with the Claude mark on each card.</p></div>
+        <div class="feature reveal"><div class="ico">❖</div><h3>Every worktree, labelled</h3><p>See where each one came from: Conductor, T3 Code, a Claude agent or by hand. Open it in the right tool, with stale and merged ones flagged.</p></div>
+        <div class="feature reveal"><div class="ico">◐</div><h3>Menu bar and Tailscale</h3><p>A popover with usage, VM health and your running projects' ports. Connection state, approval prompts and reconnecting without leaving the app.</p></div>
+        <div class="feature reveal"><div class="ico">⌘</div><h3>Claude Code mods</h3><p>The <code>workbench</code> mod brings the Ports pane, with Kill, and a status line into Claude Code and the Desktop Code tab. Install it from this repository.</p></div>
+        <div class="feature reveal"><div class="ico">◧</div><h3>Private by design</h3><p>No servers of ours, no account, no analytics. It uses your own SSH and Tailscale, and never opens a public port.</p></div>
+        <div class="feature reveal"><div class="ico">⇪</div><h3>macOS and Windows</h3><p>A native Electron app for Apple Silicon and Intel Macs, and a preview build for Windows 10 and 11.</p></div>
       </div>
     </section>
 
