@@ -20,12 +20,13 @@ export async function getVmSnapshot(target: VmTarget, repos: readonly string[]):
   const started = Date.now();
   const result = await runSsh(target, snapshotScript(repos), { timeout: 45000 });
   if (result.code !== 0) {
-    return { reachable: false, error: describeSshFailure(result), latencyMs: null, health: null, worktrees: [] };
+    return { reachable: false, error: describeSshFailure(result), approvalUrl: result.approvalUrl ?? null, latencyMs: null, health: null, worktrees: [] };
   }
   const { health, worktrees } = parseSnapshot(result.stdout);
   return {
     reachable: true,
     error: null,
+    approvalUrl: null,
     latencyMs: Date.now() - started,
     health: health ? { ...health, loadSeries: remember(health.cpu, Date.now()) } : null,
     worktrees,

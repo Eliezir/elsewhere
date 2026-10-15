@@ -2,21 +2,36 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({ shell: { openPath: vi.fn(), openExternal: vi.fn() } }));
 
-const { extractLoginUrl, interpretUp, isAllowedLoginUrl } = await import("./tailscaleControl");
+const { extractSuggestedFlags, interpretUp, needsExplicitFlags } = await import("./tailscaleControl");
 
-describe("login URLs", () => {
-  it("finds the sign-in link in the CLI output", () => {
-    const output = "\nTo authenticate, visit:\n\n\thttps://login.tailscale.com/a/abc123\n\n";
-    expect(extractLoginUrl(output)).toBe("https://login.tailscale.com/a/abc123");
+describe("suggested flags", () => {
+  const message = [
+    "Error: changing settings via 'tailscale up' requires mentioning all",
+    "non-default flags. To proceed, either re-run your command with --reset or",
+    "use the command below to explicitly mention the current value of",
+    "all non-default settings:",
+    "",
+    "\ttailscale up --ssh=false --accept-routes --hostname=my-mac",
+    "",
+  ].join("\n");
+
+  it("recognises the refusal and reads the command Tailscale suggests", () => {
+    expect(needsExplicitFlags(message)).toBe(true);
+    expect(extractSuggestedFlags(message)).toEqual(["--ssh=false", "--accept-routes", "--hostname=my-mac"]);
   });
 
-  it("only ever opens Tailscale's own hosts over https", () => {
-    expect(isAllowedLoginUrl("https://login.tailscale.com/a/x")).toBe(true);
-    expect(isAllowedLoginUrl("https://tailscale.com/start")).toBe(true);
-    expect(isAllowedLoginUrl("http://login.tailscale.com/a/x")).toBe(false);
-    expect(isAllowedLoginUrl("https://tailscale.com.evil.example/a")).toBe(false);
-    expect(isAllowedLoginUrl("https://evil.example/login.tailscale.com")).toBe(false);
-    expect(extractLoginUrl("visit https://evil.example/steal")).toBeNull();
+  it("refuses flags that would reset or re-authenticate", () => {
+    expect(extractSuggestedFlags("\ttailscale up --reset --ssh")).toBeNull();
+    expect(extractSuggestedFlags("\ttailscale up --authkey=tskey-abc")).toBeNull();
+  });
+
+  it("refuses anything that isn't a plain flag", () => {
+    expect(extractSuggestedFlags("\ttailscale up --hostname=a;rm -rf /")).toBeNull();
+    expect(extractSuggestedFlags("\ttailscale up $(whoami)")).toBeNull();
+  });
+
+  it("returns null when no command is present", () => {
+    expect(extractSuggestedFlags("Error: something else")).toBeNull();
   });
 });
 

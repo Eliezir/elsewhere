@@ -1,4 +1,5 @@
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
+import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useVmSnapshot } from "@/data/hooks";
 import { useTailscaleControl } from "@/lib/tailscale";
@@ -63,6 +64,7 @@ export function SettingsView() {
               </Button>
               <Button onClick={() => void window.api.openTailscale()}>Open Tailscale app</Button>
             </div>
+            {snapshot?.approvalUrl && <ApproveSshButton url={snapshot.approvalUrl} />}
           </div>
         </Tile>
         <Tile className="col-span-6" index={1} title="Tailscale" action={<Pill tone={tailscale.connected ? "ok" : "warn"}>{tailscale.needsLogin ? "sign-in needed" : tailscale.connected ? "connected" : "disconnected"}</Pill>}>

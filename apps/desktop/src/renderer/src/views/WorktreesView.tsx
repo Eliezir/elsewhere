@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { MoveRequestSchema, planMove, type MoveDirection, type MoveProgress, type MoveRequest, type MoveResult } from "@vmc/shared";
 import { Button, FIELD, Segmented, ToggleRow } from "@/components/controls";
-import { OpenTailscaleButton } from "@/components/OpenTailscaleButton";
+import { ApproveSshButton } from "@/components/ApproveSshButton";
+import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWorktrees } from "@/data/hooks";
@@ -236,9 +237,9 @@ export function WorktreesView() {
       >
         <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name, branch or repository" aria-label="Search worktrees" className={`${FIELD} mb-3 !py-2 placeholder:text-[var(--text-muted)]`} />
         {vmProblem && (
-          <div className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--inset)] px-3 py-2">
+          <div className="mb-3 flex items-start justify-between gap-3 rounded-xl bg-[var(--inset)] px-3 py-2">
             <span className="text-xs text-[var(--warn)]">{`VM: ${vmProblem}`}</span>
-            <OpenTailscaleButton className="shrink-0" />
+            {vm.data?.approvalUrl ? <ApproveSshButton url={vm.data.approvalUrl} className="max-w-[55%] shrink-0 justify-end" /> : <ConnectTailscaleButton className="max-w-[55%] shrink-0 justify-end" />}
           </div>
         )}
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">

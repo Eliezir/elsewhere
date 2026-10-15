@@ -16,6 +16,7 @@ const api: Api = {
     };
   },
   openTailscale: () => ipcRenderer.invoke(IPC.openTailscale),
+  openApproval: (url) => ipcRenderer.invoke(IPC.openApproval, url),
   connectTailscale: () => ipcRenderer.invoke(IPC.tailscaleConnect),
   disconnectTailscale: () => ipcRenderer.invoke(IPC.tailscaleDisconnect),
   openVmTerminal: (input) => ipcRenderer.invoke(IPC.openTerminal, input),

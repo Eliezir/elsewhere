@@ -16,6 +16,7 @@ export const IPC = {
   moveProgress: "move:progress",
   openTerminal: "vm:open-terminal",
   openTailscale: "app:open-tailscale",
+  openApproval: "app:open-approval",
   tailscaleConnect: "tailscale:connect",
   tailscaleDisconnect: "tailscale:disconnect",
 } as const;
@@ -30,6 +31,7 @@ export interface Api {
   onMoveProgress(listener: (progress: MoveProgress) => void): () => void;
   openVmTerminal(input: TerminalInput): Promise<string | null>;
   openTailscale(): Promise<string | null>;
+  openApproval(url: string): Promise<boolean>;
   connectTailscale(): Promise<TailscaleControlResult>;
   disconnectTailscale(): Promise<TailscaleControlResult>;
   openMainWindow(section?: string): Promise<void>;

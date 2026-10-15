@@ -58,6 +58,7 @@ export const VmHealthSchema = z.object({
 export const VmSnapshotSchema = z.object({
   reachable: z.boolean(),
   error: z.string().nullable(),
+  approvalUrl: z.string().nullable(),
   latencyMs: z.number().nullable(),
   health: VmHealthSchema.nullable(),
   worktrees: z.array(WorktreeSchema),

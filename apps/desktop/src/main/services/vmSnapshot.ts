@@ -29,7 +29,7 @@ echo "@@CORES $(nproc 2>/dev/null)"
 free -m 2>/dev/null | awk '/^Mem:/{print "@@MEM",$2,$3}'
 df -k / 2>/dev/null | awk 'NR==2{print "@@DISK",$2,$3}'
 echo "@@UPTIME $(cut -d. -f1 /proc/uptime 2>/dev/null)"
-echo "@@CLAUDE $(command -v claude >/dev/null 2>&1 || [ -x "$H/.local/bin/claude" ] && echo yes || echo no)"
+echo "@@CLAUDE $( (command -v claude >/dev/null 2>&1 || [ -x "$H/.local/bin/claude" ] || ls "$H"/.nvm/versions/node/*/bin/claude >/dev/null 2>&1) && echo yes || echo no)"
 echo "@@GIT $(git --version 2>/dev/null | cut -d' ' -f3)"
 for r in ${list} "$H"/Developer/.vmc/*.git; do
   case "$r" in "~/"*) r="$H/\${r#\\~/}";; esac
