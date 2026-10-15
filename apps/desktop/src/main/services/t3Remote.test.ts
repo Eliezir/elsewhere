@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { runLocal } from "./ssh";
 
-vi.mock("electron", () => ({ clipboard: {}, shell: {}, app: {} }));
+vi.mock("electron", () => ({ clipboard: {}, shell: {}, app: {}, nativeImage: { createThumbnailFromPath: async () => { throw new Error("none") } } }));
 
 const { getVmT3, openVmInT3, parseT3Remote, t3QueryScript } = await import("./t3Remote");
 

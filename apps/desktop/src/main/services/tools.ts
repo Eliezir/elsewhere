@@ -1,7 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { app } from "electron";
+import { app, nativeImage } from "electron";
 import type { T3Threads, Tool, ToolInfo, ToolsInfo } from "@vmc/shared";
 import { runLocal } from "./ssh";
 
@@ -83,10 +83,28 @@ export async function findApp(tool: Tool): Promise<string | null> {
   return null;
 }
 
+export function pickIconFile(names: readonly string[]): string | null {
+  const icons = names.filter((name) => name.toLowerCase().endsWith(".icns"));
+  for (const preferred of ["icon.icns", "appicon.icns", "app.icns"]) {
+    const match = icons.find((name) => name.toLowerCase() === preferred);
+    if (match) return match;
+  }
+  return [...icons].sort()[0] ?? null;
+}
+
+async function bundleIcon(appPath: string): Promise<string | null> {
+  const resources = join(appPath, "Contents", "Resources");
+  const file = pickIconFile(await readdir(resources).catch(() => [] as string[]));
+  if (file === null) return null;
+  const image = await nativeImage.createThumbnailFromPath(join(resources, file), { width: 64, height: 64 }).catch(() => null);
+  if (image === null || image.isEmpty()) return null;
+  return image.toDataURL();
+}
+
 async function toolInfo(tool: Tool): Promise<ToolInfo> {
   const path = await findApp(tool);
   if (path === null) return { installed: false, name: null, icon: null };
-  const icon = await app.getFileIcon(path, { size: "normal" }).then((image) => image.toDataURL(), () => null);
+  const icon = (await bundleIcon(path)) ?? (await app.getFileIcon(path, { size: "normal" }).then((image) => image.toDataURL(), () => null));
   return { installed: true, name: path.split("/").pop()?.replace(/\.app$/, "") ?? null, icon };
 }
 

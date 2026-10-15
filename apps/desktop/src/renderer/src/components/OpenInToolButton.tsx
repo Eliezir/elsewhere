@@ -38,8 +38,8 @@ export function OpenInToolButton({ tree, origin, tools, threadTitle }: OpenInToo
   };
 
   return (
-    <div className="min-w-0 flex-1">
-      <Button onClick={() => void open()} disabled={busy || !installed} className="flex w-full items-center justify-center gap-2 !py-1.5">
+    <div className="min-w-0">
+      <Button onClick={() => void open()} disabled={busy || !installed} className="flex w-full items-center justify-center gap-2 whitespace-nowrap !py-1.5">
         {info?.icon && <img src={info.icon} alt="" draggable={false} className="size-4 rounded-[4px]" />}
         {installed ? `Open in ${name}` : `${name} isn't installed`}
       </Button>

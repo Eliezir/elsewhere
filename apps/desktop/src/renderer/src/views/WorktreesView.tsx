@@ -330,12 +330,14 @@ export function WorktreesView() {
               {originFor(selected).detail && <span className="text-[var(--text-muted)]">{originFor(selected).detail}</span>}
             </div>
             {selected.location === "mac" && (
-              <div className="mt-3 flex shrink-0 items-start gap-2">
+              <div className="mt-3 shrink-0 space-y-2">
                 <OpenInToolButton tree={selected} origin={originFor(selected)} tools={tools} threadTitle={t3Threads[selected.path]?.title ?? null} />
-                <MacTerminalButton path={selected.path} className="shrink-0" />
-                <Button onClick={() => void window.api.revealInFinder(selected.path)} className="shrink-0 !py-1.5">
-                  Reveal in Finder
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <MacTerminalButton path={selected.path} className="w-full" />
+                  <Button onClick={() => void window.api.revealInFinder(selected.path)} className="w-full !py-1.5">
+                    Reveal in Finder
+                  </Button>
+                </div>
               </div>
             )}
             <div className="mt-4 grid shrink-0 grid-cols-4 gap-2">

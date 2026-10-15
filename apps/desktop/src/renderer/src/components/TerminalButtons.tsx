@@ -15,7 +15,7 @@ export function VmTerminalButton({ path = null, mode = "shell", label = "Open a 
 
   return (
     <span className={`inline-flex flex-col gap-1 ${className}`}>
-      <Button onClick={open} disabled={disabled} className="!py-1.5">
+      <Button onClick={open} disabled={disabled} className="whitespace-nowrap !py-1.5">
         {label}
       </Button>
       {problem && <span className="text-[11px] text-[var(--warn)]">{problem}</span>}
@@ -35,7 +35,7 @@ export function MacTerminalButton({ path, label = "Open terminal here", classNam
 
   return (
     <span className={`inline-flex flex-col gap-1 ${className}`}>
-      <Button onClick={open} className="!py-1.5">
+      <Button onClick={open} className="whitespace-nowrap !py-1.5">
         {label}
       </Button>
       {problem && <span className="text-[11px] text-[var(--warn)]">{problem}</span>}

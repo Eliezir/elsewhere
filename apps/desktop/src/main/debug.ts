@@ -18,7 +18,7 @@ export function runScreenshotDebug(window: BrowserWindow, outPath: string): void
         .executeJavaScript(`[...document.querySelectorAll('[role=tab]')].find((t) => t.textContent === ${tab})?.click()`)
         .then(() => new Promise((resolve) => setTimeout(resolve, 2500)))
         .then(() => (process.env.VMC_DEBUG_EVAL ? window.webContents.executeJavaScript(process.env.VMC_DEBUG_EVAL) : undefined))
-        .then(() => new Promise((resolve) => setTimeout(resolve, 400)))
+        .then(() => new Promise((resolve) => setTimeout(resolve, Number(process.env.VMC_DEBUG_WAIT ?? 400))))
         .then(() => window.webContents.executeJavaScript("document.querySelector('[role=tabpanel]')?.outerHTML.slice(0, 400) ?? 'no tabpanel'"))
         .then((html) => console.log(`panel: ${html}`))
         .then(() => window.webContents.capturePage())

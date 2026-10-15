@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("electron", () => ({ app: {}, shell: {} }));
+vi.mock("electron", () => ({ app: {}, shell: {}, nativeImage: { createThumbnailFromPath: async () => { throw new Error("none") } } }));
 
-const { openInTool, parseT3Rows, pickThreads } = await import("./tools");
+const { openInTool, parseT3Rows, pickIconFile, pickThreads } = await import("./tools");
 
 const rows = [
   { thread_id: "old", worktree_path: "/w/a", title: "Old", updated_at: "2026-01-01T00:00:00Z" },
@@ -70,5 +70,15 @@ describe("openInTool", () => {
   it("reports a missing app or folder", async () => {
     expect((await openInTool("conductor", "/w/a", deps({ findApp: async () => null }).deps)).error).toContain("isn't installed");
     expect((await openInTool("conductor", "/w/a", deps({ exists: async () => false }).deps)).error).toContain("no longer exists");
+  });
+});
+
+describe("pickIconFile", () => {
+  it("prefers the conventional icon names, then falls back to the first .icns", () => {
+    expect(pickIconFile(["Info.plist", "icon.icns", "other.icns"])).toBe("icon.icns");
+    expect(pickIconFile(["AppIcon.icns", "z.icns"])).toBe("AppIcon.icns");
+    expect(pickIconFile(["b.icns", "a.icns", "readme.txt"])).toBe("a.icns");
+    expect(pickIconFile(["Assets.car", "readme.txt"])).toBeNull();
+    expect(pickIconFile([])).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("electron", () => ({ nativeImage: {} }));
+vi.mock("electron", () => ({ nativeImage: { createThumbnailFromPath: async () => { throw new Error("none") } } }));
 
 const { candidatePaths, findProjectIcon, isFlat } = await import("./projectIcon");
 
