@@ -1,7 +1,5 @@
 import type { IdleHealth, PacerStatus, QueueTask } from "./types";
 
-export const IS_SAMPLE_DATA = true;
-
 export const REPOS = ["adt-studio", "vm-companion", "claude-companion"] as const;
 
 export const SAMPLE_IDLE: IdleHealth = {

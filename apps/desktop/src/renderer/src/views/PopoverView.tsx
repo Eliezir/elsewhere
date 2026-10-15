@@ -151,7 +151,7 @@ export function PopoverView() {
       </main>
       <footer className="flex gap-2 border-t border-[var(--hairline)] p-3">
         <Button variant="primary" onClick={() => open()} className="flex-1">
-          Open VM Companion
+          Open Elsewhere
         </Button>
         <Button onClick={() => open("queue")}>Add task</Button>
       </footer>

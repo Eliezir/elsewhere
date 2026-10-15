@@ -1,4 +1,4 @@
-# VM Companion (working name): Electron menu-bar app for the remote dev VM
+# Elsewhere: Electron app for working on a remote dev VM
 
 Status: feature list agreed in discussion 2026-10-14; nothing built yet. Start in a FRESH session; read this file plus the memory note `oracle-remote-dev-vm`.
 

@@ -119,7 +119,7 @@ async function request(fetchFn: FetchFn, token: string, withFlag: boolean) {
       Authorization: `Bearer ${token}`,
       "anthropic-beta": "oauth-2025-04-20",
       Accept: "application/json",
-      "User-Agent": "vm-companion",
+      "User-Agent": "elsewhere",
     },
     signal: AbortSignal.timeout(10000),
   });

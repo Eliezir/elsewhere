@@ -1,6 +1,6 @@
-# VM Companion
+# Elsewhere
 
-Menu-bar app that shows the state of the remote dev VM and, later, moves worktrees between machines and schedules work by Claude usage. See `docs/BRIEF.md` for goals, features and phases.
+Work on a remote dev VM as if it were next to you. Elsewhere shows the VM's health, lists your worktrees on the Mac and the VM, moves a project (branch, uncommitted work and its Claude sessions) in either direction, tracks your Claude usage, and drives Tailscale. It runs as a window plus a menu-bar popover. See `docs/BRIEF.md` for goals, features and phases.
 
 ## Layout
 

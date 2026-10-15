@@ -153,7 +153,7 @@ async function moveToMac(request: MoveRequest, remote: Remote, emit: Emit, proje
     return value;
   });
 
-  const [name, email] = await Promise.all([localGit(request.macPath, ["config", "user.name"]).catch(() => "VM Companion"), localGit(request.macPath, ["config", "user.email"]).catch(() => "vm-companion@localhost")]);
+  const [name, email] = await Promise.all([localGit(request.macPath, ["config", "user.name"]).catch(() => "Elsewhere"), localGit(request.macPath, ["config", "user.email"]).catch(() => "elsewhere@localhost")]);
   await step(emit, "commit", () =>
     remoteOk(
       remote,

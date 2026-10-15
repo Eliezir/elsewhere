@@ -8,6 +8,10 @@ import { createMainWindow, createPopover, togglePopover } from "./windows";
 
 const USAGE_POLL_MS = 5 * 60 * 1000;
 
+const userDataPath = app.getPath("userData");
+app.setName("Elsewhere");
+app.setPath("userData", userDataPath);
+
 nativeTheme.themeSource = "dark";
 
 const screenshotPath = process.env.VMC_DEBUG_SCREENSHOT;
@@ -46,7 +50,7 @@ void app.whenReady().then(() => {
   }
   const popover = createPopover();
   const tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), "resources/trayTemplate.png")));
-  tray.setToolTip("VM Companion");
+  tray.setToolTip("Elsewhere");
   tray.on("click", () => togglePopover(popover, tray.getBounds()));
   const debuggingPopover = screenshotPath !== undefined && debugView === "popover";
   if (debuggingPopover) popover.removeAllListeners("blur");
