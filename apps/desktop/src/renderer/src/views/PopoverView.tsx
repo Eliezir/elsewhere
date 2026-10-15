@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { Button } from "@/components/controls";
+import { OpenTailscaleButton } from "@/components/OpenTailscaleButton";
 import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
 import type { Health } from "@/lib/status";
@@ -86,6 +87,7 @@ export function PopoverView() {
           </motion.div>
         </div>
         {idle?.atRisk && <Pill tone="warn">idle risk</Pill>}
+        {connection.health !== "ok" && !vm && <OpenTailscaleButton />}
       </header>
       <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2">
         <Card index={0} title="Claude usage" to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>

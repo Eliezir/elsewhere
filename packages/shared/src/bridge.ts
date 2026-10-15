@@ -14,6 +14,7 @@ export const IPC = {
   moveStart: "move:start",
   moveProgress: "move:progress",
   openTerminal: "vm:open-terminal",
+  openTailscale: "app:open-tailscale",
 } as const;
 
 export interface Api {
@@ -25,6 +26,7 @@ export interface Api {
   startMove(request: MoveRequest): Promise<MoveResult>;
   onMoveProgress(listener: (progress: MoveProgress) => void): () => void;
   openVmTerminal(input: TerminalInput): Promise<string | null>;
+  openTailscale(): Promise<string | null>;
   openMainWindow(section?: string): Promise<void>;
   onNavigate(listener: (section: string) => void): () => void;
 }

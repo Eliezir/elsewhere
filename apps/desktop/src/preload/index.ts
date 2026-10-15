@@ -15,6 +15,7 @@ const api: Api = {
       ipcRenderer.removeListener(IPC.moveProgress, handler);
     };
   },
+  openTailscale: () => ipcRenderer.invoke(IPC.openTailscale),
   openVmTerminal: (input) => ipcRenderer.invoke(IPC.openTerminal, input),
   openMainWindow: (section) => ipcRenderer.invoke(IPC.openMainWindow, section),
   onNavigate: (listener) => {

@@ -1,4 +1,5 @@
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
+import { OpenTailscaleButton } from "@/components/OpenTailscaleButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useVmSnapshot } from "@/data/hooks";
 import { useOverviewModel } from "@/views/overview/model";
@@ -55,9 +56,12 @@ export function SettingsView() {
               <StatusRow label="Git on the VM" value={health?.gitVersion ?? "unknown"} />
               <StatusRow label="Claude Code on the VM" value={health ? (health.claudeInstalled ? "installed" : "not found") : "unknown"} tone={health ? (health.claudeInstalled ? "ok" : "warn") : undefined} />
             </div>
-            <Button onClick={() => void vm.refetch()} disabled={testing} className="mt-auto self-start">
-              {testing ? "Testing…" : "Test connection"}
-            </Button>
+            <div className="mt-auto flex items-center gap-2">
+              <Button onClick={() => void vm.refetch()} disabled={testing}>
+                {testing ? "Testing…" : "Test connection"}
+              </Button>
+              <OpenTailscaleButton />
+            </div>
           </div>
         </Tile>
         <Tile className="col-span-6" index={1} title="Repositories">
