@@ -19,8 +19,9 @@
       <nav class="nav-links">
         <a class="hide-sm" href="#features">Features</a>
         <a class="hide-sm" href="#how">How it works</a>
+        <a class="hide-sm" href="#download">Versions</a>
         <a href="https://github.com/Eliezir/elsewhere">GitHub</a>
-        <a class="btn primary small" href="https://github.com/Eliezir/elsewhere/releases/latest">Download</a>
+        <a class="btn primary small" href="#download">Download</a>
       </nav>
     </div>
   </header>
@@ -31,7 +32,7 @@
       <h1>Work <span>somewhere else</span>,<br />stay right here.</h1>
       <p class="lead">A desktop app for running your projects on a remote dev VM. Send a project over with its Claude sessions, forward its ports automatically, and keep an eye on storage and usage.</p>
       <div class="cta">
-        <a class="btn primary" href="https://github.com/Eliezir/elsewhere/releases/latest">Download</a>
+        <a class="btn primary" href="#download">Download</a>
         <a class="btn" href="https://github.com/Eliezir/elsewhere">View on GitHub</a>
       </div>
       <p class="note">Free and open source. macOS (Apple Silicon and Intel) and Windows (preview). Works over Tailscale, no public ports.</p>
@@ -101,12 +102,27 @@
       </div>
     </section>
 
+    <section class="block wrap" id="download">
+      <div class="eyebrow">Download</div>
+      <h2 class="reveal">Get Elsewhere <span id="latest-tag" class="tag"></span></h2>
+      <p class="sub reveal">Free and open source. The builds are not signed yet. On macOS, right-click the app and choose Open the first time. On Windows, choose More info, then Run anyway.</p>
+      <div class="downloads reveal" id="downloads">
+        <a class="dl" data-os="mac" data-kind="arm64" href="https://github.com/Eliezir/elsewhere/releases/latest"><b>macOS</b><span>Apple Silicon · .dmg</span></a>
+        <a class="dl" data-os="mac" data-kind="x64" href="https://github.com/Eliezir/elsewhere/releases/latest"><b>macOS</b><span>Intel · .dmg</span></a>
+        <a class="dl" data-os="win" data-kind="exe" href="https://github.com/Eliezir/elsewhere/releases/latest"><b>Windows</b><span>64-bit installer · .exe (preview)</span></a>
+      </div>
+      <div class="versions reveal">
+        <div class="versions-head"><h3>All versions</h3><a href="https://github.com/Eliezir/elsewhere/releases">View all releases on GitHub</a></div>
+        <ul id="version-list"><li class="muted-row">Loading versions…</li></ul>
+      </div>
+    </section>
+
     <section class="wrap">
       <div class="final reveal">
         <h2>Ready to work elsewhere?</h2>
         <p>The builds are not signed yet. On macOS, right-click the app and choose Open the first time. On Windows, choose More info, then Run anyway.</p>
         <div class="cta" style="margin:0">
-          <a class="btn primary" href="https://github.com/Eliezir/elsewhere/releases/latest">Download</a>
+          <a class="btn primary" href="#download">Download</a>
           <a class="btn" href="https://github.com/Eliezir/elsewhere#readme">Read the docs</a>
         </div>
       </div>
@@ -135,6 +151,70 @@
     } else {
       items.forEach((el) => el.classList.add("in"));
     }
+
+    const REPO = "Eliezir/elsewhere";
+    const isWindows = /Win/i.test(navigator.platform || navigator.userAgent);
+    const downloads = document.getElementById("downloads");
+    const preferred = isWindows ? "win" : "mac";
+    downloads.querySelectorAll(".dl").forEach((el) => {
+      if (el.dataset.os === preferred) el.classList.add("suggested");
+    });
+
+    const assetFor = (release, kind) => release.assets.find((a) => {
+      const n = a.name.toLowerCase();
+      if (kind === "arm64") return n.endsWith("arm64.dmg");
+      if (kind === "x64") return n.endsWith("x64.dmg");
+      return n.endsWith(".exe");
+    });
+    const size = (bytes) => Math.round(bytes / 1048576) + " MB";
+    const day = (iso) => new Date(iso).toLocaleDateString("en", { year: "numeric", month: "short", day: "numeric" });
+
+    fetch("https://api.github.com/repos/" + REPO + "/releases?per_page=20")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((all) => {
+        const releases = all.filter((r) => !r.draft && !r.prerelease);
+        const latest = releases[0];
+        if (!latest) return;
+        document.getElementById("latest-tag").textContent = latest.tag_name;
+        downloads.querySelectorAll(".dl").forEach((el) => {
+          const asset = assetFor(latest, el.dataset.kind);
+          if (asset) {
+            el.href = asset.browser_download_url;
+            el.querySelector("span").textContent += " · " + size(asset.size);
+          }
+        });
+        const list = document.getElementById("version-list");
+        list.replaceChildren(...releases.map((release, index) => {
+          const li = document.createElement("li");
+          const head = document.createElement("a");
+          head.href = release.html_url;
+          head.className = "ver";
+          head.textContent = release.tag_name;
+          if (index === 0) {
+            const badge = document.createElement("em");
+            badge.textContent = "Latest";
+            head.append(badge);
+          }
+          const date = document.createElement("span");
+          date.className = "when";
+          date.textContent = day(release.published_at);
+          const files = document.createElement("span");
+          files.className = "files";
+          [["arm64", "macOS (Apple Silicon)"], ["x64", "macOS (Intel)"], ["exe", "Windows"]].forEach(([kind, label]) => {
+            const asset = assetFor(release, kind);
+            if (!asset) return;
+            const a = document.createElement("a");
+            a.href = asset.browser_download_url;
+            a.textContent = label;
+            files.append(a);
+          });
+          li.append(head, date, files);
+          return li;
+        }));
+      })
+      .catch(() => {
+        document.getElementById("version-list").innerHTML = '<li class="muted-row">Could not load the list. See <a href="https://github.com/' + REPO + '/releases">all releases on GitHub</a>.</li>';
+      });
   </script>
 </body>
 </html>
