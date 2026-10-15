@@ -20,6 +20,11 @@ describe("suggested flags", () => {
     expect(extractSuggestedFlags(message)).toEqual(["--ssh=false", "--accept-routes", "--hostname=my-mac"]);
   });
 
+  it("drops the timeout flag the app adds itself, so it is never passed twice", () => {
+    const output = "\n\ttailscale up --timeout=20s --accept-routes\n";
+    expect(extractSuggestedFlags(output)).toEqual(["--accept-routes"]);
+  });
+
   it("refuses flags that would reset or re-authenticate", () => {
     expect(extractSuggestedFlags("\ttailscale up --reset --ssh")).toBeNull();
     expect(extractSuggestedFlags("\ttailscale up --authkey=tskey-abc")).toBeNull();

@@ -17,7 +17,10 @@ export function extractSuggestedFlags(output: string): string[] | null {
     .map((entry) => entry.trim())
     .find((entry) => /^tailscale up\s/.test(entry));
   if (!line) return null;
-  const parts = line.split(/\s+/).slice(2);
+  const parts = line
+    .split(/\s+/)
+    .slice(2)
+    .filter((part) => !part.startsWith("--timeout"));
   const safe = parts.length > 0 && parts.every((part) => FLAG_SHAPE.test(part) && !FORBIDDEN_FLAGS.has(part.split("=")[0] ?? ""));
   return safe ? parts : null;
 }
