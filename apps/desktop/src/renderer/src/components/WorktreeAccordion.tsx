@@ -1,4 +1,5 @@
 import { Accordion } from "@base-ui/react/accordion";
+import { ConnectTailscaleButton } from "./ConnectTailscaleButton";
 import { Tile } from "./Tile";
 import type { OverviewModel } from "@/views/overview/model";
 
@@ -49,6 +50,7 @@ export function WorktreeAccordion({ model }: { model: OverviewModel }) {
             <Accordion.Panel className="h-[var(--accordion-panel-height)] overflow-hidden transition-[height] duration-300 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0">
               <div className="space-y-1 px-3 pb-3 text-xs">
                 {row.lines.length === 0 && <p className="text-[var(--text-muted)]">Nothing here yet.</p>}
+                {row.value === "connection" && <ConnectTailscaleButton className="pt-2" />}
                 {row.lines.map((line) => (
                   <div key={line.name} className="flex justify-between gap-3">
                     <span>{line.name}</span>
