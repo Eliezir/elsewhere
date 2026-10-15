@@ -1,6 +1,7 @@
+import { stat } from "node:fs/promises";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, IPC, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, IPC, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -11,6 +12,7 @@ import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
 import { deleteWorktree, prune } from "./services/cleanup";
 import { clearCustomIcon, getProjectIcons, saveCustomIcon } from "./services/projectIcon";
+import { getT3Threads, getToolsInfo, openInTool } from "./services/tools";
 import { sizeService } from "./services/sizes";
 import { listMacWorktrees } from "./services/worktrees";
 
@@ -51,6 +53,18 @@ export function registerIpc(actions: IpcActions): void {
     return getVmSnapshot(parsed.target, parsed.repos);
   });
   ipcMain.handle(IPC.projectIcons, (_event, input: unknown) => getProjectIcons(IconInputSchema.parse(input).projects));
+  ipcMain.handle(IPC.toolsInfo, () => getToolsInfo());
+  ipcMain.handle(IPC.t3Threads, (_event, input: unknown) => getT3Threads(PathsInputSchema.parse(input).paths));
+  ipcMain.handle(IPC.toolOpen, (_event, input: unknown) => {
+    const parsed = ToolOpenInputSchema.parse(input);
+    return openInTool(parsed.tool, parsed.path);
+  });
+  ipcMain.handle(IPC.reveal, async (_event, path: unknown) => {
+    if (typeof path !== "string" || !path.startsWith("/")) return false;
+    const exists = await stat(path).then(() => true, () => false);
+    if (exists) shell.showItemInFolder(path);
+    return exists;
+  });
   ipcMain.handle(IPC.sizes, (_event, input: unknown) => sizeService.get(SizeInputSchema.parse(input)));
   ipcMain.handle(IPC.prunePreview, (_event, input: unknown) => prune(PruneInputSchema.parse(input), true));
   ipcMain.handle(IPC.pruneRun, (_event, input: unknown) => prune(PruneInputSchema.parse(input), false));

@@ -170,3 +170,27 @@ export type PruneEntry = z.infer<typeof PruneEntrySchema>;
 export type PruneResult = z.infer<typeof PruneResultSchema>;
 export type DeleteRequest = z.infer<typeof DeleteRequestSchema>;
 export type DeleteResult = z.infer<typeof DeleteResultSchema>;
+
+export const ToolSchema = z.enum(["conductor", "t3code"]);
+
+export const ToolOpenInputSchema = z.object({
+  tool: ToolSchema,
+  path: z.string().min(2).max(1024).startsWith("/"),
+});
+
+export const ToolOpenResultSchema = z.object({
+  ok: z.boolean(),
+  opened: z.enum(["thread", "app"]).nullable(),
+  error: z.string().nullable(),
+});
+
+export const PathsInputSchema = z.object({
+  paths: z.array(z.string().min(2).max(1024).startsWith("/")).max(400),
+});
+
+export type Tool = z.infer<typeof ToolSchema>;
+export type ToolInfo = { installed: boolean; name: string | null; icon: string | null };
+export type ToolsInfo = Record<Tool, ToolInfo>;
+export type T3Threads = Record<string, { url: string; title: string }>;
+export type ToolOpenInput = z.infer<typeof ToolOpenInputSchema>;
+export type ToolOpenResult = z.infer<typeof ToolOpenResultSchema>;

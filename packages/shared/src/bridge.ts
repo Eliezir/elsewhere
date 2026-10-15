@@ -2,7 +2,7 @@ import type { TailscaleStatus } from "./status";
 import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult } from "./move";
 import type { UsageSnapshot } from "./usage";
-import type { DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
+import type { T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
   tailscaleStatus: "tailscale:status",
@@ -19,6 +19,10 @@ export const IPC = {
   openApproval: "app:open-approval",
   projectIcons: "icons:get",
   sizes: "worktrees:sizes",
+  toolsInfo: "tools:info",
+  t3Threads: "tools:t3-threads",
+  toolOpen: "tools:open",
+  reveal: "tools:reveal",
   prunePreview: "worktrees:prune-preview",
   pruneRun: "worktrees:prune-run",
   deleteWorktree: "worktrees:delete",
@@ -40,6 +44,10 @@ export interface Api {
   openTailscale(): Promise<string | null>;
   openApproval(url: string): Promise<boolean>;
   getProjectIcons(input: IconInput): Promise<ProjectIcons>;
+  getTools(): Promise<ToolsInfo>;
+  getT3Threads(paths: string[]): Promise<T3Threads>;
+  openInTool(input: ToolOpenInput): Promise<ToolOpenResult>;
+  revealInFinder(path: string): Promise<boolean>;
   getWorktreeSizes(input: SizeInput): Promise<SizeResult>;
   previewPrune(input: PruneInput): Promise<PruneResult>;
   runPrune(input: PruneInput): Promise<PruneResult>;

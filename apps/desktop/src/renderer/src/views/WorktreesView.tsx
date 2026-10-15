@@ -1,6 +1,7 @@
 import { Input } from "@base-ui/react/input";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+import type { ToolsInfo } from "@vmc/shared";
 import { MoveRequestSchema, planMove, type MoveDirection, type MoveProgress, type MoveRequest, type MoveResult } from "@vmc/shared";
 import { Button, FIELD, Segmented, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
@@ -9,11 +10,14 @@ import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { OpenInToolButton } from "@/components/OpenInToolButton";
+import { OriginBadge } from "@/components/OriginBadge";
 import { DeleteWorktreePanel } from "@/components/DeleteWorktreePanel";
 import { ProjectIconEditor } from "@/components/ProjectIconEditor";
-import { useProjectIcons, useWorktreeSizes, useWorktrees } from "@/data/hooks";
+import { useProjectIcons, useT3Threads, useTools, useWorktreeSizes, useWorktrees } from "@/data/hooks";
 import type { Location, VmSnapshot, Worktree } from "@/data/types";
 import { formatBytes } from "@/lib/format";
+import { originOf, type Origin } from "@/lib/origin";
 import { useSettings } from "@/lib/settings";
 import { staleInfo, type StaleInfo } from "@/lib/stale";
 import { timeAgo } from "@/lib/time";
@@ -38,7 +42,7 @@ function Chip({ children, tone }: { children: string; tone?: "warn" | "ok" }) {
   return <span className={`rounded-full bg-[var(--inset)] px-2 py-0.5 text-[11px] ${color}`}>{children}</span>;
 }
 
-function Row({ tree, icon, size, stale, selected, index, hasTwin, onSelect }: { tree: Worktree; icon: string | null | undefined; size: number | null | undefined; stale: StaleInfo; selected: boolean; index: number; hasTwin: boolean; onSelect: () => void }) {
+function Row({ tree, icon, size, stale, origin, tools, selected, index, hasTwin, onSelect }: { tree: Worktree; icon: string | null | undefined; size: number | null | undefined; stale: StaleInfo; origin: Origin; tools: ToolsInfo | undefined; selected: boolean; index: number; hasTwin: boolean; onSelect: () => void }) {
   return (
     <motion.button
       type="button"
@@ -54,6 +58,7 @@ function Row({ tree, icon, size, stale, selected, index, hasTwin, onSelect }: { 
           <span className="truncate text-[15px]">{tree.name}</span>
           <Pill tone={tree.location === "vm" ? "ok" : "neutral"}>{PLACE[tree.location]}</Pill>
           {hasTwin && <Pill>{tree.location === "mac" ? "also on VM" : "also on Mac"}</Pill>}
+          {(origin.kind === "conductor" || origin.kind === "t3code" || origin.kind === "claude") && <OriginBadge origin={origin} tools={tools} />}
         </div>
         <div className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">{`${tree.repo} · ${tree.branch ?? "detached HEAD"}`}</div>
       </div>
@@ -217,6 +222,9 @@ export function WorktreesView() {
   const queryClient = useQueryClient();
   const { worktrees, mac, vm } = useWorktrees();
   const icons = useProjectIcons().data ?? {};
+  const tools = useTools().data;
+  const t3Threads = useT3Threads(worktrees.filter((tree) => tree.location === "mac").map((tree) => tree.path)).data ?? {};
+  const originFor = (tree: Worktree): Origin => originOf(tree, t3Threads[tree.path] !== undefined);
   const [settings] = useSettings();
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const sizes = useWorktreeSizes(worktrees, vm.data?.reachable ?? false).data?.sizes ?? {};
@@ -267,7 +275,7 @@ export function WorktreesView() {
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {mac.isPending && <p className="text-xs text-[var(--text-muted)]">Reading your worktrees…</p>}
           {visible.map((tree, i) => (
-            <Row key={tree.id} tree={tree} icon={icons[tree.repo]?.icon} size={sizes[tree.id]} stale={staleInfo(tree, settings.staleDays)} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
+            <Row key={tree.id} tree={tree} icon={icons[tree.repo]?.icon} size={sizes[tree.id]} stale={staleInfo(tree, settings.staleDays)} origin={originFor(tree)} tools={tools} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
           ))}
           {!mac.isPending && visible.length === 0 && <p className="text-xs text-[var(--text-muted)]">{needle === "" ? "No worktrees found. Add repositories in Settings." : "Nothing matches that search."}</p>}
         </div>
@@ -282,6 +290,19 @@ export function WorktreesView() {
             <div className="mt-1 shrink-0 truncate text-xs text-[var(--text-secondary)]" title={selected.path}>
               {selected.path}
             </div>
+            <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
+              <span>From</span>
+              <OriginBadge origin={originFor(selected)} tools={tools} size="md" />
+              {originFor(selected).detail && <span className="text-[var(--text-muted)]">{originFor(selected).detail}</span>}
+            </div>
+            {selected.location === "mac" && (
+              <div className="mt-3 flex shrink-0 items-start gap-2">
+                <OpenInToolButton tree={selected} origin={originFor(selected)} tools={tools} threadTitle={t3Threads[selected.path]?.title ?? null} />
+                <Button onClick={() => void window.api.revealInFinder(selected.path)} className="shrink-0 !py-1.5">
+                  Reveal in Finder
+                </Button>
+              </div>
+            )}
             <div className="mt-4 grid shrink-0 grid-cols-4 gap-2">
               <Stat label="Modified" value={String(selected.modified)} />
               <Stat label="Ahead · behind" value={`${selected.ahead} · ${selected.behind}`} />

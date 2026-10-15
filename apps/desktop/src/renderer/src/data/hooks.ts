@@ -81,6 +81,21 @@ export function useWorktreeSizes(worktrees: readonly Worktree[], vmReachable: bo
   });
 }
 
+export function useTools() {
+  return useQuery({ queryKey: ["tools"], queryFn: () => window.api.getTools(), staleTime: 10 * 60 * 1000, retry: false });
+}
+
+export function useT3Threads(paths: readonly string[]) {
+  return useQuery({
+    queryKey: ["t3-threads", paths],
+    queryFn: () => window.api.getT3Threads([...paths]),
+    enabled: paths.length > 0,
+    staleTime: 20000,
+    refetchInterval: 60000,
+    retry: false,
+  });
+}
+
 export function useWorktrees() {
   const mac = useMacWorktrees();
   const vm = useVmSnapshot();
