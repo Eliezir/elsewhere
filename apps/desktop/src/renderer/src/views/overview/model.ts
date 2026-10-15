@@ -14,6 +14,7 @@ export interface ConnectionModel {
 
 export interface WorktreeModel {
   name: string;
+  repo: string;
   detail: string;
   location: Location;
 }
@@ -59,6 +60,7 @@ export function useOverviewModel(): OverviewModel {
     idle: vm?.reachable ? (idle ?? null) : null,
     worktrees: trees.map((tree) => ({
         name: tree.name,
+        repo: tree.repo,
         detail: `${tree.branch ?? "detached"} · ${tree.modified > 0 ? `${tree.modified} modified` : "clean"}`,
         location: tree.location,
       })),

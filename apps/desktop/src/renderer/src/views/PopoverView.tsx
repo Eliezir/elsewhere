@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { Button } from "@/components/controls";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { useProjectIcons } from "@/data/hooks";
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
@@ -62,6 +64,7 @@ function Stat({ label, value, unit, percent, color }: { label: string; value: st
 
 export function PopoverView() {
   const model = useOverviewModel();
+  const icons = useProjectIcons().data ?? {};
   const { connection, usage, vm, idle, worktrees, queue } = model;
   const running = queue.find((job) => job.state === "running");
   const waiting = queue.filter((job) => job.state === "waiting").length;
@@ -132,7 +135,10 @@ export function PopoverView() {
           <div className="space-y-1.5">
             {worktrees.slice(0, 3).map((tree) => (
               <div key={`${tree.location}-${tree.name}`} className="flex items-center justify-between gap-3">
-                <span className="truncate">{tree.name}</span>
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <ProjectIcon repo={tree.repo} icon={icons[tree.repo]} size="sm" />
+                  <span className="truncate">{tree.name}</span>
+                </span>
                 <span className="flex shrink-0 items-center gap-2">
                   <span className="text-xs text-[var(--text-secondary)]">{tree.detail.split("·")[1]?.trim()}</span>
                   <Pill tone={tree.location === "vm" ? "ok" : "neutral"}>{tree.location === "vm" ? "VM" : "Mac"}</Pill>

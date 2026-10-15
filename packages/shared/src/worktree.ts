@@ -30,6 +30,16 @@ export const WorktreeListSchema = z.object({
   error: z.string().nullable(),
 });
 
+export const IconProjectSchema = z.object({
+  repo: z.string().min(1).max(128),
+  path: z.string().min(2).max(1024).startsWith("/"),
+});
+
+export const IconInputSchema = z.object({
+  projects: z.array(IconProjectSchema).max(100),
+});
+
+export type IconInput = z.infer<typeof IconInputSchema>;
 export type Location = z.infer<typeof LocationSchema>;
 export type ClaudeSession = z.infer<typeof ClaudeSessionSchema>;
 export type Worktree = z.infer<typeof WorktreeSchema>;

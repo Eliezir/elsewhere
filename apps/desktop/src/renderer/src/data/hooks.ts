@@ -47,6 +47,24 @@ export function useVmSnapshot() {
   });
 }
 
+export function useProjectIcons() {
+  const mac = useMacWorktrees();
+  const seen = new Set<string>();
+  const projects = (mac.data ?? []).flatMap((tree) => {
+    if (seen.has(tree.repo)) return [];
+    seen.add(tree.repo);
+    return [{ repo: tree.repo, path: tree.path }];
+  });
+  const key = projects.map((project) => `${project.repo}:${project.path}`).join("|");
+  return useQuery({
+    queryKey: ["project-icons", key],
+    queryFn: () => window.api.getProjectIcons({ projects }),
+    enabled: projects.length > 0,
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  });
+}
+
 export function useWorktrees() {
   const mac = useMacWorktrees();
   const vm = useVmSnapshot();

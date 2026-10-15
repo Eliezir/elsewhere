@@ -16,6 +16,7 @@ const api: Api = {
     };
   },
   openTailscale: () => ipcRenderer.invoke(IPC.openTailscale),
+  getProjectIcons: (input) => ipcRenderer.invoke(IPC.projectIcons, input),
   openApproval: (url) => ipcRenderer.invoke(IPC.openApproval, url),
   connectTailscale: () => ipcRenderer.invoke(IPC.tailscaleConnect),
   disconnectTailscale: () => ipcRenderer.invoke(IPC.tailscaleDisconnect),

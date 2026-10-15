@@ -7,7 +7,8 @@ import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useQueryClient } from "@tanstack/react-query";
-import { useWorktrees } from "@/data/hooks";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { useProjectIcons, useWorktrees } from "@/data/hooks";
 import type { Location, VmSnapshot, Worktree } from "@/data/types";
 import { useSettings } from "@/lib/settings";
 import { timeAgo } from "@/lib/time";
@@ -32,7 +33,7 @@ function Chip({ children, tone }: { children: string; tone?: "warn" | "ok" }) {
   return <span className={`rounded-full bg-[var(--inset)] px-2 py-0.5 text-[11px] ${color}`}>{children}</span>;
 }
 
-function Row({ tree, selected, index, hasTwin, onSelect }: { tree: Worktree; selected: boolean; index: number; hasTwin: boolean; onSelect: () => void }) {
+function Row({ tree, icon, selected, index, hasTwin, onSelect }: { tree: Worktree; icon: string | null | undefined; selected: boolean; index: number; hasTwin: boolean; onSelect: () => void }) {
   return (
     <motion.button
       type="button"
@@ -42,7 +43,8 @@ function Row({ tree, selected, index, hasTwin, onSelect }: { tree: Worktree; sel
       onClick={onSelect}
       className={`no-drag flex w-full shrink-0 cursor-default items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-left outline-none transition-colors duration-200 ${selected ? "border-[var(--accent)] bg-[var(--accent)]/15" : "border-[var(--hairline)] bg-[var(--inset)] hover:bg-white/5"}`}
     >
-      <div className="min-w-0">
+      <ProjectIcon repo={tree.repo} icon={icon} />
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate text-[15px]">{tree.name}</span>
           <Pill tone={tree.location === "vm" ? "ok" : "neutral"}>{PLACE[tree.location]}</Pill>
@@ -203,6 +205,7 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
 export function WorktreesView() {
   const queryClient = useQueryClient();
   const { worktrees, mac, vm } = useWorktrees();
+  const icons = useProjectIcons().data ?? {};
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -245,7 +248,7 @@ export function WorktreesView() {
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {mac.isPending && <p className="text-xs text-[var(--text-muted)]">Reading your worktrees…</p>}
           {visible.map((tree, i) => (
-            <Row key={tree.id} tree={tree} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
+            <Row key={tree.id} tree={tree} icon={icons[tree.repo]} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
           ))}
           {!mac.isPending && visible.length === 0 && <p className="text-xs text-[var(--text-muted)]">{needle === "" ? "No worktrees found. Add repositories in Settings." : "Nothing matches that search."}</p>}
         </div>
@@ -253,7 +256,10 @@ export function WorktreesView() {
       <Tile className="col-span-5" tone="light" index={1} title="Selected" action={selected && <Pill>{PLACE[selected.location]}</Pill>}>
         {selected ? (
           <div key={selected.id} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <div className="shrink-0 text-3xl font-medium leading-tight">{selected.name}</div>
+            <div className="flex shrink-0 items-center gap-3">
+              <ProjectIcon repo={selected.repo} icon={icons[selected.repo]} size="lg" />
+              <div className="min-w-0 truncate text-3xl font-medium leading-tight">{selected.name}</div>
+            </div>
             <div className="mt-1 shrink-0 truncate text-xs text-[var(--text-secondary)]" title={selected.path}>
               {selected.path}
             </div>

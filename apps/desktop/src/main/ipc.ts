@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { IPC, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type MoveResult } from "@vmc/shared";
+import { IPC, IconInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -9,6 +9,7 @@ import { connectTailscale, disconnectTailscale } from "./services/tailscaleContr
 import { openVmTerminal } from "./services/terminal";
 import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
+import { getProjectIcons } from "./services/projectIcon";
 import { listMacWorktrees } from "./services/worktrees";
 
 export interface IpcActions {
@@ -47,6 +48,7 @@ export function registerIpc(actions: IpcActions): void {
     const parsed = VmInputSchema.parse(input);
     return getVmSnapshot(parsed.target, parsed.repos);
   });
+  ipcMain.handle(IPC.projectIcons, (_event, input: unknown) => getProjectIcons(IconInputSchema.parse(input).projects));
   ipcMain.handle(IPC.openTerminal, (_event, input: unknown) => openVmTerminal(TerminalInputSchema.parse(input)));
   ipcMain.handle(IPC.moveStart, async (_event, input: unknown): Promise<MoveResult> => {
     const request = MoveRequestSchema.parse(input);
