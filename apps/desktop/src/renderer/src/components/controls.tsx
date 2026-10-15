@@ -61,7 +61,7 @@ export function ToggleRow({ label, hint, checked, onChange, disabled }: ToggleRo
         onCheckedChange={onChange}
         disabled={disabled}
         aria-label={label}
-        className="relative h-6 w-[42px] shrink-0 cursor-default rounded-full bg-white/10 shadow-[inset_0_0_0_1px_oklch(1_0_0/0.12)] outline-none transition-[background-color,box-shadow] duration-300 focus-visible:shadow-[0_0_0_3px_oklch(0.62_0.24_285/0.45)] data-[checked]:bg-[var(--accent)] data-[checked]:shadow-[inset_0_0_0_1px_oklch(1_0_0/0.28),inset_0_-6px_10px_oklch(0.4_0.25_285/0.5)] data-[disabled]:opacity-40"
+        className="relative flex h-6 w-[42px] shrink-0 items-center cursor-default rounded-full bg-white/10 shadow-[inset_0_0_0_1px_oklch(1_0_0/0.12)] outline-none transition-[background-color,box-shadow] duration-300 focus-visible:shadow-[0_0_0_3px_oklch(0.62_0.24_285/0.45)] data-[checked]:bg-[var(--accent)] data-[checked]:shadow-[inset_0_0_0_1px_oklch(1_0_0/0.28),inset_0_-6px_10px_oklch(0.4_0.25_285/0.5)] data-[disabled]:opacity-40"
       >
         <Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-white shadow-[0_1px_3px_oklch(0_0_0/0.45)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)] data-[checked]:translate-x-[20px]" />
       </Switch.Root>
