@@ -4,7 +4,11 @@ import { describe, healthOf } from "./status";
 
 const base: TailscaleStatus = {
   state: "connected",
+  backend: "Running",
   selfName: "mac",
+  selfIp: "100.1.1.1",
+  tailnet: "me.example",
+  peers: [],
   vm: { name: "adt-dev", dnsName: "adt-dev.ts.net", ip: "100.2.2.2", online: true },
   checkedAt: 1,
 };
@@ -21,6 +25,10 @@ suite("status helpers", () => {
 
   it("warns when the VM is missing from the tailnet", () => {
     expect(healthOf({ ...base, vm: null })).toBe("warn");
+  });
+
+  it("asks you to sign in when Tailscale needs a login", () => {
+    expect(describe({ ...base, state: "disconnected", backend: "NeedsLogin" })).toBe("Sign in to Tailscale");
   });
 
   it("is unknown before the first result", () => {

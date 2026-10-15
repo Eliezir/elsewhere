@@ -1,4 +1,5 @@
 import type { TailscaleStatus } from "./status";
+import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult } from "./move";
 import type { UsageSnapshot } from "./usage";
 import type { VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
@@ -15,6 +16,8 @@ export const IPC = {
   moveProgress: "move:progress",
   openTerminal: "vm:open-terminal",
   openTailscale: "app:open-tailscale",
+  tailscaleConnect: "tailscale:connect",
+  tailscaleDisconnect: "tailscale:disconnect",
 } as const;
 
 export interface Api {
@@ -27,6 +30,8 @@ export interface Api {
   onMoveProgress(listener: (progress: MoveProgress) => void): () => void;
   openVmTerminal(input: TerminalInput): Promise<string | null>;
   openTailscale(): Promise<string | null>;
+  connectTailscale(): Promise<TailscaleControlResult>;
+  disconnectTailscale(): Promise<TailscaleControlResult>;
   openMainWindow(section?: string): Promise<void>;
   onNavigate(listener: (section: string) => void): () => void;
 }

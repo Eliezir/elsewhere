@@ -17,6 +17,17 @@ describe("parseTailscaleStatus", () => {
     expect(status.vm).toEqual({ name: "adt-dev", dnsName: "adt-dev.tail.ts.net", ip: "100.2.2.2", online: true });
   });
 
+  it("lists devices with the VM first, then online ones", () => {
+    const status = parseTailscaleStatus(sample, "adt-dev", 10);
+    expect(status.peers.map((peer) => peer.name)).toEqual(["adt-dev", "phone"]);
+    expect(status.peers[0]?.isVm).toBe(true);
+    expect(status.selfIp).toBe("100.1.1.1");
+  });
+
+  it("keeps the raw backend state so the UI can tell sign-in from stopped", () => {
+    expect(parseTailscaleStatus({ ...sample, BackendState: "Stopped" }, "adt-dev", 10).backend).toBe("Stopped");
+  });
+
   it("reports disconnected when the backend is not running", () => {
     const status = parseTailscaleStatus({ ...sample, BackendState: "NeedsLogin" }, "adt-dev", 10);
     expect(status.state).toBe("disconnected");

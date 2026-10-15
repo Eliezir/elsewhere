@@ -11,7 +11,9 @@ export function healthOf(status: TailscaleStatus | undefined): Health {
 
 export function describe(status: TailscaleStatus | undefined): string {
   if (status === undefined) return "Checking…";
-  if (status.state === "unknown") return "Tailscale isn't available";
+  if (status.backend === "NotInstalled") return "Tailscale isn't installed";
+  if (status.state === "unknown") return "Tailscale isn't running";
+  if (status.backend === "NeedsLogin") return "Sign in to Tailscale";
   if (status.state === "disconnected") return "Tailscale is disconnected";
   if (status.vm === null) return "VM not found on your tailnet";
   return status.vm.online ? `Tailscale connected · ${status.vm.ip ?? "no IP"}` : "VM is offline";

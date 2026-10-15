@@ -1,22 +1,17 @@
-import { useState } from "react";
+import { useTailscaleControl } from "@/lib/tailscale";
 import { Button } from "./controls";
 
 export function OpenTailscaleButton({ className = "" }: { className?: string }) {
-  const [problem, setProblem] = useState<string | null>(null);
+  const { connected, needsLogin, busy, message, connect } = useTailscaleControl();
+  if (connected) return null;
 
-  const open = () => {
-    setProblem(null);
-    void window.api.openTailscale().then((error) => {
-      if (error) setProblem("Tailscale isn't installed in Applications.");
-    });
-  };
-
+  const label = busy ? "Connecting…" : needsLogin ? "Sign in to Tailscale" : "Connect Tailscale";
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <Button onClick={open} className="!px-3 !py-1 text-xs">
-        Open Tailscale
+      <Button onClick={connect} disabled={busy} className="!px-3 !py-1 text-xs">
+        {label}
       </Button>
-      {problem && <span className="text-[11px] text-[var(--warn)]">{problem}</span>}
+      {message && <span className="max-w-[240px] text-[11px] leading-snug text-[var(--warn)]">{message}</span>}
     </span>
   );
 }

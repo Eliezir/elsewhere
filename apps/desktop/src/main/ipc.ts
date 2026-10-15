@@ -4,6 +4,7 @@ import { IPC, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSch
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { getTailscaleStatus } from "./services/tailscale";
+import { connectTailscale, disconnectTailscale } from "./services/tailscaleControl";
 import { openVmTerminal } from "./services/terminal";
 import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
@@ -26,6 +27,8 @@ export function registerIpc(actions: IpcActions): void {
     return readUsage();
   });
   ipcMain.handle(IPC.tailscaleStatus, () => getTailscaleStatus());
+  ipcMain.handle(IPC.tailscaleConnect, () => connectTailscale());
+  ipcMain.handle(IPC.tailscaleDisconnect, () => disconnectTailscale());
   ipcMain.handle(IPC.openTailscale, async () => {
     const error = await shell.openPath(TAILSCALE_APP);
     return error === "" ? null : error;
