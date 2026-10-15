@@ -1,11 +1,13 @@
 import { motion } from "motion/react";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
+import type { VmPort } from "@vmc/shared";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { ClaudeMark } from "@/components/ClaudeMark";
 import { Button } from "@/components/controls";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { useProjectIcons } from "@/data/hooks";
+import { useProjectIcons, useVmPorts, useVmSnapshot } from "@/data/hooks";
+import { groupPorts } from "@/lib/ports";
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
@@ -19,6 +21,24 @@ const DOT: Record<Health, string> = {
   down: "bg-[var(--down)]",
   unknown: "bg-[var(--text-muted)]",
 };
+
+const MAX_GROUPS = 3;
+const MAX_CHIPS = 3;
+
+function PortChip({ port }: { port: VmPort }) {
+  const forwarded = port.state === "active" || port.state === "remapped";
+  return (
+    <button
+      type="button"
+      onClick={() => forwarded && port.localPort !== null && void window.api.openLocalPort(port.localPort)}
+      title={forwarded ? `Open localhost:${port.localPort}` : "Not forwarded"}
+      className={`no-drag flex cursor-default items-center gap-1.5 rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-2 py-0.5 text-[11px] tabular-nums outline-none transition-colors duration-200 ${forwarded ? "hover:bg-white/10" : "text-[var(--text-muted)]"}`}
+    >
+      <span aria-hidden="true" className={`size-1.5 rounded-full ${forwarded ? "bg-[var(--ok)]" : "bg-white/25"}`} />
+      {port.port}
+    </button>
+  );
+}
 
 function open(section?: NavId) {
   void window.api.openMainWindow(section);
@@ -67,9 +87,12 @@ function Stat({ label, value, unit, percent, color }: { label: string; value: st
 export function PopoverView() {
   const model = useOverviewModel();
   const icons = useProjectIcons().data ?? {};
-  const { connection, usage, vm, idle, worktrees, queue } = model;
-  const running = queue.find((job) => job.state === "running");
-  const waiting = queue.filter((job) => job.state === "waiting").length;
+  const { connection, usage, vm, idle } = model;
+  const ports = useVmPorts();
+  const snapshot = useVmSnapshot();
+  const projectPorts = (ports.data?.ports ?? []).filter((port) => port.kind === "project");
+  const groups = useMemo(() => groupPorts(projectPorts, snapshot.data?.worktrees ?? []), [projectPorts, snapshot.data]);
+  const projectCount = groups.length;
   const reachable = connection.health === "ok";
 
   return (
@@ -98,7 +121,7 @@ export function PopoverView() {
           <ConnectTailscaleButton />
         </div>
       )}
-      <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2">
+      <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden px-3 py-2">
         <Card index={0} title="Claude usage" icon={<ClaudeMark />} to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
           {usage && (usage.fiveHour !== null || usage.weekly !== null) ? (
             <div className="flex gap-5">
@@ -120,42 +143,40 @@ export function PopoverView() {
             <p className="text-xs text-[var(--text-muted)]">{reachable ? "VM health isn't available yet." : `${connection.headline}.`}</p>
           )}
         </Card>
-        <Card index={2} title="Queue" to="queue" action={queue.length > 0 && <Pill>{`${running ? 1 : 0} running · ${waiting} waiting`}</Pill>}>
-          {queue.length > 0 ? (
-            <div className="flex items-center gap-2.5">
-              <span className={`size-2 shrink-0 rounded-full ${running ? "animate-pulse bg-[var(--ok)]" : "bg-white/30"}`} />
-              <div className="min-w-0">
-                <div className="truncate">{running?.title ?? "Waiting for headroom"}</div>
-                <div className="truncate text-xs text-[var(--text-secondary)]">{running?.detail ?? `${waiting} tasks queued`}</div>
-              </div>
+        <Card index={2} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
+          {groups.length > 0 ? (
+            <div className="space-y-2.5">
+              {groups.slice(0, MAX_GROUPS).map((group) => (
+                <div key={group.key} className="flex items-center gap-2.5">
+                  <ProjectIcon repo={group.repo} icon={icons[group.repo]?.icon} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate leading-tight">{`${group.repo} · ${group.name}`}</div>
+                    {group.branch !== null && <div className="truncate text-[11px] leading-tight text-[var(--text-secondary)]">{group.branch}</div>}
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    {group.ports.slice(0, MAX_CHIPS).map((port) => (
+                      <PortChip key={port.port} port={port} />
+                    ))}
+                    {group.ports.length > MAX_CHIPS && <span className="self-center text-[11px] text-[var(--text-secondary)]">{`+${group.ports.length - MAX_CHIPS}`}</span>}
+                  </div>
+                </div>
+              ))}
+              {groups.length > MAX_GROUPS && (
+                <button type="button" onClick={() => open("vm")} className="no-drag cursor-default text-xs text-[var(--text-secondary)] outline-none transition-colors duration-200 hover:text-[var(--text-primary)]">
+                  {`+${groups.length - MAX_GROUPS} more`}
+                </button>
+              )}
             </div>
           ) : (
-            <p className="text-xs text-[var(--text-muted)]">{reachable ? "No tasks queued." : "The queue lives on the VM."}</p>
+            <p className="text-xs text-[var(--text-muted)]">{reachable ? "Nothing is running on the VM." : "Ports show up once the VM is reachable."}</p>
           )}
-        </Card>
-        <Card index={3} title="Worktrees" to="worktrees" action={<Pill>{String(worktrees.length)}</Pill>}>
-          <div className="space-y-1.5">
-            {worktrees.slice(0, 3).map((tree) => (
-              <div key={`${tree.location}-${tree.name}`} className="flex items-center justify-between gap-3">
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <ProjectIcon repo={tree.repo} icon={icons[tree.repo]?.icon} size="sm" />
-                  <span className="truncate">{tree.name}</span>
-                </span>
-                <span className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs text-[var(--text-secondary)]">{tree.detail.split("·")[1]?.trim()}</span>
-                  <Pill tone={tree.location === "vm" ? "ok" : "neutral"}>{tree.location === "vm" ? "VM" : "Mac"}</Pill>
-                </span>
-              </div>
-            ))}
-            {worktrees.length === 0 && <p className="text-xs text-[var(--text-muted)]">No worktrees found.</p>}
-          </div>
         </Card>
       </main>
       <footer className="flex gap-2 border-t border-[var(--hairline)] p-3">
         <Button variant="primary" onClick={() => open()} className="flex-1">
           Open Elsewhere
         </Button>
-        <Button onClick={() => open("queue")}>Add task</Button>
+        <Button onClick={() => open("vm")}>Ports</Button>
       </footer>
     </div>
   );
