@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { MacTerminalButton } from "@/components/TerminalButtons";
 import { OpenInToolButton } from "@/components/OpenInToolButton";
+import { OpenVmInClaudeButton } from "@/components/OpenVmInClaudeButton";
 import { OpenVmInT3Button } from "@/components/OpenVmInT3Button";
 import { OriginBadge } from "@/components/OriginBadge";
 import { DeleteWorktreePanel } from "@/components/DeleteWorktreePanel";
@@ -189,6 +190,7 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
 
   return (
     <div className="mt-auto shrink-0 pt-4">
+      {canOpen && vmTree && <OpenVmInClaudeButton tree={vmTree} vmReachable={vm?.reachable === true} />}
       {canOpen && vmTree && <OpenVmInT3Button tree={vmTree} vmReachable={vm?.reachable === true} />}
       {canOpen && (
         <div className="mb-4 flex gap-2">

@@ -25,6 +25,7 @@ const api: Api = {
   getProjectIcons: (input) => ipcRenderer.invoke(IPC.projectIcons, input),
   getTools: () => ipcRenderer.invoke(IPC.toolsInfo),
   getVmT3: (input) => ipcRenderer.invoke(IPC.vmT3, input),
+  openInClaudeDesktop: (input) => ipcRenderer.invoke(IPC.claudeDesktopOpen, input),
   openVmInT3: (input) => ipcRenderer.invoke(IPC.vmT3Open, input),
   getT3Threads: (paths) => ipcRenderer.invoke(IPC.t3Threads, { paths }),
   openInTool: (input) => ipcRenderer.invoke(IPC.toolOpen, input),

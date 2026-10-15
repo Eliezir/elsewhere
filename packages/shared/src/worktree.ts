@@ -209,6 +209,9 @@ export const VmT3OpenSchema = z.object({
   path: z.string().min(2).max(1024).startsWith("/"),
 });
 
+export const ClaudeDesktopOpenSchema = VmT3OpenSchema;
+export type ClaudeDesktopOpenResult = { ok: boolean; error: string | null };
+
 export type VmT3Input = z.infer<typeof VmT3InputSchema>;
 export type VmT3Project = { projectTitle: string; threads: { id: string; title: string }[] };
 export type VmT3Info = { reachable: boolean; hasDatabase: boolean; environmentId: string | null; projects: Record<string, VmT3Project> };
