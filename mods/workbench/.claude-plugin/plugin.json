@@ -1,0 +1,7 @@
+{
+  "name": "workbench",
+  "version": "0.1.0",
+  "description": "Ports pane for the folder a session runs in: see the dev servers, stop them, and keep the branch and ports in the status line",
+  "author": { "name": "Eliezir" },
+  "types": "./types/index.d.ts"
+}

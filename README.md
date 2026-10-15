@@ -57,6 +57,16 @@ pnpm --filter @vmc/desktop build
 cd apps/desktop && VMC_DEBUG_SCREENSHOT=/tmp/popover.png pnpm exec electron .
 ```
 
+## Claude Code mods
+
+The `mods/` folder holds mods for Claude Code and the Code tab of Claude Desktop. `workbench` adds a Ports pane (`/ports`) for the folder a session runs in, with Kill, and puts the branch and ports in the status line.
+
+```text
+/plugin install workbench --marketplace Eliezir/elsewhere
+```
+
+In Claude Desktop, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `Eliezir/elsewhere`, then Add plugin.
+
 ## Releases
 
 Push a tag such as `v0.1.0` and the Release workflow builds the macOS and Windows apps and attaches the `.dmg`, `.zip` and `.exe` files to a GitHub release.
