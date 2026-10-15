@@ -145,11 +145,13 @@ export function Button({
   variant = "ghost",
   className = "",
   ...props
-}: { children: ReactNode; variant?: "primary" | "ghost" } & ComponentProps<"button">) {
+}: { children: ReactNode; variant?: "primary" | "ghost" | "danger" } & ComponentProps<"button">) {
   const style =
     variant === "primary"
       ? "bg-[var(--accent)] text-white hover:brightness-110 disabled:bg-white/10 disabled:text-[var(--text-muted)]"
-      : "border border-[var(--hairline)] bg-white/5 hover:bg-white/10 disabled:text-[var(--text-muted)]";
+      : variant === "danger"
+        ? "bg-[var(--down)]/85 text-white hover:brightness-110 disabled:bg-white/10 disabled:text-[var(--text-muted)]"
+        : "border border-[var(--hairline)] bg-white/5 hover:bg-white/10 disabled:text-[var(--text-muted)]";
   return (
     <button
       type="button"

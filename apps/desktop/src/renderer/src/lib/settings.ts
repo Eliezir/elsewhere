@@ -9,6 +9,7 @@ export interface Settings {
   diskWarn: number;
   idleLine: number;
   pacerCap: number;
+  staleDays: number;
   notifyUnreachable: boolean;
   notifyDisk: boolean;
   notifyIdle: boolean;
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   diskWarn: 80,
   idleLine: 20,
   pacerCap: 80,
+  staleDays: 30,
   notifyUnreachable: true,
   notifyDisk: true,
   notifyIdle: true,

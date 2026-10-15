@@ -136,7 +136,7 @@ export function parseSnapshot(output: string): VmSnapshotData {
 
   const worktrees: Worktree[] = [];
   for (const [repo, text] of repoBlocks) {
-    for (const raw of parseWorktreeList(text)) {
+    for (const [position, raw] of parseWorktreeList(text).entries()) {
       const detail = details.get(raw.path);
       if (raw.bare || raw.prunable || !detail) continue;
       worktrees.push({
@@ -153,6 +153,9 @@ export function parseSnapshot(output: string): VmSnapshotData {
         lastActive: Math.max(detail.ts, detail.sessions[0]?.lastActive ?? 0),
         sessions: detail.sessions,
         hasEnv: detail.env,
+        isMain: position === 0 && !raw.bare,
+        merged: false,
+        upstreamGone: false,
       });
     }
   }

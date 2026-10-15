@@ -65,6 +65,22 @@ export function useProjectIcons() {
   });
 }
 
+export function useWorktreeSizes(worktrees: readonly Worktree[], vmReachable: boolean) {
+  const [settings] = useSettings();
+  const mac = worktrees.filter((tree) => tree.location === "mac").map((tree) => tree.path);
+  const vm = worktrees.filter((tree) => tree.location === "vm").map((tree) => tree.path);
+  const target = { host: settings.host.trim(), user: settings.user.trim() };
+  const input = { mac, vm: vmReachable && vm.length > 0 ? { target, paths: vm } : null };
+  return useQuery({
+    queryKey: ["worktree-sizes", mac, input.vm?.paths ?? null],
+    queryFn: () => window.api.getWorktreeSizes(input),
+    enabled: mac.length > 0 || input.vm !== null,
+    refetchInterval: (query) => ((query.state.data?.pending ?? 1) > 0 ? 3000 : 60000),
+    staleTime: 0,
+    retry: false,
+  });
+}
+
 export function useWorktrees() {
   const mac = useMacWorktrees();
   const vm = useVmSnapshot();

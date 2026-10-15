@@ -104,6 +104,7 @@ export function SettingsView() {
         <div className="min-h-0 flex-1 overflow-y-auto">
           <SliderRow label="Disk warning" hint="Alert when the VM disk is fuller than this." value={settings.diskWarn} min={50} max={95} onChange={(diskWarn) => update({ diskWarn })} />
           <SliderRow label="Idle risk line" hint="Oracle reclaims a VM under this for seven days." value={settings.idleLine} min={5} max={40} onChange={(idleLine) => update({ idleLine })} />
+          <SliderRow label="Stale after" hint="Worktrees idle this long are suggested for clean-up." value={settings.staleDays} min={7} max={180} unit=" days" onChange={(staleDays) => update({ staleDays })} />
           <SliderRow label="Pacer cap" hint="Hold queued tasks above this 5-hour usage." value={settings.pacerCap} min={30} max={100} onChange={(pacerCap) => update({ pacerCap })} />
         </div>
       </Tile>

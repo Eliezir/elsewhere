@@ -7,6 +7,8 @@ import { describe, expect, it } from "vitest";
 import type { MoveProgress, MoveRequest, VmTarget } from "@vmc/shared";
 import { encodeProjectPath } from "../sessions";
 import { runSsh, shq } from "../ssh";
+import { deleteVmWorktree } from "../cleanup";
+import { parseDu } from "../sizes";
 import { runMove } from "./flow";
 import { vmPathsFor } from "./paths";
 import { sshRemote } from "./remote";
@@ -75,6 +77,19 @@ describe.skipIf(!live)("move against the real VM", () => {
       expect(back.ok).toBe(true);
       expect(await readFile(join(macPath, "vm.txt"), "utf8")).toBe("made on the VM\n");
       expect(events.filter((event) => event.status === "failed")).toEqual([]);
+
+      const du = await runSsh(target, `du -sk ${shq(paths.worktree)} 2>/dev/null`, { timeout: 60000 });
+      expect(parseDu(du.stdout)[paths.worktree]).toBeGreaterThan(0);
+
+      await runSsh(target, `cd ${shq(paths.worktree)} && echo dirty > dirty.txt`, { timeout: 60000 });
+      const refused = await deleteVmWorktree({ location: "vm", target, path: paths.worktree, branch: "feature", repo: repoName, force: false, deleteBranch: false, deleteSessions: false });
+      expect(refused).toMatchObject({ ok: false, needsForce: true });
+
+      const removed = await deleteVmWorktree({ location: "vm", target, path: paths.worktree, branch: "feature", repo: repoName, force: true, deleteBranch: true, deleteSessions: true });
+      expect(removed.error).toBeNull();
+      expect(removed.ok).toBe(true);
+      const gone = await runSsh(target, `[ ! -d ${shq(paths.worktree)} ] && [ ! -d ${shq(`${home}/.claude/projects/${encodeProjectPath(paths.worktree)}`)} ] && echo gone`, { timeout: 60000 });
+      expect(gone.stdout).toContain("gone");
     } finally {
       await cleanup();
     }

@@ -25,7 +25,7 @@ export default defineConfig({
         "motion/react",
         "@tanstack/react-query",
         "@base-ui/react/tabs",
-        "@base-ui/react/separator", "@base-ui/react/accordion", "@base-ui/react/switch", "@base-ui/react/slider", "@base-ui/react/input", "@base-ui/react/toggle-group", "@base-ui/react/toggle", "@base-ui/react/popover",
+        "@base-ui/react/separator", "@base-ui/react/accordion", "@base-ui/react/switch", "@base-ui/react/slider", "@base-ui/react/input", "@base-ui/react/toggle-group", "@base-ui/react/toggle", "@base-ui/react/popover", "@base-ui/react/dialog", "@base-ui/react/checkbox",
       ],
     },
     plugins: [react(), tailwindcss()],

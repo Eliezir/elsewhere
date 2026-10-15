@@ -4,14 +4,18 @@ import { useEffect, useState } from "react";
 import { MoveRequestSchema, planMove, type MoveDirection, type MoveProgress, type MoveRequest, type MoveResult } from "@vmc/shared";
 import { Button, FIELD, Segmented, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
+import { CleanupDialog } from "@/components/CleanupDialog";
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { DeleteWorktreePanel } from "@/components/DeleteWorktreePanel";
 import { ProjectIconEditor } from "@/components/ProjectIconEditor";
-import { useProjectIcons, useWorktrees } from "@/data/hooks";
+import { useProjectIcons, useWorktreeSizes, useWorktrees } from "@/data/hooks";
 import type { Location, VmSnapshot, Worktree } from "@/data/types";
+import { formatBytes } from "@/lib/format";
 import { useSettings } from "@/lib/settings";
+import { staleInfo, type StaleInfo } from "@/lib/stale";
 import { timeAgo } from "@/lib/time";
 
 type Filter = "all" | Location;
@@ -34,7 +38,7 @@ function Chip({ children, tone }: { children: string; tone?: "warn" | "ok" }) {
   return <span className={`rounded-full bg-[var(--inset)] px-2 py-0.5 text-[11px] ${color}`}>{children}</span>;
 }
 
-function Row({ tree, icon, selected, index, hasTwin, onSelect }: { tree: Worktree; icon: string | null | undefined; selected: boolean; index: number; hasTwin: boolean; onSelect: () => void }) {
+function Row({ tree, icon, size, stale, selected, index, hasTwin, onSelect }: { tree: Worktree; icon: string | null | undefined; size: number | null | undefined; stale: StaleInfo; selected: boolean; index: number; hasTwin: boolean; onSelect: () => void }) {
   return (
     <motion.button
       type="button"
@@ -54,6 +58,12 @@ function Row({ tree, icon, selected, index, hasTwin, onSelect }: { tree: Worktre
         <div className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">{`${tree.repo} · ${tree.branch ?? "detached HEAD"}`}</div>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
+        {stale.stale && (
+          <span title={stale.reasons.join(". ")}>
+            <Chip tone="warn">stale</Chip>
+          </span>
+        )}
+        {typeof size === "number" && <Chip>{formatBytes(size)}</Chip>}
         {tree.modified > 0 && <Chip tone="warn">{`${tree.modified} modified`}</Chip>}
         {(tree.ahead > 0 || tree.behind > 0) && <Chip>{`↑${tree.ahead} ↓${tree.behind}`}</Chip>}
         {tree.sessions.length > 0 && <Chip>{`${tree.sessions.length} ${tree.sessions.length === 1 ? "session" : "sessions"}`}</Chip>}
@@ -207,6 +217,11 @@ export function WorktreesView() {
   const queryClient = useQueryClient();
   const { worktrees, mac, vm } = useWorktrees();
   const icons = useProjectIcons().data ?? {};
+  const [settings] = useSettings();
+  const [cleanupOpen, setCleanupOpen] = useState(false);
+  const sizes = useWorktreeSizes(worktrees, vm.data?.reachable ?? false).data?.sizes ?? {};
+  const staleEntries = worktrees.map((tree) => ({ tree, info: staleInfo(tree, settings.staleDays) })).filter((entry) => entry.info.stale);
+  const staleIds = new Set(staleEntries.map((entry) => entry.tree.id));
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -234,7 +249,10 @@ export function WorktreesView() {
         title="Worktrees"
         action={
           <div className="flex items-center gap-2">
-            <Pill>{String(visible.length)}</Pill>
+            <Pill>{`${visible.length} · ${formatBytes(visible.reduce((total, tree) => total + (sizes[tree.id] ?? 0), 0))}`}</Pill>
+            <Button onClick={() => setCleanupOpen(true)} className="!px-3 !py-1 text-xs">
+              {staleEntries.length > 0 ? `Clean up · ${staleEntries.length}` : "Clean up"}
+            </Button>
             <Segmented id="worktree-filter" label="Location" options={FILTERS} value={filter} onChange={setFilter} />
           </div>
         }
@@ -249,7 +267,7 @@ export function WorktreesView() {
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {mac.isPending && <p className="text-xs text-[var(--text-muted)]">Reading your worktrees…</p>}
           {visible.map((tree, i) => (
-            <Row key={tree.id} tree={tree} icon={icons[tree.repo]?.icon} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
+            <Row key={tree.id} tree={tree} icon={icons[tree.repo]?.icon} size={sizes[tree.id]} stale={staleInfo(tree, settings.staleDays)} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
           ))}
           {!mac.isPending && visible.length === 0 && <p className="text-xs text-[var(--text-muted)]">{needle === "" ? "No worktrees found. Add repositories in Settings." : "Nothing matches that search."}</p>}
         </div>
@@ -264,11 +282,13 @@ export function WorktreesView() {
             <div className="mt-1 shrink-0 truncate text-xs text-[var(--text-secondary)]" title={selected.path}>
               {selected.path}
             </div>
-            <div className="mt-4 grid shrink-0 grid-cols-3 gap-2">
+            <div className="mt-4 grid shrink-0 grid-cols-4 gap-2">
               <Stat label="Modified" value={String(selected.modified)} />
               <Stat label="Ahead · behind" value={`${selected.ahead} · ${selected.behind}`} />
               <Stat label="Last active" value={timeAgo(selected.lastActive).replace(" ago", "")} />
+              <Stat label="Disk size" value={typeof sizes[selected.id] === "number" ? formatBytes(sizes[selected.id] ?? 0) : "…"} />
             </div>
+            {staleIds.has(selected.id) && <p className="mt-2 shrink-0 text-xs text-[var(--warn)]">{`Stale: ${staleInfo(selected, settings.staleDays).reasons.join(" · ")}`}</p>}
             <div className="mb-1.5 mt-4 shrink-0 text-xs text-[var(--text-secondary)]">Claude sessions</div>
             <div className="max-h-32 shrink-0 space-y-1.5 overflow-y-auto">
               {selected.sessions.length === 0 && <p className="text-xs text-[var(--text-muted)]">No sessions for this worktree.</p>}
@@ -280,11 +300,13 @@ export function WorktreesView() {
               ))}
             </div>
             <MovePanel key={selected.id} tree={selected} all={worktrees} vm={vm.data} onMoved={refresh} />
+            <DeleteWorktreePanel key={`delete-${selected.id}`} tree={selected} vmReachable={vm.data?.reachable ?? false} size={sizes[selected.id]} onDeleted={refresh} />
           </div>
         ) : (
           <p className="text-xs text-[var(--text-muted)]">Select a worktree to see its sessions and move it.</p>
         )}
       </Tile>
+      <CleanupDialog open={cleanupOpen} onOpenChange={setCleanupOpen} entries={staleEntries} sizes={sizes} icons={icons} vmReachable={vm.data?.reachable ?? false} onChanged={refresh} />
     </div>
   );
 }

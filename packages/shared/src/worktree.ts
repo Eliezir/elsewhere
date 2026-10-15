@@ -23,6 +23,9 @@ export const WorktreeSchema = z.object({
   lastActive: z.number(),
   sessions: z.array(ClaudeSessionSchema),
   hasEnv: z.boolean(),
+  isMain: z.boolean(),
+  merged: z.boolean(),
+  upstreamGone: z.boolean(),
 });
 
 export const WorktreeListSchema = z.object({
@@ -107,3 +110,63 @@ export type VmSnapshot = z.infer<typeof VmSnapshotSchema>;
 export type VmInput = z.infer<typeof VmInputSchema>;
 export type MacInput = z.infer<typeof MacInputSchema>;
 export type TerminalInput = z.infer<typeof TerminalInputSchema>;
+
+export const SizeInputSchema = z.object({
+  mac: z.array(z.string().min(2).max(1024).startsWith("/")).max(300),
+  vm: z.object({ target: VmTargetSchema, paths: z.array(z.string().min(2).max(1024).startsWith("/")).max(300) }).nullable(),
+});
+
+export const SizeResultSchema = z.object({
+  sizes: z.record(z.string(), z.number().nullable()),
+  pending: z.number(),
+});
+
+export const PruneInputSchema = z.object({
+  repos: z.array(z.string().max(1024)).max(50),
+  vm: z.object({ target: VmTargetSchema, repos: z.array(z.string().max(1024)).max(50) }).nullable(),
+});
+
+export const PruneEntrySchema = z.object({
+  location: LocationSchema,
+  repo: z.string(),
+  items: z.array(z.string()),
+});
+
+export const PruneResultSchema = z.object({
+  entries: z.array(PruneEntrySchema),
+  error: z.string().nullable(),
+});
+
+const safeName = z.string().min(1).max(128).regex(/^[A-Za-z0-9._-]+$/);
+const safeBranch = z
+  .string()
+  .min(1)
+  .max(200)
+  .regex(/^[A-Za-z0-9._/-]+$/)
+  .refine((value) => !value.includes("..") && !value.startsWith("/") && !value.endsWith("/") && !value.endsWith(".lock"));
+
+export const DeleteRequestSchema = z.object({
+  location: LocationSchema,
+  target: VmTargetSchema.nullable(),
+  path: z.string().min(2).max(1024).startsWith("/"),
+  branch: safeBranch.nullable(),
+  repo: safeName.nullable(),
+  force: z.boolean(),
+  deleteBranch: z.boolean(),
+  deleteSessions: z.boolean(),
+});
+
+export const DeleteResultSchema = z.object({
+  ok: z.boolean(),
+  needsForce: z.boolean(),
+  error: z.string().nullable(),
+  notes: z.array(z.string()),
+});
+
+export type SizeInput = z.infer<typeof SizeInputSchema>;
+export type SizeResult = z.infer<typeof SizeResultSchema>;
+export type PruneInput = z.infer<typeof PruneInputSchema>;
+export type PruneEntry = z.infer<typeof PruneEntrySchema>;
+export type PruneResult = z.infer<typeof PruneResultSchema>;
+export type DeleteRequest = z.infer<typeof DeleteRequestSchema>;
+export type DeleteResult = z.infer<typeof DeleteResultSchema>;

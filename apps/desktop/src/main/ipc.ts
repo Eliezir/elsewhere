@@ -1,6 +1,6 @@
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { IPC, IconInputSchema, IconRepoSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, IPC, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -9,7 +9,9 @@ import { connectTailscale, disconnectTailscale } from "./services/tailscaleContr
 import { openVmTerminal } from "./services/terminal";
 import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
+import { deleteWorktree, prune } from "./services/cleanup";
 import { clearCustomIcon, getProjectIcons, saveCustomIcon } from "./services/projectIcon";
+import { sizeService } from "./services/sizes";
 import { listMacWorktrees } from "./services/worktrees";
 
 export interface IpcActions {
@@ -49,6 +51,17 @@ export function registerIpc(actions: IpcActions): void {
     return getVmSnapshot(parsed.target, parsed.repos);
   });
   ipcMain.handle(IPC.projectIcons, (_event, input: unknown) => getProjectIcons(IconInputSchema.parse(input).projects));
+  ipcMain.handle(IPC.sizes, (_event, input: unknown) => sizeService.get(SizeInputSchema.parse(input)));
+  ipcMain.handle(IPC.prunePreview, (_event, input: unknown) => prune(PruneInputSchema.parse(input), true));
+  ipcMain.handle(IPC.pruneRun, (_event, input: unknown) => prune(PruneInputSchema.parse(input), false));
+  ipcMain.handle(IPC.deleteWorktree, async (_event, input: unknown): Promise<DeleteResult> => {
+    const request = DeleteRequestSchema.parse(input);
+    if (moving) return { ok: false, needsForce: false, error: "A move is running. Try again when it finishes.", notes: [] };
+    if (request.location === "vm" && request.target === null) return { ok: false, needsForce: false, error: "No VM is configured.", notes: [] };
+    const result = await deleteWorktree(request);
+    if (result.ok) sizeService.forget(`${request.location}:${request.path}`);
+    return result;
+  });
   ipcMain.handle(IPC.iconChoose, async (_event, input: unknown) => {
     const { repo } = IconRepoSchema.parse(input);
     const options = { title: "Choose a project icon", properties: ["openFile" as const], filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "svg"] }] };

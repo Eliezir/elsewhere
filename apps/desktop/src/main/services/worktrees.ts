@@ -29,7 +29,39 @@ async function mapLimit<T, R>(items: readonly T[], limit: number, work: (item: T
   return results;
 }
 
-async function describeWorktree(raw: RawWorktree, repo: string): Promise<Worktree | null> {
+interface BranchFlags {
+  merged: Set<string>;
+  gone: Set<string>;
+  base: string | null;
+}
+
+async function baseRef(repo: string): Promise<string | null> {
+  const head = await git(repo, ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]).catch(() => "");
+  if (head.trim() !== "") return head.trim();
+  for (const candidate of ["origin/main", "main", "origin/develop", "develop"]) {
+    const found = await git(repo, ["rev-parse", "--verify", "--quiet", candidate]).catch(() => "");
+    if (found.trim() !== "") return candidate;
+  }
+  return null;
+}
+
+export async function branchFlags(repo: string): Promise<BranchFlags> {
+  const base = await baseRef(repo);
+  const merged = new Set<string>();
+  if (base) {
+    const out = await git(repo, ["for-each-ref", `--merged=${base}`, "--format=%(refname:short)", "refs/heads"]).catch(() => "");
+    for (const line of out.split("\n")) if (line.trim() !== "") merged.add(line.trim());
+  }
+  const gone = new Set<string>();
+  const tracking = await git(repo, ["for-each-ref", "--format=%(refname:short)\t%(upstream:track)", "refs/heads"]).catch(() => "");
+  for (const line of tracking.split("\n")) {
+    const [name, track] = line.split("\t");
+    if (name && track?.includes("gone")) gone.add(name);
+  }
+  return { merged, gone, base };
+}
+
+async function describeWorktree(raw: RawWorktree, repo: string, isMain: boolean, flags: BranchFlags): Promise<Worktree | null> {
   if (raw.bare || raw.prunable || !(await exists(raw.path))) return null;
   const [statusText, committed, sessions, hasEnv] = await Promise.all([
     git(raw.path, ["status", "--porcelain=v2", "--branch"]).catch(() => ""),
@@ -53,6 +85,9 @@ async function describeWorktree(raw: RawWorktree, repo: string): Promise<Worktre
     lastActive: Math.max(Number(committed.trim()) || 0, newestSession),
     sessions,
     hasEnv,
+    isMain,
+    merged: raw.branch !== null && flags.merged.has(raw.branch) && !isMain,
+    upstreamGone: raw.branch !== null && flags.gone.has(raw.branch),
   };
 }
 
@@ -64,9 +99,10 @@ export async function listMacWorktrees(repoPaths: readonly string[]): Promise<Wo
     try {
       if (!(await stat(repo)).isDirectory()) continue;
       const raws = parseWorktreeList(await git(repo, ["worktree", "list", "--porcelain"]));
-      const fresh = raws.filter((raw) => !seen.has(raw.path));
-      for (const raw of fresh) seen.add(raw.path);
-      const described = await mapLimit(fresh, CONCURRENCY, (raw) => describeWorktree(raw, basename(repo)));
+      const flags = await branchFlags(repo);
+      const fresh = raws.map((raw, index) => ({ raw, isMain: index === 0 && !raw.bare })).filter((entry) => !seen.has(entry.raw.path));
+      for (const entry of fresh) seen.add(entry.raw.path);
+      const described = await mapLimit(fresh, CONCURRENCY, (entry) => describeWorktree(entry.raw, basename(repo), entry.isMain, flags));
       for (const worktree of described) if (worktree) found.push(worktree);
     } catch {
       continue;

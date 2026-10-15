@@ -2,7 +2,7 @@ import type { TailscaleStatus } from "./status";
 import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult } from "./move";
 import type { UsageSnapshot } from "./usage";
-import type { IconChoiceResult, IconInput, ProjectIcons, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
+import type { DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
   tailscaleStatus: "tailscale:status",
@@ -18,6 +18,10 @@ export const IPC = {
   openTailscale: "app:open-tailscale",
   openApproval: "app:open-approval",
   projectIcons: "icons:get",
+  sizes: "worktrees:sizes",
+  prunePreview: "worktrees:prune-preview",
+  pruneRun: "worktrees:prune-run",
+  deleteWorktree: "worktrees:delete",
   iconChoose: "icons:choose",
   iconClear: "icons:clear",
   tailscaleConnect: "tailscale:connect",
@@ -36,6 +40,10 @@ export interface Api {
   openTailscale(): Promise<string | null>;
   openApproval(url: string): Promise<boolean>;
   getProjectIcons(input: IconInput): Promise<ProjectIcons>;
+  getWorktreeSizes(input: SizeInput): Promise<SizeResult>;
+  previewPrune(input: PruneInput): Promise<PruneResult>;
+  runPrune(input: PruneInput): Promise<PruneResult>;
+  deleteWorktree(request: DeleteRequest): Promise<DeleteResult>;
   chooseProjectIcon(repo: string): Promise<IconChoiceResult>;
   clearProjectIcon(repo: string): Promise<void>;
   connectTailscale(): Promise<TailscaleControlResult>;
