@@ -22,6 +22,8 @@ export const VmPortSchema = z.object({
   state: PortForwardStateSchema,
   localPort: PortNumber.nullable(),
   busyBy: z.string().nullable(),
+  pinKey: z.string(),
+  pinnedLocal: PortNumber.nullable(),
 });
 export type VmPort = z.infer<typeof VmPortSchema>;
 
@@ -57,6 +59,12 @@ export const ForwardConfigSchema = z.object({
   autoForward: z.boolean(),
 });
 export type ForwardConfig = z.infer<typeof ForwardConfigSchema>;
+
+export const PortPinSchema = z.object({
+  key: z.string().min(1).max(400),
+  local: z.number().int().min(1024).max(65535).nullable(),
+});
+export type PortPin = z.infer<typeof PortPinSchema>;
 
 export const LocalPortSchema = z.number().int().min(1024).max(65535);
 

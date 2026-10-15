@@ -36,46 +36,105 @@ interface PortRowProps {
 
 function PortRow({ port, root, busy, kill, onToggle, onKill }: PortRowProps) {
   const forwarded = port.state === "active" || port.state === "remapped";
+  const pinned = port.pinnedLocal !== null && port.pinnedLocal === port.localPort;
   const where =
     forwarded && port.localPort !== null
       ? port.state === "remapped"
-        ? `localhost:${port.localPort} · ${port.port} is busy on this Mac${port.busyBy ? ` (${port.busyBy})` : ""}`
-        : `localhost:${port.localPort} on this Mac`
+        ? `localhost:${port.localPort} · use this link, not :${port.pinnedLocal ?? port.port}, which is busy here${port.busyBy ? ` (${port.busyBy})` : ""}`
+        : `localhost:${port.localPort} on this Mac${pinned ? " · pinned" : ""}`
       : "Not reachable from this Mac";
+  const [copied, setCopied] = useState(false);
+  const [pinning, setPinning] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const copy = () => {
+    if (port.localPort === null) return;
+    void navigator.clipboard.writeText(`http://localhost:${port.localPort}`).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+
+  const savePin = (value: number | null) => {
+    void window.api.setPortPin({ key: port.pinKey, local: value }).then(() => setPinning(false));
+  };
+
+  const draftNumber = Number(draft);
+  const draftValid = Number.isInteger(draftNumber) && draftNumber >= 1024 && draftNumber <= 65535;
   const killing = kill?.port === port.port ? kill : null;
   return (
-    <li className="flex items-center gap-4 rounded-2xl bg-white/[0.04] px-4 py-3">
-      <div className="w-16 text-2xl font-medium tabular-nums">{port.port}</div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate">{relativeTo(port.cwd, root) ?? port.process}</div>
-        <div className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">
-          {killing?.message ?? (killing?.phase === "confirm" ? "This stops the server on the VM." : killing?.phase === "force" ? "It did not exit. Force it?" : where)}
+    <li className="rounded-2xl bg-white/[0.04] px-4 py-3">
+      <div className="flex items-center gap-4">
+        <div className="w-16 text-2xl font-medium tabular-nums">{port.port}</div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate">{relativeTo(port.cwd, root) ?? port.process}</div>
+          <div className="mt-0.5 text-xs leading-snug text-[var(--text-secondary)]">
+            {killing?.message ?? (killing?.phase === "confirm" ? "This stops the server on the VM." : killing?.phase === "force" ? "It did not exit. Force it?" : where)}
+          </div>
         </div>
+        {!killing && <Pill tone={port.state === "failed" ? "warn" : forwarded ? "ok" : "neutral"}>{STATE_LABEL[port.state]}</Pill>}
       </div>
-      {killing ? (
-        <>
-          <Button disabled={killing.phase === "working"} onClick={() => onKill("cancel")} className="!py-1.5">
-            Cancel
-          </Button>
-          <Button variant="danger" disabled={killing.phase === "working"} onClick={() => onKill(killing.phase === "force" ? "force" : "stop")} className="!py-1.5">
-            {killing.phase === "working" ? "Stopping…" : killing.phase === "force" ? "Force kill" : "Stop server"}
-          </Button>
-        </>
-      ) : (
-        <>
-          <Pill tone={port.state === "failed" ? "warn" : forwarded ? "ok" : "neutral"}>{STATE_LABEL[port.state]}</Pill>
-          {forwarded && port.localPort !== null && (
-            <Button onClick={() => void window.api.openLocalPort(port.localPort ?? 0)} className="!py-1.5">
-              Open
+      <div className="mt-2.5 flex flex-wrap items-center justify-end gap-2">
+        {killing ? (
+          <>
+            <Button disabled={killing.phase === "working"} onClick={() => onKill("cancel")} className="!py-1.5">
+              Cancel
+            </Button>
+            <Button variant="danger" disabled={killing.phase === "working"} onClick={() => onKill(killing.phase === "force" ? "force" : "stop")} className="!py-1.5">
+              {killing.phase === "working" ? "Stopping…" : killing.phase === "force" ? "Force kill" : "Stop server"}
+            </Button>
+          </>
+        ) : (
+          <>
+            {forwarded && port.localPort !== null && (
+              <>
+                <Button onClick={() => void window.api.openLocalPort(port.localPort ?? 0)} className="!py-1.5">
+                  Open
+                </Button>
+                <Button onClick={copy} className="!py-1.5">
+                  {copied ? "Copied" : "Copy link"}
+                </Button>
+              </>
+            )}
+            <Button
+              onClick={() => {
+                setDraft(port.pinnedLocal === null ? "" : String(port.pinnedLocal));
+                setPinning((open) => !open);
+              }}
+              title="Always use this number on your Mac for this project's port"
+              className="!py-1.5"
+            >
+              {port.pinnedLocal === null ? "Pin port" : `Pinned :${port.pinnedLocal}`}
+            </Button>
+            <Button disabled={busy} onClick={() => onToggle(!forwarded)} title={forwarded ? "Closes the tunnel to this Mac. The server keeps running on the VM." : "Opens a tunnel from this Mac to the VM"} className="!py-1.5">
+              {forwarded ? "Stop forwarding" : "Forward"}
+            </Button>
+            <Button onClick={() => onKill("ask")} title="Stops the server process on the VM" className="!py-1.5 hover:!bg-[var(--down)]/25">
+              Kill
+            </Button>
+          </>
+        )}
+      </div>
+      {pinning && !killing && (
+        <div className="mt-2.5 flex flex-wrap items-center justify-end gap-2">
+          <span className="mr-auto text-xs text-[var(--text-secondary)]">Local port on this Mac (1024–65535)</span>
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value.replace(/\D/g, "").slice(0, 5))}
+            inputMode="numeric"
+            placeholder={String(port.port)}
+            spellCheck={false}
+            className="w-24 rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-3 py-1.5 text-center tabular-nums outline-none transition-[box-shadow] duration-200 focus:shadow-[0_0_0_3px_oklch(0.62_0.24_285/0.45)]"
+          />
+          {port.pinnedLocal !== null && (
+            <Button onClick={() => savePin(null)} className="!py-1.5">
+              Clear
             </Button>
           )}
-          <Button disabled={busy} onClick={() => onToggle(!forwarded)} title={forwarded ? "Closes the tunnel to this Mac. The server keeps running on the VM." : "Opens a tunnel from this Mac to the VM"} className="!py-1.5">
-            {forwarded ? "Stop forwarding" : "Forward"}
+          <Button variant="primary" disabled={!draftValid} onClick={() => savePin(draftNumber)} className="!py-1.5">
+            Save pin
           </Button>
-          <Button onClick={() => onKill("ask")} title="Stops the server process on the VM" className="!py-1.5 hover:!bg-[var(--down)]/25">
-            Kill
-          </Button>
-        </>
+        </div>
       )}
     </li>
   );

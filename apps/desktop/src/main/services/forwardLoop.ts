@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { ForwardConfigSchema, type ForwardConfig } from "@vmc/shared";
+import { stopStaleForwards } from "./forwards";
 import { getVmPorts } from "./vmPorts";
 
 const POLL_MS = 6000;
@@ -41,7 +42,7 @@ async function tick(): Promise<void> {
 
 export function startForwardLoop(): void {
   if (timer !== null) return;
-  void loadConfig().catch(() => undefined).then(() => tick());
+  void stopStaleForwards().catch(() => undefined).then(() => loadConfig()).catch(() => undefined).then(() => tick());
   timer = setInterval(() => void tick(), POLL_MS);
 }
 

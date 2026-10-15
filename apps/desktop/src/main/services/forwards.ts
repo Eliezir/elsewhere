@@ -1,10 +1,14 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { createServer } from "node:net";
 import type { PortForwardState, VmTarget } from "@vmc/shared";
 import { runLocal, sshBaseArgs } from "./ssh";
 
 interface Forward {
   child: ChildProcess;
+  target: VmTarget;
   localPort: number;
   state: PortForwardState;
   busyBy: string | null;
@@ -13,7 +17,12 @@ interface Forward {
 const FALLBACK_START = 20000;
 
 const forwards = new Map<number, Forward>();
-const failed = new Set<number>();
+const keys = new Map<number, string>();
+const pins = new Map<string, number>();
+let pinsLoaded = false;
+const failedAt = new Map<number, number>();
+const starting = new Set<number>();
+const RETRY_AFTER_MS = 10000;
 const disabled = new Set<number>();
 
 function canListen(port: number, host: string): Promise<boolean> {
@@ -29,8 +38,59 @@ export async function isLocalPortFree(port: number): Promise<boolean> {
   return checks.every(Boolean);
 }
 
+export function pinKeyFor(cwd: string | null, port: number): string {
+  const root = cwd === null ? "unknown" : (/^(.*\/worktrees\/[^/]+\/[^/]+)/.exec(cwd)?.[1] ?? cwd);
+  return `${root}|${port}`;
+}
+
+function pinsFile(): string {
+  return join(process.env.VMC_HOME ?? join(homedir(), ".vm-companion"), "port-pins.json");
+}
+
+export async function loadPins(): Promise<void> {
+  if (pinsLoaded) return;
+  pinsLoaded = true;
+  const text = await readFile(pinsFile(), "utf8").catch(() => null);
+  if (text === null) return;
+  try {
+    for (const [key, value] of Object.entries(JSON.parse(text) as Record<string, unknown>)) {
+      if (typeof value === "number" && Number.isInteger(value) && value >= 1024 && value <= 65535) pins.set(key, value);
+    }
+  } catch {
+    return;
+  }
+}
+
+async function savePins(): Promise<void> {
+  await mkdir(join(pinsFile(), ".."), { recursive: true });
+  await writeFile(pinsFile(), `${JSON.stringify(Object.fromEntries(pins))}\n`).catch(() => undefined);
+}
+
+export function pinnedFor(port: number): number | null {
+  const key = keys.get(port);
+  return key === undefined ? null : (pins.get(key) ?? null);
+}
+
+function preferredLocal(remote: number): number {
+  return pinnedFor(remote) ?? remote;
+}
+
+export async function setPortPin(input: { key: string; local: number | null }): Promise<void> {
+  await loadPins();
+  if (input.local === null) pins.delete(input.key);
+  else pins.set(input.key, input.local);
+  await savePins();
+  for (const [remote, key] of keys) {
+    const forward = forwards.get(remote);
+    if (key === input.key && forward && forward.target) {
+      await restart(forward.target, remote);
+    }
+  }
+}
+
 async function pickLocalPort(remote: number, taken: ReadonlySet<number>): Promise<number | null> {
-  if (!taken.has(remote) && (await isLocalPortFree(remote))) return remote;
+  const preferred = preferredLocal(remote);
+  if (!taken.has(preferred) && (await isLocalPortFree(preferred))) return preferred;
   for (let candidate = FALLBACK_START + (remote % 10000); candidate < 65000; candidate += 1) {
     if (!taken.has(candidate) && (await isLocalPortFree(candidate))) return candidate;
   }
@@ -55,10 +115,31 @@ async function localOwner(port: number): Promise<string | null> {
 }
 
 async function start(target: VmTarget, remote: number): Promise<void> {
+  if (starting.has(remote)) return;
+  starting.add(remote);
+  try {
+    await startUnguarded(target, remote);
+  } finally {
+    starting.delete(remote);
+  }
+}
+
+async function restart(target: VmTarget, remote: number): Promise<void> {
+  if (starting.has(remote)) return;
+  starting.add(remote);
+  try {
+    stop(remote);
+    await startUnguarded(target, remote);
+  } finally {
+    starting.delete(remote);
+  }
+}
+
+async function startUnguarded(target: VmTarget, remote: number): Promise<void> {
   const taken = new Set([...forwards.values()].map((forward) => forward.localPort));
   const local = await pickLocalPort(remote, taken);
   if (local === null) {
-    failed.add(remote);
+    failedAt.set(remote, Date.now());
     return;
   }
   const child = spawn(
@@ -66,13 +147,13 @@ async function start(target: VmTarget, remote: number): Promise<void> {
     [...sshBaseArgs(target), "-N", "-o", "ExitOnForwardFailure=yes", "-L", `127.0.0.1:${local}:127.0.0.1:${remote}`],
     { stdio: "ignore" },
   );
-  const forward: Forward = { child, localPort: local, state: local === remote ? "active" : "remapped", busyBy: local === remote ? null : await localOwner(remote) };
+  const forward: Forward = { child, target, localPort: local, state: local === preferredLocal(remote) ? "active" : "remapped", busyBy: local === preferredLocal(remote) ? null : await localOwner(preferredLocal(remote)) };
   forwards.set(remote, forward);
-  failed.delete(remote);
+  failedAt.delete(remote);
   const release = () => {
     if (forwards.get(remote) === forward) {
       forwards.delete(remote);
-      failed.add(remote);
+      failedAt.set(remote, Date.now());
     }
   };
   child.on("error", release);
@@ -86,29 +167,31 @@ function stop(remote: number): void {
   forward.child.kill("SIGTERM");
 }
 
-export async function reconcileForwards(target: VmTarget, listening: readonly number[], autoForward: boolean): Promise<void> {
+export async function reconcileForwards(target: VmTarget, listeners: readonly { port: number; key: string }[], autoForward: boolean): Promise<void> {
+  await loadPins();
+  const listening = listeners.map((listener) => listener.port);
+  for (const listener of listeners) keys.set(listener.port, listener.key);
   const live = new Set(listening);
   for (const port of [...forwards.keys()]) if (!live.has(port)) stop(port);
-  for (const port of [...failed, ...disabled]) if (!live.has(port)) {
-    failed.delete(port);
+  for (const port of [...failedAt.keys(), ...disabled]) if (!live.has(port)) {
+    failedAt.delete(port);
     disabled.delete(port);
   }
   for (const [port, forward] of [...forwards]) {
-    if (forward.state === "remapped" && (await isLocalPortFree(port))) {
-      stop(port);
-      await start(target, port);
-    }
+    if (forward.state === "remapped" && (await isLocalPortFree(preferredLocal(port)))) await restart(target, port);
   }
   if (!autoForward) return;
+  const now = Date.now();
   for (const port of listening) {
-    if (!forwards.has(port) && !disabled.has(port) && !failed.has(port)) await start(target, port);
+    const retryAt = (failedAt.get(port) ?? 0) + RETRY_AFTER_MS;
+    if (!forwards.has(port) && !disabled.has(port) && now >= retryAt) await start(target, port);
   }
 }
 
 export async function setForward(target: VmTarget, port: number, enabled: boolean): Promise<void> {
   if (enabled) {
     disabled.delete(port);
-    failed.delete(port);
+    failedAt.delete(port);
     if (!forwards.has(port)) await start(target, port);
   } else {
     disabled.add(port);
@@ -119,9 +202,13 @@ export async function setForward(target: VmTarget, port: number, enabled: boolea
 export function forwardState(port: number): { state: PortForwardState; localPort: number | null; busyBy: string | null } {
   const forward = forwards.get(port);
   if (forward) return { state: forward.state, localPort: forward.localPort, busyBy: forward.busyBy };
-  return { state: failed.has(port) ? "failed" : "off", localPort: null, busyBy: null };
+  return { state: failedAt.has(port) ? "failed" : "off", localPort: null, busyBy: null };
 }
 
 export function stopAllForwards(): void {
   for (const port of [...forwards.keys()]) stop(port);
+}
+
+export async function stopStaleForwards(): Promise<void> {
+  await runLocal("pkill", ["-f", "ExitOnForwardFailure=yes -L 127.0.0.1:"], { timeout: 5000 });
 }

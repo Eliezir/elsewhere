@@ -1,5 +1,5 @@
 import type { KillPortResult, VmPorts, VmTarget } from "@vmc/shared";
-import { forwardState, reconcileForwards } from "./forwards";
+import { forwardState, pinKeyFor, pinnedFor, reconcileForwards } from "./forwards";
 import { describeSshFailure, runSsh } from "./ssh";
 
 export interface Listener {
@@ -67,8 +67,8 @@ export async function getVmPorts(target: VmTarget, autoForward: boolean): Promis
   const result = await runSsh(target, PORTS_SCRIPT, { timeout: 20000 });
   if (result.code !== 0) return { reachable: false, error: describeSshFailure(result), ports: [] };
   const listeners = parseListeners(result.stdout);
-  await reconcileForwards(target, listeners.filter((listener) => listener.kind === "project").map((listener) => listener.port), autoForward);
-  return { reachable: true, error: null, ports: listeners.map((listener) => ({ ...listener, ...forwardState(listener.port) })) };
+  await reconcileForwards(target, listeners.map((listener) => ({ port: listener.port, key: pinKeyFor(listener.cwd, listener.port) })).filter((entry) => listeners.find((listener) => listener.port === entry.port)?.kind === "project"), autoForward);
+  return { reachable: true, error: null, ports: listeners.map((listener) => ({ ...listener, ...forwardState(listener.port), pinKey: pinKeyFor(listener.cwd, listener.port), pinnedLocal: pinnedFor(listener.port) })) };
 }
 
 export function pickKillable(listeners: readonly Listener[], port: number): { pid: number } | { error: string } {
