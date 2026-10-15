@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({ shell: {} }));
 
-const { openMacTerminal, remoteScript, terminalScript, windowsTerminalScript } = await import("./terminal");
+const { openMacTerminal, remoteScript, terminalScript, tmuxSessionName, windowsTerminalScript } = await import("./terminal");
 
 const target = { host: "adt-dev.ts.net", user: "dev" };
 
@@ -15,18 +15,32 @@ describe("remoteScript", () => {
     expect(remoteScript({ mode: "shell", path: null })).toBe(`exec "\${SHELL:-bash}" -l`);
   });
 
-  it("continues the last Claude conversation, starts a new one if there isn't any, then keeps the shell", () => {
-    expect(remoteScript({ mode: "claude", path: "/p" })).toBe(`cd '/p' && { claude --continue || claude; }; exec "\${SHELL:-bash}" -l`);
+  it("runs Claude inside a named tmux session so it survives a closed laptop and can be reattached", () => {
+    const script = remoteScript({ mode: "claude", path: "/home/dev/Developer/worktrees/app/lisbon" });
+    expect(script).toContain("cd '/home/dev/Developer/worktrees/app/lisbon' && if command -v tmux");
+    expect(script).toContain("tmux new-session -A -s 'cc-lisbon' ");
+    expect(script).toContain("claude --continue || claude");
   });
 
-  it("resumes the named conversation when given its id", () => {
-    expect(remoteScript({ mode: "claude", path: "/p", sessionId: "7096db01-7391-4fd4-9445-a2ae3f42c53f" })).toBe(
-      `cd '/p' && { claude --resume '7096db01-7391-4fd4-9445-a2ae3f42c53f' || claude --continue || claude; }; exec "\${SHELL:-bash}" -l`,
-    );
+  it("falls back to running Claude directly when tmux is missing", () => {
+    expect(remoteScript({ mode: "claude", path: "/p" }).endsWith(`fi; { claude --continue || claude; }; exec "\${SHELL:-bash}" -l`)).toBe(true);
+  });
+
+  it("resumes the named conversation in its own tmux session", () => {
+    const script = remoteScript({ mode: "claude", path: "/p", sessionId: "7096db01-7391-4fd4-9445-a2ae3f42c53f" });
+    expect(script).toContain("-s 'cc-p-7096db01'");
+    expect(script).toContain("claude --resume '\\''7096db01-7391-4fd4-9445-a2ae3f42c53f'\\'' || claude --continue || claude");
   });
 
   it("quotes hostile folder names", () => {
     expect(remoteScript({ mode: "shell", path: "/tmp/a'; rm -rf / #" })).toContain("'/tmp/a'\\''; rm -rf / #'");
+  });
+});
+
+describe("tmuxSessionName", () => {
+  it("builds a safe name from the folder and the session id", () => {
+    expect(tmuxSessionName("/a/my folder!", undefined)).toBe("cc-my-folder-");
+    expect(tmuxSessionName(null, "abcdef0123456789")).toBe("cc-home-abcdef01");
   });
 });
 
