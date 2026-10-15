@@ -1,3 +1,4 @@
+import { ClaudeMark } from "@/components/ClaudeMark";
 import { AreaChart, BigNumber, DayBars, HalfGauge, Meter } from "@/components/charts";
 import { QueueHero } from "@/components/QueueHero";
 import { Pill, Tile } from "@/components/Tile";
@@ -12,7 +13,7 @@ export function OverviewView() {
   return (
     <div className="grid h-full grid-cols-12 gap-3">
       <div className="col-span-9 grid min-h-0 grid-cols-3 grid-rows-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3">
-        <Tile index={0} title="5-hour usage" to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
+        <Tile index={0} title="5-hour usage" icon={<ClaudeMark />} to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
           <Loadable model={model}>
             {usage && usage.fiveHour !== null ? (
               <div className="flex min-h-0 flex-1 flex-col justify-between">
@@ -87,7 +88,7 @@ export function OverviewView() {
             )}
           </Loadable>
         </Tile>
-        <Tile index={4} title="Weekly capacity" to="usage" action={usage?.weeklyResets && <Pill>{`resets in ${usage.weeklyResets}`}</Pill>}>
+        <Tile index={4} title="Weekly capacity" icon={<ClaudeMark />} to="usage" action={usage?.weeklyResets && <Pill>{`resets in ${usage.weeklyResets}`}</Pill>}>
           <Loadable model={model}>
             {usage && usage.weekly !== null ? (
               <div className="flex min-h-0 flex-1 flex-col items-center justify-between">

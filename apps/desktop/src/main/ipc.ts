@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, IPC, VmT3InputSchema, VmT3OpenSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, IPC, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, VmT3InputSchema, VmT3OpenSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -10,6 +10,9 @@ import { connectTailscale, disconnectTailscale } from "./services/tailscaleContr
 import { openMacTerminal, openVmTerminal } from "./services/terminal";
 import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
+import { setForward } from "./services/forwards";
+import { getVmPorts } from "./services/vmPorts";
+import { getVmStorage } from "./services/vmStorage";
 import { deleteWorktree, prune } from "./services/cleanup";
 import { clearCustomIcon, getProjectIcons, saveCustomIcon } from "./services/projectIcon";
 import { getVmT3, openVmInT3 } from "./services/t3Remote";
@@ -53,6 +56,22 @@ export function registerIpc(actions: IpcActions): void {
     const parsed = VmInputSchema.parse(input);
     return getVmSnapshot(parsed.target, parsed.repos);
   });
+  ipcMain.handle(IPC.vmPorts, (_event, input: unknown) => {
+    const parsed = VmPortsInputSchema.parse(input);
+    return getVmPorts(parsed.target, parsed.autoForward);
+  });
+  ipcMain.handle(IPC.vmPortForward, async (_event, input: unknown) => {
+    const parsed = PortForwardToggleSchema.parse(input);
+    await setForward(parsed.target, parsed.port, parsed.enabled);
+    return getVmPorts(parsed.target, false);
+  });
+  ipcMain.handle(IPC.openLocalPort, async (_event, port: unknown) => {
+    const parsed = LocalPortSchema.safeParse(port);
+    if (!parsed.success) return false;
+    await shell.openExternal(`http://localhost:${parsed.data}`);
+    return true;
+  });
+  ipcMain.handle(IPC.vmStorage, (_event, input: unknown) => getVmStorage(VmStorageInputSchema.parse(input).target));
   ipcMain.handle(IPC.projectIcons, (_event, input: unknown) => getProjectIcons(IconInputSchema.parse(input).projects));
   ipcMain.handle(IPC.vmT3, (_event, input: unknown) => {
     const parsed = VmT3InputSchema.parse(input);

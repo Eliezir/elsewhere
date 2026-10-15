@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { ClaudeMark } from "@/components/ClaudeMark";
 import { AreaChart, BigNumber, ColumnChart, HalfGauge, Meter } from "@/components/charts";
 import { Button } from "@/components/controls";
 import { Pill, Tile } from "@/components/Tile";
@@ -45,7 +46,7 @@ export function UsageView() {
 
   return (
     <div className="grid h-full grid-cols-12 grid-rows-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3">
-      <Tile className="col-span-4" title="5-hour window" action={usage.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
+      <Tile className="col-span-4" title="5-hour window" icon={<ClaudeMark />} action={usage.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
         {fiveHour === null ? (
           <NoUsage />
         ) : (
@@ -63,7 +64,7 @@ export function UsageView() {
           </div>
         )}
       </Tile>
-      <Tile className="col-span-4" index={1} title="Weekly allowance" action={usage.weeklyResets && <Pill>{`resets in ${usage.weeklyResets}`}</Pill>}>
+      <Tile className="col-span-4" index={1} title="Weekly allowance" icon={<ClaudeMark />} action={usage.weeklyResets && <Pill>{`resets in ${usage.weeklyResets}`}</Pill>}>
         {weekly === null ? (
           <NoUsage />
         ) : (

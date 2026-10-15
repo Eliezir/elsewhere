@@ -115,3 +115,28 @@ export function useWorktrees() {
   const worktrees: Worktree[] = [...(mac.data ?? []), ...(vm.data?.worktrees ?? [])].sort((a, b) => b.lastActive - a.lastActive);
   return { worktrees, mac, vm };
 }
+
+export function useVmPorts() {
+  const [settings] = useSettings();
+  const target = { host: settings.host.trim(), user: settings.user.trim() };
+  return useQuery({
+    queryKey: ["vm-ports", target.host, target.user, settings.autoForward],
+    queryFn: () => window.api.getVmPorts({ target, autoForward: settings.autoForward }),
+    enabled: VmTargetSchema.safeParse(target).success,
+    refetchInterval: 6000,
+    staleTime: 3000,
+    retry: false,
+  });
+}
+
+export function useVmStorage() {
+  const [settings] = useSettings();
+  const target = { host: settings.host.trim(), user: settings.user.trim() };
+  return useQuery({
+    queryKey: ["vm-storage", target.host, target.user],
+    queryFn: () => window.api.getVmStorage({ target }),
+    enabled: VmTargetSchema.safeParse(target).success,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}

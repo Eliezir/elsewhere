@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
+import { ClaudeMark } from "@/components/ClaudeMark";
 import { Button } from "@/components/controls";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { useProjectIcons } from "@/data/hooks";
@@ -23,7 +24,7 @@ function open(section?: NavId) {
   void window.api.openMainWindow(section);
 }
 
-function Card({ title, to, action, index, children }: { title: string; to: NavId; action?: ReactNode; index: number; children: ReactNode }) {
+function Card({ title, icon, to, action, index, children }: { title: string; icon?: ReactNode; to: NavId; action?: ReactNode; index: number; children: ReactNode }) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -35,8 +36,9 @@ function Card({ title, to, action, index, children }: { title: string; to: NavId
         <button
           type="button"
           onClick={() => open(to)}
-          className="group flex cursor-default items-center gap-1 text-xs text-[var(--text-secondary)] outline-none transition-colors duration-200 hover:text-[var(--text-primary)]"
+          className="group flex cursor-default items-center gap-1.5 text-xs text-[var(--text-secondary)] outline-none transition-colors duration-200 hover:text-[var(--text-primary)]"
         >
+          {icon}
           {title}
           <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">
             ›
@@ -97,7 +99,7 @@ export function PopoverView() {
         </div>
       )}
       <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2">
-        <Card index={0} title="Claude usage" to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
+        <Card index={0} title="Claude usage" icon={<ClaudeMark />} to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
           {usage && (usage.fiveHour !== null || usage.weekly !== null) ? (
             <div className="flex gap-5">
               <Stat label="5-hour" value={usage.fiveHour === null ? "–" : String(usage.fiveHour)} unit="%" percent={usage.fiveHour ?? 0} color="var(--accent)" />

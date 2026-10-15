@@ -1,3 +1,4 @@
+import { stopAllForwards } from "./services/forwards";
 import { join } from "node:path";
 import { app, BrowserWindow, nativeImage, nativeTheme, Tray } from "electron";
 import { IPC } from "@vmc/shared";
@@ -62,3 +63,4 @@ void app.whenReady().then(() => {
 
 app.on("activate", () => showMainWindow());
 app.on("window-all-closed", () => undefined);
+app.on("before-quit", () => stopAllForwards());

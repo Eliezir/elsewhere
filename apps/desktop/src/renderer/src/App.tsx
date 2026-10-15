@@ -9,11 +9,13 @@ import { PopoverView } from "@/views/PopoverView";
 import { QueueView } from "@/views/QueueView";
 import { SettingsView } from "@/views/SettingsView";
 import { UsageView } from "@/views/UsageView";
+import { VmView } from "@/views/VmView";
 import { WorktreesView } from "@/views/WorktreesView";
 
 const VIEWS: Record<NavId, ReactNode> = {
   overview: <OverviewView />,
   worktrees: <WorktreesView />,
+  vm: <VmView />,
   usage: <UsageView />,
   queue: <QueueView />,
   settings: <SettingsView />,

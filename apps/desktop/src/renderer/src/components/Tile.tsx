@@ -5,6 +5,7 @@ import { useNavigate } from "@/lib/nav-context";
 
 interface TileProps {
   title?: string;
+  icon?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -18,7 +19,7 @@ const TONE = {
   light: "bg-[oklch(0.5_0.2_290/0.2)]",
 } as const;
 
-export function Tile({ title, action, children, className = "", tone = "dark", index = 0, to }: TileProps) {
+export function Tile({ title, icon, action, children, className = "", tone = "dark", index = 0, to }: TileProps) {
   const go = useNavigate();
   return (
     <motion.section
@@ -29,7 +30,8 @@ export function Tile({ title, action, children, className = "", tone = "dark", i
     >
       {(title || action) && (
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs text-[var(--text-secondary)]">
+          <h2 className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+            {icon}
             {to ? (
               <button
                 type="button"

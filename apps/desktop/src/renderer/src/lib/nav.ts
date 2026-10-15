@@ -1,6 +1,7 @@
 export const NAV_ITEMS = [
   { id: "overview", label: "Overview" },
   { id: "worktrees", label: "Worktrees" },
+  { id: "vm", label: "VM" },
   { id: "usage", label: "Usage" },
   { id: "queue", label: "Queue" },
   { id: "settings", label: "Settings" },

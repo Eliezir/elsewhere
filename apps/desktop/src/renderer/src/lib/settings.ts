@@ -17,6 +17,7 @@ export interface Settings {
   notifyDigest: boolean;
   startAtLogin: boolean;
   showInMenuBar: boolean;
+  autoForward: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,6 +37,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifyDigest: false,
   startAtLogin: false,
   showInMenuBar: true,
+  autoForward: true,
 };
 
 export function splitLines(value: string): string[] {

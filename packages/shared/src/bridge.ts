@@ -3,6 +3,7 @@ import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult } from "./move";
 import type { UsageSnapshot } from "./usage";
 import type { VmTarget } from "./worktree";
+import type { PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput } from "./ports";
 import type { VmT3Info, VmT3Input, VmT3OpenResult, T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
@@ -34,6 +35,10 @@ export const IPC = {
   iconClear: "icons:clear",
   tailscaleConnect: "tailscale:connect",
   tailscaleDisconnect: "tailscale:disconnect",
+  vmPorts: "vm:ports",
+  vmPortForward: "vm:port-forward",
+  openLocalPort: "app:open-local-port",
+  vmStorage: "vm:storage",
 } as const;
 
 export interface Api {
@@ -63,6 +68,10 @@ export interface Api {
   clearProjectIcon(repo: string): Promise<void>;
   connectTailscale(): Promise<TailscaleControlResult>;
   disconnectTailscale(): Promise<TailscaleControlResult>;
+  getVmPorts(input: VmPortsInput): Promise<VmPorts>;
+  setPortForward(input: PortForwardToggle): Promise<VmPorts>;
+  openLocalPort(port: number): Promise<boolean>;
+  getVmStorage(input: VmStorageInput): Promise<VmStorage>;
   openMainWindow(section?: string): Promise<void>;
   onNavigate(listener: (section: string) => void): () => void;
 }
