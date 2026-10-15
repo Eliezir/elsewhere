@@ -14,14 +14,12 @@ import { MacTerminalButton } from "@/components/TerminalButtons";
 import { OpenInToolButton } from "@/components/OpenInToolButton";
 import { TwinSyncCard } from "@/components/TwinSyncCard";
 import { OpenVmInClaudeButton } from "@/components/OpenVmInClaudeButton";
-import { OpenVmInT3Button } from "@/components/OpenVmInT3Button";
 import { OriginBadge } from "@/components/OriginBadge";
 import { DeleteWorktreePanel } from "@/components/DeleteWorktreePanel";
 import { ProjectIconEditor } from "@/components/ProjectIconEditor";
 import { useProjectIcons, useT3Threads, useTools, useWorktreeSizes, useWorktrees } from "@/data/hooks";
 import type { Location, VmSnapshot, Worktree } from "@/data/types";
 import { formatBytes } from "@/lib/format";
-import { describeOpen } from "@/lib/t3Messages";
 import { originOf, type Origin } from "@/lib/origin";
 import { useSettings } from "@/lib/settings";
 import { staleInfo, type StaleInfo } from "@/lib/stale";
@@ -116,8 +114,6 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
   const [settings] = useSettings();
   const [withEnv, setWithEnv] = useState(false);
   const [removeSource, setRemoveSource] = useState(false);
-  const [openInT3, setOpenInT3] = useState(false);
-  const [t3Message, setT3Message] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<Record<string, MoveProgress>>({});
   const [result, setResult] = useState<MoveResult | null>(null);
@@ -165,14 +161,6 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
     try {
       const moved = await window.api.startMove(request);
       setResult(moved);
-      setT3Message(null);
-      if (moved.ok && openInT3) {
-        if (direction === "to-vm" && moved.vmPath) setT3Message(describeOpen(await window.api.openVmInT3({ target, path: moved.vmPath })));
-        else if (direction === "to-mac") {
-          const opened = await window.api.openInTool({ tool: "t3code", path: request.macPath });
-          setT3Message(opened.ok ? (opened.opened === "thread" ? "Opened its latest conversation in T3 Code." : "T3 Code is open. It has no conversation for this worktree yet.") : (opened.error ?? "T3 Code couldn't be opened."));
-        }
-      }
     } catch {
       setResult({ ok: false, error: "The move couldn't start.", note: null, vmPath: null });
     } finally {
@@ -192,7 +180,6 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
   return (
     <div className="mt-auto shrink-0 pt-4">
       {canOpen && vmTree && <OpenVmInClaudeButton tree={vmTree} vmReachable={vm?.reachable === true} />}
-      {canOpen && vmTree && <OpenVmInT3Button tree={vmTree} vmReachable={vm?.reachable === true} />}
       {canOpen && (
         <div className="mb-4 flex gap-2">
           <Button onClick={() => openTerminal("shell")} className="flex-1 !py-1.5">
@@ -211,13 +198,6 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
         hint={`Only once the ${direction === "to-vm" ? "VM" : "Mac"} copy is verified. Git refuses if anything changed in between.`}
         checked={removeSource}
         onChange={setRemoveSource}
-        disabled={running}
-      />
-      <ToggleRow
-        label="Then open it in T3 Code"
-        hint={direction === "to-vm" ? "Opens T3 Code and copies the VM path, so you can add it as a project on the VM." : "Opens its T3 Code conversation on your Mac."}
-        checked={openInT3}
-        onChange={setOpenInT3}
         disabled={running}
       />
       <ol className="my-3 space-y-1.5 text-xs">
@@ -246,7 +226,6 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
           </motion.p>
         )}
       </AnimatePresence>
-      {t3Message && <p className="mb-3 rounded-xl bg-[var(--inset)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">{t3Message}</p>}
       <Button variant="primary" disabled={request === null || running} onClick={() => void run()} className="w-full">
         {running ? (direction === "to-vm" ? "Sending…" : "Bringing back…") : removeSource ? `${actionLabel}, then remove the ${origin} copy` : actionLabel}
       </Button>

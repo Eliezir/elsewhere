@@ -150,13 +150,3 @@ export async function openInTool(tool: Tool, path: string, deps: OpenDeps = real
   const error = await deps.openApp(appPath);
   return error === "" ? { ok: true, opened: "app", error: null } : { ok: false, opened: null, error };
 }
-
-export async function openUrlWithShell(url: string): Promise<void> {
-  const { shell } = await import("electron");
-  await shell.openExternal(url);
-}
-
-export async function openAppPath(path: string): Promise<string> {
-  const { shell } = await import("electron");
-  return shell.openPath(path);
-}

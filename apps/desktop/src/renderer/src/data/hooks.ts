@@ -81,19 +81,6 @@ export function useWorktreeSizes(worktrees: readonly Worktree[], vmReachable: bo
   });
 }
 
-export function useVmT3(paths: readonly string[], enabled: boolean) {
-  const [settings] = useSettings();
-  const target = { host: settings.host.trim(), user: settings.user.trim() };
-  return useQuery({
-    queryKey: ["vm-t3", target.host, target.user, paths],
-    queryFn: () => window.api.getVmT3({ target, paths: [...paths] }),
-    enabled: enabled && paths.length > 0 && VmTargetSchema.safeParse(target).success,
-    staleTime: 10000,
-    refetchInterval: 20000,
-    retry: false,
-  });
-}
-
 export function useTools() {
   return useQuery({ queryKey: ["tools"], queryFn: () => window.api.getTools(), staleTime: 10 * 60 * 1000, retry: false });
 }
