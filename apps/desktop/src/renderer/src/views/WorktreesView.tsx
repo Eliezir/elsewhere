@@ -110,6 +110,7 @@ interface MovePanelProps {
 function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
   const [settings] = useSettings();
   const [withEnv, setWithEnv] = useState(false);
+  const [removeSource, setRemoveSource] = useState(false);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<Record<string, MoveProgress>>({});
   const [result, setResult] = useState<MoveResult | null>(null);
@@ -138,13 +139,15 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
       macPath: macTree?.path ?? tree.path,
       vmPath: vmTree?.path ?? null,
       includeEnv: direction === "to-vm" && withEnv && tree.hasEnv,
+      removeSource,
     });
     if (parsed.success) request = parsed.data;
     else reason = "The name or branch has characters the VM path can't use.";
   }
 
-  const steps = planMove({ direction, branch: tree.branch ?? "", modified: tree.modified, sessions: tree.sessions.length, includeEnv: withEnv, hasEnv: tree.hasEnv });
-  const destination = PLACE[direction === "to-vm" ? "vm" : "mac"];
+  const steps = planMove({ direction, branch: tree.branch ?? "", modified: tree.modified, sessions: tree.sessions.length, includeEnv: withEnv, hasEnv: tree.hasEnv, removeSource });
+  const origin = direction === "to-vm" ? "Mac" : "VM";
+  const actionLabel = direction === "to-vm" ? "Send to the VM" : "Bring back to the Mac";
 
   const run = async () => {
     if (!request) return;
@@ -182,8 +185,16 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
           </Button>
         </div>
       )}
-      <div className="mb-1 text-xs text-[var(--text-secondary)]">{direction === "to-vm" ? "Move to the VM" : "Bring back to the Mac"}</div>
+      <div className="mb-1 text-xs text-[var(--text-secondary)]">{actionLabel}</div>
+      <p className="mb-1 text-xs leading-relaxed text-[var(--text-muted)]">{`This copies it. The original stays on the ${origin} unless you choose to remove it.`}</p>
       {direction === "to-vm" && tree.hasEnv && <ToggleRow label="Include .env files" hint="Secrets stay behind unless you opt in." checked={withEnv} onChange={setWithEnv} disabled={running} />}
+      <ToggleRow
+        label={`Remove the ${origin} copy afterwards`}
+        hint={`Only once the ${direction === "to-vm" ? "VM" : "Mac"} copy is verified. Git refuses if anything changed in between.`}
+        checked={removeSource}
+        onChange={setRemoveSource}
+        disabled={running}
+      />
       <ol className="my-3 space-y-1.5 text-xs">
         {steps.map((step) => {
           const state = progress[step.id];
@@ -211,7 +222,7 @@ function MovePanel({ tree, all, vm, onMoved }: MovePanelProps) {
         )}
       </AnimatePresence>
       <Button variant="primary" disabled={request === null || running} onClick={() => void run()} className="w-full">
-        {running ? "Moving…" : `Move to the ${destination}`}
+        {running ? (direction === "to-vm" ? "Sending…" : "Bringing back…") : removeSource ? `${actionLabel}, then remove the ${origin} copy` : actionLabel}
       </Button>
       {reason && <p className="mt-2 text-center text-[11px] text-[var(--text-muted)]">{reason}</p>}
     </div>

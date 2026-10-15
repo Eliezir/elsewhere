@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { realpathSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { appendFile, mkdir, mkdtemp, readFile, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -38,9 +38,9 @@ async function world() {
   await mkdir(sessionDir, { recursive: true });
   await writeFile(join(sessionDir, "s1.jsonl"), `${JSON.stringify({ type: "user", cwd: macPath, message: { content: "Add the export button" } })}\n${JSON.stringify({ type: "assistant", cwd: macPath })}\n`);
 
-  const request: MoveRequest = { direction: "to-vm", target: { host: "vm", user: "dev" }, repo: "demo", name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: false };
+  const request: MoveRequest = { direction: "to-vm", target: { host: "vm", user: "dev" }, repo: "demo", name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: false, removeSource: false };
   const paths = vmPathsFor(vmHome, "demo", "feature");
-  return { root, macProjects, vmHome, macPath, request, paths, remote: localRemote(vmHome) };
+  return { root, repo, macProjects, vmHome, macPath, request, paths, remote: localRemote(vmHome) };
 }
 
 const quiet = () => undefined;
@@ -124,5 +124,45 @@ describe("move back to the Mac", () => {
     const back = await runMove({ ...w.request, direction: "to-mac", vmPath: w.paths.worktree }, w.remote, quiet, w.macProjects);
     expect(back.ok).toBe(false);
     expect(back.error).toContain("uncommitted");
+  });
+});
+
+describe("removing the original after the move", () => {
+  it("removes the Mac copy only after the VM copy is verified", async () => {
+    const w = await world();
+    const result = await runMove({ ...w.request, removeSource: true }, w.remote, quiet, w.macProjects);
+    expect(result.ok).toBe(true);
+    expect(result.note).toContain("The Mac copy was removed.");
+    expect(existsSync(w.macPath)).toBe(false);
+    expect(git(w.paths.worktree, "log", "-1", "--format=%s")).toBe("WIP: moved to the VM");
+    expect(git(w.repo, "branch", "--list", "feature")).toContain("feature");
+  });
+
+  it("keeps the Mac copy when it is a main checkout, and says why", async () => {
+    const w = await world();
+    const events: MoveProgress[] = [];
+    const result = await runMove({ ...w.request, macPath: w.repo, branch: "main", name: "demo", removeSource: true }, w.remote, (event) => events.push(event), w.macProjects);
+    expect(result.ok).toBe(true);
+    expect(result.note).toContain("The Mac copy was kept");
+    expect(existsSync(join(w.repo, "a.txt"))).toBe(true);
+    expect(events.filter((event) => event.step === "remove").pop()?.status).toBe("failed");
+  });
+
+  it("removes the VM copy after bringing it back, once the Mac is up to date", async () => {
+    const w = await world();
+    await runMove(w.request, w.remote, quiet, w.macProjects);
+    await writeFile(join(w.paths.worktree, "vm.txt"), "made on the VM\n");
+    const back = await runMove({ ...w.request, direction: "to-mac", vmPath: w.paths.worktree, removeSource: true }, w.remote, quiet, w.macProjects);
+    expect(back.ok).toBe(true);
+    expect(back.note).toContain("The VM copy was removed.");
+    expect(existsSync(w.paths.worktree)).toBe(false);
+    expect(await readFile(join(w.macPath, "vm.txt"), "utf8")).toBe("made on the VM\n");
+  });
+
+  it("leaves everything in place when removal is not requested", async () => {
+    const w = await world();
+    await runMove(w.request, w.remote, quiet, w.macProjects);
+    expect(existsSync(w.macPath)).toBe(true);
+    expect(existsSync(w.paths.worktree)).toBe(true);
   });
 });

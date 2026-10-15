@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { realpathSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -48,7 +48,7 @@ describe.skipIf(!live)("move against the real VM", () => {
     const home = await remote.home();
     expect(home).not.toBe("");
     const paths = vmPathsFor(home, repoName, "feature");
-    const request: MoveRequest = { direction: "to-vm", target, repo: repoName, name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: false };
+    const request: MoveRequest = { direction: "to-vm", target, repo: repoName, name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: false, removeSource: false };
     const events: MoveProgress[] = [];
     const cleanup = () =>
       runSsh(target, `rm -rf ${shq(paths.hub)} ${shq(`${home}/Developer/worktrees/${repoName}`)} ${shq(`${home}/.claude/projects/${encodeProjectPath(paths.worktree)}`)}`, { timeout: 60000 });
@@ -92,6 +92,39 @@ describe.skipIf(!live)("move against the real VM", () => {
       expect(gone.stdout).toContain("gone");
     } finally {
       await cleanup();
+    }
+  }, 600000);
+
+  it("sends a throwaway project and removes the Mac copy once the VM copy is verified", async () => {
+    const stamp = Date.now() + 1;
+    const repoName = `vmclive${stamp}`;
+    const root = realpathSync(await mkdtemp(join(tmpdir(), "vmc-live2-")));
+    const repo = join(root, repoName);
+    await mkdir(repo, { recursive: true });
+    git(repo, "init", "-q", "-b", "main");
+    git(repo, "config", "user.name", "Live Test");
+    git(repo, "config", "user.email", "live@example.com");
+    await writeFile(join(repo, "a.txt"), "one\n");
+    git(repo, "add", ".");
+    git(repo, "commit", "-q", "-m", "init");
+    const macPath = join(root, "wt", "feature");
+    git(repo, "worktree", "add", "-q", "-b", "feature", macPath);
+    await writeFile(join(macPath, "work.txt"), "unsaved work\n");
+
+    const remote = sshRemote(target);
+    const home = await remote.home();
+    const paths = vmPathsFor(home, repoName, "feature");
+    const request: MoveRequest = { direction: "to-vm", target, repo: repoName, name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: false, removeSource: true };
+    try {
+      const result = await runMove(request, remote, () => undefined, join(root, "claude"));
+      expect(result.error).toBeNull();
+      expect(result.note).toContain("The Mac copy was removed.");
+      expect(existsSync(macPath)).toBe(false);
+      const check = await runSsh(target, `cd ${shq(paths.worktree)} && cat work.txt && git log -1 --format=%s`, { timeout: 60000 });
+      expect(check.stdout).toContain("unsaved work");
+      expect(check.stdout).toContain("WIP: moved to the VM");
+    } finally {
+      await runSsh(target, `rm -rf ${shq(paths.hub)} ${shq(`${home}/Developer/worktrees/${repoName}`)}`, { timeout: 60000 });
     }
   }, 600000);
 });

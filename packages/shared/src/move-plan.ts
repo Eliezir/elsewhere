@@ -1,7 +1,7 @@
 export type MoveDirection = "to-vm" | "to-mac";
 
 export interface MoveStepInfo {
-  id: "preflight" | "commit" | "hub" | "push" | "checkout" | "fetch" | "merge" | "sessions" | "env";
+  id: "preflight" | "commit" | "hub" | "push" | "checkout" | "fetch" | "merge" | "sessions" | "env" | "remove";
   label: string;
 }
 
@@ -11,6 +11,7 @@ export interface PlanInput {
   modified: number;
   sessions: number;
   includeEnv: boolean;
+  removeSource: boolean;
   hasEnv: boolean;
 }
 
@@ -27,6 +28,7 @@ export function planMove(input: PlanInput): MoveStepInfo[] {
       { id: "checkout", label: "Create or update the worktree on the VM" },
       ...(input.sessions > 0 ? [{ id: "sessions" as const, label: `Copy ${sessions} with paths rewritten` }] : []),
       ...(input.includeEnv && input.hasEnv ? [{ id: "env" as const, label: "Copy .env files" }] : []),
+      ...(input.removeSource ? [{ id: "remove" as const, label: "Remove the Mac copy once the VM copy is verified" }] : []),
     ];
   }
   return [
@@ -35,5 +37,6 @@ export function planMove(input: PlanInput): MoveStepInfo[] {
     { id: "fetch", label: `Fetch ${input.branch} from the VM` },
     { id: "merge", label: "Fast-forward the Mac worktree" },
     ...(input.sessions > 0 ? [{ id: "sessions" as const, label: `Copy ${sessions} back, keeping the newest` }] : []),
+    ...(input.removeSource ? [{ id: "remove" as const, label: "Remove the VM copy once the Mac is updated" }] : []),
   ];
 }

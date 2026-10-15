@@ -19,6 +19,7 @@ export const MoveRequestSchema = z.object({
   macPath: absolutePath,
   vmPath: absolutePath.nullable(),
   includeEnv: z.boolean(),
+  removeSource: z.boolean(),
 });
 
 export const MoveProgressSchema = z.object({

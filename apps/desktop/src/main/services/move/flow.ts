@@ -4,6 +4,7 @@ import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import type { MoveProgress, MoveRequest, MoveResult } from "@vmc/shared";
+import { deleteMacWorktree, deleteVmWorktree } from "../cleanup";
 import { encodeProjectPath, projectsDir } from "../sessions";
 import { shq } from "../ssh";
 import { copyRewritten, mergeNewer, vmPathsFor } from "./paths";
@@ -55,6 +56,23 @@ async function exists(path: string): Promise<boolean> {
     () => true,
     () => false,
   );
+}
+
+async function removeOriginal(request: MoveRequest, remote: Remote, emit: Emit, projects: string, side: "mac" | "vm"): Promise<string> {
+  const label = side === "mac" ? "Mac" : "VM";
+  emit({ step: "remove", status: "running", detail: null });
+  const base = { target: side === "vm" ? request.target : null, branch: request.branch, repo: request.repo, force: false, deleteBranch: false, deleteSessions: false };
+  const result =
+    side === "mac"
+      ? await deleteMacWorktree({ ...base, location: "mac", path: request.macPath }, projects)
+      : await deleteVmWorktree({ ...base, location: "vm", path: request.vmPath ?? "/" }, (script) => remote.run(script));
+  if (result.ok) {
+    emit({ step: "remove", status: "done", detail: null });
+    return `The ${label} copy was removed.`;
+  }
+  const reason = result.needsForce ? "it has changes that weren't copied" : (result.error ?? "it couldn't be removed");
+  emit({ step: "remove", status: "failed", detail: reason });
+  return `The ${label} copy was kept: ${reason}.`;
 }
 
 async function moveToVm(request: MoveRequest, remote: Remote, emit: Emit, projects: string): Promise<MoveResult> {
@@ -140,7 +158,9 @@ async function moveToVm(request: MoveRequest, remote: Remote, emit: Emit, projec
     }
   }
 
-  return { ok: true, error: null, note: copied > 0 ? `${copied} session files copied.` : null, vmPath: paths.worktree };
+  const notes = [copied > 0 ? `${copied} session files copied.` : null];
+  if (request.removeSource) notes.push(await removeOriginal(request, remote, emit, projects, "mac"));
+  return { ok: true, error: null, note: notes.filter((entry): entry is string => entry !== null).join(" ") || null, vmPath: paths.worktree };
 }
 
 async function moveToMac(request: MoveRequest, remote: Remote, emit: Emit, projects: string): Promise<MoveResult> {
@@ -199,7 +219,9 @@ async function moveToMac(request: MoveRequest, remote: Remote, emit: Emit, proje
     await rm(staging, { recursive: true, force: true });
   }
 
-  return { ok: true, error: null, note: note ?? (merged.copied > 0 ? `${merged.copied} session files copied back.` : null), vmPath };
+  const notes = [note ?? (merged.copied > 0 ? `${merged.copied} session files copied back.` : null)];
+  if (request.removeSource) notes.push(await removeOriginal(request, remote, emit, projects, "vm"));
+  return { ok: true, error: null, note: notes.filter((entry): entry is string => entry !== null).join(" ") || null, vmPath };
 }
 
 export async function runMove(request: MoveRequest, remote: Remote, emit: Emit, projects = projectsDir()): Promise<MoveResult> {
