@@ -18,3 +18,7 @@ export function labelFor(cwd: string | null, trees: readonly { path: string; rep
   const match = cwd === null ? null : /\/worktrees\/([^/]+)\/([^/]+)/.exec(cwd);
   return match?.[1] && match[2] ? `${match[1]} · ${match[2]}` : null;
 }
+
+export function serviceLabel(port: number, process: string): string {
+  return port === 3773 ? "T3 Code server" : process.replace(/-MainThread$/, "");
+}

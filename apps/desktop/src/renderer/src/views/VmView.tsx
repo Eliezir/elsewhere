@@ -5,7 +5,7 @@ import { Button, Segmented, ToggleRow } from "@/components/controls";
 import { Pill, Tile } from "@/components/Tile";
 import { useVmPorts, useVmSnapshot, useVmStorage } from "@/data/hooks";
 import { formatBytes } from "@/lib/format";
-import { labelFor, shortPath } from "@/lib/ports";
+import { labelFor, serviceLabel, shortPath } from "@/lib/ports";
 import { useSettings } from "@/lib/settings";
 
 const STATE_LABEL = {
@@ -17,17 +17,20 @@ const STATE_LABEL = {
 
 function PortRow({ port, project, busy, onToggle }: { port: VmPort; project: string | null; busy: boolean; onToggle: (enabled: boolean) => void }) {
   const forwarded = port.state === "active" || port.state === "remapped";
+  const where =
+    forwarded && port.localPort !== null
+      ? port.state === "remapped"
+        ? `localhost:${port.localPort} · ${port.port} is busy on this Mac`
+        : `localhost:${port.localPort} on this Mac`
+      : port.process;
   return (
     <li className="flex items-center gap-4 rounded-2xl bg-white/[0.04] px-4 py-3">
       <div className="w-16 text-2xl font-medium tabular-nums">{port.port}</div>
       <div className="min-w-0 flex-1">
         <div className="truncate">{project ?? port.process}</div>
-        <div className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">
-          {forwarded && port.localPort !== null
-            ? port.state === "remapped"
-              ? `localhost:${port.localPort} · ${port.port} is busy on this Mac`
-              : `localhost:${port.localPort} on this Mac`
-            : `${port.process}${port.cwd ? ` · ${shortPath(port.cwd)}` : ""}`}
+        <div className="mt-1 flex flex-col items-start gap-1 text-xs text-[var(--text-secondary)]">
+          {port.branch !== null && <span className="max-w-full truncate rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-2 py-px">{port.branch}</span>}
+          <span className="max-w-full truncate">{where}</span>
         </div>
       </div>
       <Pill tone={port.state === "failed" ? "warn" : forwarded ? "ok" : "neutral"}>{STATE_LABEL[port.state]}</Pill>
@@ -39,6 +42,16 @@ function PortRow({ port, project, busy, onToggle }: { port: VmPort; project: str
       <Button disabled={busy} onClick={() => onToggle(!forwarded)} className="!py-1.5">
         {forwarded ? "Stop" : "Forward"}
       </Button>
+    </li>
+  );
+}
+
+function ServiceRow({ port }: { port: VmPort }) {
+  return (
+    <li className="flex items-center gap-4 rounded-2xl px-4 py-2 opacity-70">
+      <div className="w-16 text-base tabular-nums text-[var(--text-secondary)]">{port.port}</div>
+      <div className="min-w-0 flex-1 truncate text-[13px]">{serviceLabel(port.port, port.process)}</div>
+      <Pill>Read only</Pill>
     </li>
   );
 }
@@ -61,21 +74,33 @@ function PortsTile({ className }: { className: string }) {
     }
   };
 
-  const list = ports.data?.ports ?? [];
+  const all = ports.data?.ports ?? [];
+  const list = all.filter((port) => port.kind === "project");
+  const services = all.filter((port) => port.kind === "service");
   return (
-    <Tile className={className} title="Running on the VM" action={<Pill>{`${list.length} listening`}</Pill>}>
+    <Tile className={className} title="Running on the VM" action={<Pill>{`${list.length} ${list.length === 1 ? "project" : "projects"}`}</Pill>}>
       <ToggleRow label="Forward new ports automatically" hint="Each project's dev server becomes reachable on this Mac as it starts." checked={settings.autoForward} onChange={(autoForward) => update({ autoForward })} />
       <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
         {ports.data && !ports.data.reachable ? (
           <p className="text-xs text-[var(--text-secondary)]">{ports.data.error}</p>
-        ) : list.length === 0 ? (
+        ) : list.length === 0 && services.length === 0 ? (
           <p className="text-xs text-[var(--text-muted)]">{ports.isPending ? "Looking for running servers…" : "Nothing is listening. Start a dev server on the VM and it will show up here."}</p>
         ) : (
           <ul className="space-y-2">
-            {list.map((port) => {
-              return <PortRow key={port.port} port={port} project={labelFor(port.cwd, trees)} busy={busyPort === port.port} onToggle={(enabled) => void toggle(port.port, enabled)} />;
-            })}
+            {list.map((port) => (
+              <PortRow key={port.port} port={port} project={labelFor(port.cwd, trees)} busy={busyPort === port.port} onToggle={(enabled) => void toggle(port.port, enabled)} />
+            ))}
           </ul>
+        )}
+        {services.length > 0 && (
+          <div className="mt-4">
+            <div className="mb-1 px-4 text-xs text-[var(--text-muted)]">Other services</div>
+            <ul>
+              {services.map((port) => (
+                <ServiceRow key={port.port} port={port} />
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </Tile>

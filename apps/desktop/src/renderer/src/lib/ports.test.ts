@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { labelFor, projectFor, shortPath } from "./ports";
+import { labelFor, projectFor, serviceLabel, shortPath } from "./ports";
 
 describe("projectFor", () => {
   const trees = ["/home/dev/Developer/adt-studio", "/home/dev/Developer/worktrees/adt-studio/cayenne"];
@@ -25,5 +25,12 @@ describe("labelFor", () => {
     expect(labelFor("/home/dev/.t3/worktrees/adt-studio/t3-42a/apps/api", [])).toBe("adt-studio · t3-42a");
     expect(labelFor("/home/dev", [])).toBeNull();
     expect(labelFor("/x/worktrees/a/b", [{ path: "/x/worktrees/a/b", repo: "adt", name: "b" }])).toBe("adt · b");
+  });
+});
+
+describe("serviceLabel", () => {
+  it("names the editor server and trims thread suffixes", () => {
+    expect(serviceLabel(3773, "node-MainThread")).toBe("T3 Code server");
+    expect(serviceLabel(9000, "node-MainThread")).toBe("node");
   });
 });

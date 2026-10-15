@@ -9,14 +9,18 @@ LISTEN 0 511 127.0.0.1:3773 0.0.0.0:* users:(("node",pid=900,fd=22))
 @@CWDS
 4321 /home/dev/Developer/worktrees/adt-studio/cayenne/apps/studio
 4400 /home/dev/Developer/worktrees/adt-studio/cayenne/apps/api
+900 /home/dev
+@@BRANCHES
+4321 eliezir/beta-update-banner-settings
+4400 HEAD
 `;
 
 describe("parseListeners", () => {
   it("keeps user listeners with their working directory and skips ssh and system ports", () => {
     expect(parseListeners(OUTPUT)).toEqual([
-      { port: 3001, process: "node", pid: 4400, cwd: "/home/dev/Developer/worktrees/adt-studio/cayenne/apps/api" },
-      { port: 3773, process: "node", pid: 900, cwd: null },
-      { port: 5173, process: "node", pid: 4321, cwd: "/home/dev/Developer/worktrees/adt-studio/cayenne/apps/studio" },
+      { port: 3001, process: "node", pid: 4400, cwd: "/home/dev/Developer/worktrees/adt-studio/cayenne/apps/api", branch: "detached", kind: "project" },
+      { port: 3773, process: "node", pid: 900, cwd: "/home/dev", branch: null, kind: "service" },
+      { port: 5173, process: "node", pid: 4321, cwd: "/home/dev/Developer/worktrees/adt-studio/cayenne/apps/studio", branch: "eliezir/beta-update-banner-settings", kind: "project" },
     ]);
   });
 });

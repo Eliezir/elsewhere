@@ -17,6 +17,8 @@ export const VmPortSchema = z.object({
   process: z.string(),
   pid: z.number().int().nullable(),
   cwd: z.string().nullable(),
+  branch: z.string().nullable(),
+  kind: z.enum(["project", "service"]),
   state: PortForwardStateSchema,
   localPort: PortNumber.nullable(),
 });
