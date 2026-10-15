@@ -1,6 +1,9 @@
-import { readdir, readFile, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { extname, join } from "node:path";
 import { nativeImage } from "electron";
+import type { IconChoiceResult, ProjectIcons } from "@vmc/shared";
 
 const NAMES = ["icon", "logo", "app-icon", "favicon"] as const;
 const EXTENSIONS = ["png", "svg"] as const;
@@ -87,21 +90,89 @@ const realDeps: IconDeps = {
   },
 };
 
+const CUSTOM_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg"]);
+const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
+const MAX_SVG_BYTES = 512 * 1024;
+const STORED_SIZE = 128;
+
+export function customIconsDir(): string {
+  return join(process.env.VMC_HOME ?? join(homedir(), ".vm-companion"), "project-icons");
+}
+
+export function iconFileStem(repo: string): string {
+  const readable = repo.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 60);
+  return `${readable}-${createHash("sha256").update(repo).digest("hex").slice(0, 8)}`;
+}
+
+function dataUrlFor(file: string, bytes: Buffer): string {
+  return file.endsWith(".svg") ? `data:image/svg+xml;base64,${bytes.toString("base64")}` : `data:image/png;base64,${bytes.toString("base64")}`;
+}
+
+async function readCustomIcon(repo: string, dir = customIconsDir()): Promise<string | null> {
+  const stem = iconFileStem(repo);
+  for (const extension of [".png", ".svg"]) {
+    try {
+      return dataUrlFor(extension, await readFile(join(dir, `${stem}${extension}`)));
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+export async function clearCustomIcon(repo: string, dir = customIconsDir()): Promise<void> {
+  const stem = iconFileStem(repo);
+  await Promise.all([".png", ".svg"].map((extension) => rm(join(dir, `${stem}${extension}`), { force: true })));
+}
+
+export async function saveCustomIcon(repo: string, source: string, dir = customIconsDir()): Promise<IconChoiceResult> {
+  const extension = extname(source).toLowerCase();
+  if (!CUSTOM_EXTENSIONS.has(extension)) return { ok: false, cancelled: false, error: "Choose a PNG, JPG, WebP or SVG image." };
+  const info = await stat(source).catch(() => null);
+  if (info === null || !info.isFile()) return { ok: false, cancelled: false, error: "That file couldn't be read." };
+  if (info.size > MAX_SOURCE_BYTES) return { ok: false, cancelled: false, error: "That image is larger than 8 MB." };
+
+  await mkdir(dir, { recursive: true });
+  const stem = iconFileStem(repo);
+  if (extension === ".svg") {
+    if (info.size > MAX_SVG_BYTES) return { ok: false, cancelled: false, error: "That SVG is larger than 512 KB." };
+    const text = await readFile(source, "utf8");
+    if (!text.includes("<svg")) return { ok: false, cancelled: false, error: "That file isn't a valid SVG." };
+    await clearCustomIcon(repo, dir);
+    await writeFile(join(dir, `${stem}.svg`), text);
+    return { ok: true, cancelled: false, error: null };
+  }
+
+  const image = nativeImage.createFromPath(source);
+  if (image.isEmpty()) return { ok: false, cancelled: false, error: "That image couldn't be opened." };
+  const { width, height } = image.getSize();
+  const scale = STORED_SIZE / Math.max(width, height);
+  const stored = scale < 1 ? image.resize({ width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), quality: "best" }) : image;
+  await clearCustomIcon(repo, dir);
+  await writeFile(join(dir, `${stem}.png`), stored.toPNG());
+  return { ok: true, cancelled: false, error: null };
+}
+
 const cache = new Map<string, { at: number; icon: string | null }>();
 const CACHE_MS = 10 * 60 * 1000;
 
-export async function getProjectIcons(projects: readonly { repo: string; path: string }[]): Promise<Record<string, string | null>> {
-  const result: Record<string, string | null> = {};
+export async function getProjectIcons(projects: readonly { repo: string; path: string }[]): Promise<ProjectIcons> {
+  const result: ProjectIcons = {};
   for (const project of projects) {
     if (project.repo in result) continue;
+    const custom = await readCustomIcon(project.repo);
+    if (custom) {
+      result[project.repo] = { icon: custom, custom: true };
+      continue;
+    }
     const cached = cache.get(project.path);
     if (cached && Date.now() - cached.at < CACHE_MS) {
-      result[project.repo] = cached.icon;
+      result[project.repo] = { icon: cached.icon, custom: false };
       continue;
     }
     const icon = await findProjectIcon(project.path, realDeps).catch(() => null);
     cache.set(project.path, { at: Date.now(), icon });
-    result[project.repo] = icon;
+    result[project.repo] = { icon, custom: false };
   }
   return result;
 }

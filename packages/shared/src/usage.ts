@@ -22,7 +22,6 @@ export const UsageFileSchema = z.object({
 export const UsageStatusSchema = z.object({
   source: z.enum(["oauth", "statusline", "none"]),
   error: z.string().nullable(),
-  detail: z.string().nullable(),
   checkedAt: z.number().nullable(),
 });
 

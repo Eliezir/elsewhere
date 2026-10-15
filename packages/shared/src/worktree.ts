@@ -39,6 +39,19 @@ export const IconInputSchema = z.object({
   projects: z.array(IconProjectSchema).max(100),
 });
 
+export const IconRepoSchema = z.object({
+  repo: z.string().min(1).max(128),
+});
+
+export const IconChoiceResultSchema = z.object({
+  ok: z.boolean(),
+  cancelled: z.boolean(),
+  error: z.string().nullable(),
+});
+
+export type ProjectIconInfo = { icon: string | null; custom: boolean };
+export type ProjectIcons = Record<string, ProjectIconInfo>;
+export type IconChoiceResult = z.infer<typeof IconChoiceResultSchema>;
 export type IconInput = z.infer<typeof IconInputSchema>;
 export type Location = z.infer<typeof LocationSchema>;
 export type ClaudeSession = z.infer<typeof ClaudeSessionSchema>;

@@ -45,7 +45,7 @@ export function parseSamples(text: string, nowSeconds: number): UsageSample[] {
   return samples;
 }
 
-let status: UsageStatus = { source: "none", error: null, detail: null, checkedAt: null };
+let status: UsageStatus = { source: "none", error: null, checkedAt: null };
 
 export function currentStatus(): UsageStatus {
   return status;
@@ -127,7 +127,7 @@ export async function refreshUsage(deps?: Partial<RefreshDeps>): Promise<UsageSt
     ...deps,
   };
   const now = resolved.now();
-  const fail = (error: string): UsageStatus => (status = { source: status.source, error, detail: null, checkedAt: now });
+  const fail = (error: string): UsageStatus => (status = { source: status.source, error, checkedAt: now });
 
   const credentials = await resolved.load();
   if (!credentials) return fail("No Claude login found. Sign in with Claude Code first.");
@@ -141,6 +141,6 @@ export async function refreshUsage(deps?: Partial<RefreshDeps>): Promise<UsageSt
   const file: UsageFile = { updatedAt: now, fiveHour: windows.fiveHour, sevenDay: windows.sevenDay, scoped: windows.scoped };
   await writeCurrent(resolved.dir, file);
   await appendSample(resolved.dir, file);
-  status = { source: "oauth", error: null, detail: `fields: ${windows.fields.join(", ")}`, checkedAt: now };
+  status = { source: "oauth", error: null, checkedAt: now };
   return status;
 }

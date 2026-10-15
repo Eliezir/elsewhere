@@ -136,7 +136,7 @@ export function PopoverView() {
             {worktrees.slice(0, 3).map((tree) => (
               <div key={`${tree.location}-${tree.name}`} className="flex items-center justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-2.5">
-                  <ProjectIcon repo={tree.repo} icon={icons[tree.repo]} size="sm" />
+                  <ProjectIcon repo={tree.repo} icon={icons[tree.repo]?.icon} size="sm" />
                   <span className="truncate">{tree.name}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">

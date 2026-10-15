@@ -4,7 +4,7 @@ import { forecastUnused, formatDuration, toUsageData } from "./usage";
 
 const NOW = 1_800_000_000;
 const DAY = 86400;
-const STATUS: UsageSnapshot["status"] = { source: "none", error: null, detail: null, checkedAt: null };
+const STATUS: UsageSnapshot["status"] = { source: "none", error: null, checkedAt: null };
 
 describe("formatDuration", () => {
   it("picks the two most useful units", () => {

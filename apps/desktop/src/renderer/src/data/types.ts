@@ -16,7 +16,6 @@ export interface ScopedUsage {
 export interface UsageSource {
   kind: "oauth" | "statusline" | "none";
   error: string | null;
-  detail: string | null;
 }
 
 export interface UsageData {

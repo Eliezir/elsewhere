@@ -67,6 +67,6 @@ export function toUsageData(snapshot: UsageSnapshot, now: number): UsageData {
       percent: Math.round(window.usedPercentage),
       resets: formatDuration(window.resetsAt - now),
     })),
-    source: { kind: snapshot.status.source, error: snapshot.status.error, detail: snapshot.status.detail },
+    source: { kind: snapshot.status.source, error: snapshot.status.error },
   };
 }

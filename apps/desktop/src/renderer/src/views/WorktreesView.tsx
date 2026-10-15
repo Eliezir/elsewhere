@@ -8,6 +8,7 @@ import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { ProjectIconEditor } from "@/components/ProjectIconEditor";
 import { useProjectIcons, useWorktrees } from "@/data/hooks";
 import type { Location, VmSnapshot, Worktree } from "@/data/types";
 import { useSettings } from "@/lib/settings";
@@ -248,7 +249,7 @@ export function WorktreesView() {
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {mac.isPending && <p className="text-xs text-[var(--text-muted)]">Reading your worktrees…</p>}
           {visible.map((tree, i) => (
-            <Row key={tree.id} tree={tree} icon={icons[tree.repo]} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
+            <Row key={tree.id} tree={tree} icon={icons[tree.repo]?.icon} index={i} selected={tree.id === selected?.id} hasTwin={counterpartOf(tree, worktrees) !== null} onSelect={() => setSelectedId(tree.id)} />
           ))}
           {!mac.isPending && visible.length === 0 && <p className="text-xs text-[var(--text-muted)]">{needle === "" ? "No worktrees found. Add repositories in Settings." : "Nothing matches that search."}</p>}
         </div>
@@ -257,7 +258,7 @@ export function WorktreesView() {
         {selected ? (
           <div key={selected.id} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex shrink-0 items-center gap-3">
-              <ProjectIcon repo={selected.repo} icon={icons[selected.repo]} size="lg" />
+              <ProjectIconEditor repo={selected.repo} info={icons[selected.repo]} />
               <div className="min-w-0 truncate text-3xl font-medium leading-tight">{selected.name}</div>
             </div>
             <div className="mt-1 shrink-0 truncate text-xs text-[var(--text-secondary)]" title={selected.path}>

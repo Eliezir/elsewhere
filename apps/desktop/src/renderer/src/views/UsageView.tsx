@@ -137,7 +137,6 @@ export function UsageView() {
               <span className="tabular-nums">{usage.sampleCount}</span>
             </div>
             {usage.source.error && <p className="leading-relaxed text-[var(--warn)]">{usage.source.error}</p>}
-            {usage.source.detail && <p className="break-words leading-relaxed text-[var(--text-muted)]">{usage.source.detail}</p>}
             <Button onClick={refresh} disabled={refreshing} className="w-full !py-1.5">
               {refreshing ? "Refreshing…" : "Refresh now"}
             </Button>
