@@ -61,7 +61,7 @@ export interface Api {
   getT3Threads(paths: string[]): Promise<T3Threads>;
   getVmT3(input: VmT3Input): Promise<VmT3Info>;
   openVmInT3(input: { target: VmTarget; path: string }): Promise<VmT3OpenResult>;
-  openInClaudeDesktop(input: { target: VmTarget; path: string }): Promise<ClaudeDesktopOpenResult>;
+  openInClaudeDesktop(input: { target: VmTarget; path: string; sessionId?: string | undefined }): Promise<ClaudeDesktopOpenResult>;
   openInTool(input: ToolOpenInput): Promise<ToolOpenResult>;
   revealInFinder(path: string): Promise<boolean>;
   getWorktreeSizes(input: SizeInput): Promise<SizeResult>;

@@ -13,8 +13,8 @@ export function OpenVmInClaudeButton({ tree, vmReachable }: { tree: Worktree; vm
     setBusy(true);
     setMessage(null);
     try {
-      const result = await window.api.openInClaudeDesktop({ target: { host: settings.host.trim(), user: settings.user.trim() }, path: tree.path });
-      setMessage(result.ok ? "Claude Desktop will ask you to confirm the connection. If it asks for a folder, paste: the path is on your clipboard." : result.error);
+      const result = await window.api.openInClaudeDesktop({ target: { host: settings.host.trim(), user: settings.user.trim() }, path: tree.path, sessionId: tree.sessions[0]?.id });
+      setMessage(result.ok ? tree.sessions.length > 0 ? "Confirm the connection in Claude Desktop. The prompt box is pre-filled to read where the earlier conversation stopped: check it, then press Enter. If it asks for a folder, paste: the path is on your clipboard." : "Confirm the connection in Claude Desktop. If it asks for a folder, paste: the path is on your clipboard." : result.error);
     } catch {
       setMessage("Claude Desktop couldn't be opened.");
     } finally {
@@ -29,7 +29,7 @@ export function OpenVmInClaudeButton({ tree, vmReachable }: { tree: Worktree; vm
         Open in Claude Desktop
         <span className="rounded-full border border-[var(--hairline)] px-1.5 text-[10px] text-[var(--text-secondary)]">Test</span>
       </Button>
-      <p className="mt-1.5 text-[11px] leading-snug text-[var(--text-secondary)]">{message ?? "Runs Claude on the VM in this folder, over SSH, and copies the folder path. Needs Claude Desktop 2.110 or newer. Desktop starts a new conversation. To continue a copied one, use Resume below."}</p>
+      <p className="mt-1.5 text-[11px] leading-snug text-[var(--text-secondary)]">{message ?? "Runs Claude on the VM in this folder, over SSH. Needs Claude Desktop 2.110 or newer. It starts a new conversation, pre-filled to catch up from the copied one."}</p>
     </div>
   );
 }

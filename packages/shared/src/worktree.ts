@@ -210,7 +210,7 @@ export const VmT3OpenSchema = z.object({
   path: z.string().min(2).max(1024).startsWith("/"),
 });
 
-export const ClaudeDesktopOpenSchema = VmT3OpenSchema;
+export const ClaudeDesktopOpenSchema = VmT3OpenSchema.extend({ sessionId: z.string().regex(/^[0-9a-fA-F-]{8,64}$/).optional() });
 export type ClaudeDesktopOpenResult = { ok: boolean; error: string | null };
 
 export type VmT3Input = z.infer<typeof VmT3InputSchema>;

@@ -68,7 +68,7 @@ export function registerIpc(actions: IpcActions): void {
   });
   ipcMain.handle(IPC.claudeDesktopOpen, (_event, input: unknown) => {
     const parsed = ClaudeDesktopOpenSchema.parse(input);
-    return openInClaudeDesktop(parsed.target, parsed.path);
+    return openInClaudeDesktop(parsed.target, parsed.path, parsed.sessionId);
   });
   ipcMain.handle(IPC.vmPortKill, (_event, input: unknown) => {
     const parsed = KillPortSchema.parse(input);
