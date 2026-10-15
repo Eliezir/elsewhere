@@ -31,6 +31,7 @@ const api: Api = {
   connectTailscale: () => ipcRenderer.invoke(IPC.tailscaleConnect),
   disconnectTailscale: () => ipcRenderer.invoke(IPC.tailscaleDisconnect),
   openVmTerminal: (input) => ipcRenderer.invoke(IPC.openTerminal, input),
+  openMacTerminal: (path) => ipcRenderer.invoke(IPC.openMacTerminal, path),
   openMainWindow: (section) => ipcRenderer.invoke(IPC.openMainWindow, section),
   onNavigate: (listener) => {
     const handler = (_event: Electron.IpcRendererEvent, section: string) => listener(section);

@@ -101,8 +101,12 @@ export const MacInputSchema = z.object({
 
 export const TerminalInputSchema = z.object({
   target: VmTargetSchema,
-  path: z.string().min(2).max(1024).startsWith("/"),
+  path: z.string().min(2).max(1024).startsWith("/").nullable(),
   mode: z.enum(["shell", "claude"]),
+});
+
+export const MacTerminalInputSchema = z.object({
+  path: z.string().min(2).max(1024).startsWith("/"),
 });
 
 export type VmHealth = z.infer<typeof VmHealthSchema>;

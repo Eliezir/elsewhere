@@ -10,6 +10,7 @@ import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill, Tile } from "@/components/Tile";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { MacTerminalButton } from "@/components/TerminalButtons";
 import { OpenInToolButton } from "@/components/OpenInToolButton";
 import { OriginBadge } from "@/components/OriginBadge";
 import { DeleteWorktreePanel } from "@/components/DeleteWorktreePanel";
@@ -309,6 +310,7 @@ export function WorktreesView() {
             {selected.location === "mac" && (
               <div className="mt-3 flex shrink-0 items-start gap-2">
                 <OpenInToolButton tree={selected} origin={originFor(selected)} tools={tools} threadTitle={t3Threads[selected.path]?.title ?? null} />
+                <MacTerminalButton path={selected.path} className="shrink-0" />
                 <Button onClick={() => void window.api.revealInFinder(selected.path)} className="shrink-0 !py-1.5">
                   Reveal in Finder
                 </Button>

@@ -7,7 +7,7 @@ import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
 import { getTailscaleStatus } from "./services/tailscale";
 import { connectTailscale, disconnectTailscale } from "./services/tailscaleControl";
-import { openVmTerminal } from "./services/terminal";
+import { openMacTerminal, openVmTerminal } from "./services/terminal";
 import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
 import { deleteWorktree, prune } from "./services/cleanup";
@@ -86,6 +86,7 @@ export function registerIpc(actions: IpcActions): void {
     return saveCustomIcon(repo, file);
   });
   ipcMain.handle(IPC.iconClear, async (_event, input: unknown) => clearCustomIcon(IconRepoSchema.parse(input).repo));
+  ipcMain.handle(IPC.openMacTerminal, (_event, path: unknown) => openMacTerminal(path));
   ipcMain.handle(IPC.openTerminal, (_event, input: unknown) => openVmTerminal(TerminalInputSchema.parse(input)));
   ipcMain.handle(IPC.moveStart, async (_event, input: unknown): Promise<MoveResult> => {
     const request = MoveRequestSchema.parse(input);

@@ -15,6 +15,7 @@ export const IPC = {
   moveStart: "move:start",
   moveProgress: "move:progress",
   openTerminal: "vm:open-terminal",
+  openMacTerminal: "terminal:open-mac",
   openTailscale: "app:open-tailscale",
   openApproval: "app:open-approval",
   projectIcons: "icons:get",
@@ -41,6 +42,7 @@ export interface Api {
   startMove(request: MoveRequest): Promise<MoveResult>;
   onMoveProgress(listener: (progress: MoveProgress) => void): () => void;
   openVmTerminal(input: TerminalInput): Promise<string | null>;
+  openMacTerminal(path: string): Promise<string | null>;
   openTailscale(): Promise<string | null>;
   openApproval(url: string): Promise<boolean>;
   getProjectIcons(input: IconInput): Promise<ProjectIcons>;

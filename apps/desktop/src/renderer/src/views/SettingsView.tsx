@@ -1,5 +1,6 @@
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
+import { VmTerminalButton } from "@/components/TerminalButtons";
 import { Pill, Tile } from "@/components/Tile";
 import { useVmSnapshot } from "@/data/hooks";
 import { useTailscaleControl } from "@/lib/tailscale";
@@ -62,6 +63,7 @@ export function SettingsView() {
               <Button onClick={() => void vm.refetch()} disabled={testing}>
                 {testing ? "Testing…" : "Test connection"}
               </Button>
+              <VmTerminalButton label="Open a VM terminal" disabled={!snapshot?.reachable} />
               <Button onClick={() => void window.api.openTailscale()}>Open Tailscale app</Button>
             </div>
             {snapshot?.approvalUrl && <ApproveSshButton url={snapshot.approvalUrl} />}
