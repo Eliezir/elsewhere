@@ -23,16 +23,18 @@ function loadView(window: BrowserWindow, view: View): void {
   }
 }
 
+const IS_MAC = process.platform === "darwin";
+
 export function createMainWindow(opaque: boolean): BrowserWindow {
   const window = new BrowserWindow({
     ...MAIN_WINDOW_SIZE,
     minWidth: 900,
     minHeight: 600,
     show: false,
-    titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 16, y: 18 },
-    backgroundColor: opaque ? "#14161a" : "#00000000",
-    vibrancy: opaque ? undefined : "under-window",
+    titleBarStyle: IS_MAC ? "hiddenInset" : "hidden",
+    ...(IS_MAC ? { trafficLightPosition: { x: 16, y: 18 } } : { titleBarOverlay: { color: "#0b0716", symbolColor: "#d8cffb", height: 52 } }),
+    backgroundColor: opaque || !IS_MAC ? "#0b0716" : "#00000000",
+    vibrancy: opaque || !IS_MAC ? undefined : "under-window",
     visualEffectState: "active",
     webPreferences: SHARED_PREFERENCES,
   });
@@ -51,9 +53,10 @@ export function createPopover(): BrowserWindow {
     fullscreenable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    transparent: true,
+    transparent: IS_MAC,
+    backgroundColor: IS_MAC ? undefined : "#0b0716",
     hasShadow: true,
-    vibrancy: "popover",
+    vibrancy: IS_MAC ? "popover" : undefined,
     visualEffectState: "active",
     webPreferences: SHARED_PREFERENCES,
   });
@@ -72,7 +75,9 @@ export function togglePopover(popover: BrowserWindow, trayBounds: Rectangle): vo
   const centered = Math.round(trayBounds.x + trayBounds.width / 2 - width / 2);
   const maxX = display.workArea.x + display.workArea.width - width - 8;
   const x = Math.max(display.workArea.x + 8, Math.min(centered, maxX));
-  const y = trayBounds.y + trayBounds.height + 4;
+  const { height } = popover.getBounds();
+  const below = trayBounds.y + trayBounds.height + 4;
+  const y = below + height > display.workArea.y + display.workArea.height ? Math.max(display.workArea.y, trayBounds.y - height - 4) : below;
   popover.setPosition(x, y, false);
   popover.show();
   popover.focus();

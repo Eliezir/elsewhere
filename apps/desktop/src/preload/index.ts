@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { IPC, type Api } from "@vmc/shared/bridge";
 
 const api: Api = {
+  platform: process.platform,
   getTailscaleStatus: () => ipcRenderer.invoke(IPC.tailscaleStatus),
   getUsage: () => ipcRenderer.invoke(IPC.usage),
   refreshUsage: () => ipcRenderer.invoke(IPC.usageRefresh),

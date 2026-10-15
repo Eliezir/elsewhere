@@ -10,7 +10,7 @@ interface TopBarProps {
 
 export function TopBar({ active }: TopBarProps) {
   return (
-    <header className="drag grid h-[52px] shrink-0 grid-cols-[1fr_auto_1fr] items-center pl-[84px] pr-4">
+    <header className={`drag grid h-[52px] shrink-0 grid-cols-[1fr_auto_1fr] items-center ${window.api.platform === "darwin" ? "pl-[84px] pr-4" : "pl-5 pr-[150px]"}`}>
       <span className="flex items-center gap-3 whitespace-nowrap text-[13px] font-medium">
         <img src={mark} alt="" className="size-5 rounded-[6px]" />
         Elsewhere

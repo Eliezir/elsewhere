@@ -42,6 +42,7 @@ export const IPC = {
 } as const;
 
 export interface Api {
+  platform: string;
   getTailscaleStatus(): Promise<TailscaleStatus>;
   getUsage(): Promise<UsageSnapshot>;
   refreshUsage(): Promise<UsageSnapshot>;

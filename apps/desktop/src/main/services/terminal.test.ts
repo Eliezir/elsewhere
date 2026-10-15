@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({ shell: {} }));
 
-const { openMacTerminal, remoteScript, terminalScript } = await import("./terminal");
+const { openMacTerminal, remoteScript, terminalScript, windowsTerminalScript } = await import("./terminal");
 
 const target = { host: "adt-dev.ts.net", user: "dev" };
 
@@ -28,6 +28,14 @@ describe("terminalScript", () => {
   it("connects to the VM with a terminal attached", () => {
     const script = terminalScript({ target, path: null, mode: "shell" });
     expect(script.startsWith("#!/bin/sh\nexec ssh -t 'dev@adt-dev.ts.net' ")).toBe(true);
+  });
+});
+
+describe("windowsTerminalScript", () => {
+  it("sends the remote script base64 encoded so no quoting survives cmd", () => {
+    const script = windowsTerminalScript({ target, path: "/home/dev/a b", mode: "shell" });
+    const encoded = Buffer.from(remoteScript({ mode: "shell", path: "/home/dev/a b" })).toString("base64");
+    expect(script).toBe(`@echo off\r\nssh -t dev@adt-dev.ts.net "eval \\"$(echo ${encoded} | base64 -d)\\""\r\n`);
   });
 });
 

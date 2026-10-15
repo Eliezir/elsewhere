@@ -18,6 +18,15 @@ mac:
       arch: [arm64, x64]
   extendInfo:
     LSUIElement: false
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
 dmg:
   title: Elsewhere
 artifactName: Elsewhere-${version}-${arch}.${ext}

@@ -50,7 +50,11 @@ void app.whenReady().then(() => {
     setInterval(() => void refreshUsage(), USAGE_POLL_MS);
   }
   const popover = createPopover();
-  const tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), "resources/trayTemplate.png")));
+  const tray = new Tray(
+    process.platform === "darwin"
+      ? nativeImage.createFromPath(join(app.getAppPath(), "resources/trayTemplate.png"))
+      : nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")).resize({ width: 16, height: 16, quality: "best" }),
+  );
   tray.setToolTip("Elsewhere");
   tray.on("click", () => togglePopover(popover, tray.getBounds()));
   const debuggingPopover = screenshotPath !== undefined && debugView === "popover";
