@@ -1,4 +1,4 @@
-import type { IdleHealth, PacerStatus, QueueTask, UsageData, VmHealth, Worktree } from "./types";
+import type { IdleHealth, PacerStatus, QueueTask, VmHealth, Worktree } from "./types";
 
 export const IS_SAMPLE_DATA = true;
 
@@ -69,30 +69,6 @@ export const SAMPLE_WORKTREES: readonly Worktree[] = [
     largeDir: null,
   },
 ];
-
-export const SAMPLE_USAGE: UsageData = {
-  fiveHour: 22,
-  fiveHourResets: "1h 56m",
-  weekly: 36,
-  weeklyResets: "1d 19h",
-  unused: 28,
-  fiveHourSeries: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 20, 21, 22],
-  byModel: [
-    { name: "Fable", percent: 24 },
-    { name: "Opus", percent: 31 },
-    { name: "Sonnet", percent: 12 },
-    { name: "Haiku", percent: 3 },
-  ],
-  days: [
-    { day: "Thu", percent: 62 },
-    { day: "Fri", percent: 48 },
-    { day: "Sat", percent: 12 },
-    { day: "Sun", percent: 8 },
-    { day: "Mon", percent: 71 },
-    { day: "Tue", percent: 55 },
-    { day: "Wed", percent: 36 },
-  ],
-};
 
 export const SAMPLE_VM: VmHealth = {
   cpu: 18,

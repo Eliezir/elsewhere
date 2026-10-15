@@ -3,7 +3,10 @@ import { app, BrowserWindow, nativeImage, nativeTheme, Tray } from "electron";
 import { IPC } from "@vmc/shared";
 import { runScreenshotDebug } from "./debug";
 import { registerIpc } from "./ipc";
+import { refreshUsage } from "./services/usage";
 import { createMainWindow, createPopover, togglePopover } from "./windows";
+
+const USAGE_POLL_MS = 5 * 60 * 1000;
 
 nativeTheme.themeSource = "dark";
 
@@ -37,15 +40,20 @@ function showMainWindow(section?: string): void {
 void app.whenReady().then(() => {
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
   registerIpc({ openMainWindow: showMainWindow });
+  if (screenshotPath === undefined) {
+    void refreshUsage();
+    setInterval(() => void refreshUsage(), USAGE_POLL_MS);
+  }
   const popover = createPopover();
   const tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), "resources/trayTemplate.png")));
   tray.setToolTip("VM Companion");
   tray.on("click", () => togglePopover(popover, tray.getBounds()));
-  showMainWindow();
+  const debuggingPopover = screenshotPath !== undefined && debugView === "popover";
+  if (debuggingPopover) popover.removeAllListeners("blur");
+  else showMainWindow();
 
-  if (screenshotPath && mainWindow) {
-    runScreenshotDebug(debugView === "popover" ? popover : mainWindow, screenshotPath);
-  }
+  const target = debuggingPopover ? popover : mainWindow;
+  if (screenshotPath && target) runScreenshotDebug(target, screenshotPath);
 });
 
 app.on("activate", () => showMainWindow());

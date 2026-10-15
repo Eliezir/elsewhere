@@ -22,25 +22,39 @@ export interface Worktree {
   largeDir: { name: string; size: string } | null;
 }
 
-export interface ModelUsage {
-  name: string;
-  percent: number;
-}
-
 export interface DayUsage {
   day: string;
   percent: number;
+  hasData: boolean;
+}
+
+export interface ScopedUsage {
+  id: string;
+  title: string;
+  percent: number;
+  resets: string;
+}
+
+export interface UsageSource {
+  kind: "oauth" | "statusline" | "none";
+  error: string | null;
+  detail: string | null;
 }
 
 export interface UsageData {
-  fiveHour: number;
-  fiveHourResets: string;
-  weekly: number;
-  weeklyResets: string;
-  unused: number;
-  byModel: readonly ModelUsage[];
+  fiveHour: number | null;
+  fiveHourResets: string | null;
+  weekly: number | null;
+  weeklyResets: string | null;
+  unused: number | null;
   days: readonly DayUsage[];
   fiveHourSeries: readonly number[];
+  updatedAt: number | null;
+  ageMinutes: number | null;
+  stale: boolean;
+  sampleCount: number;
+  scoped: readonly ScopedUsage[];
+  source: UsageSource;
 }
 
 export interface VmHealth {

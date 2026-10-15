@@ -143,6 +143,7 @@ export function SelectField({ label, children, ...props }: { label: string } & C
 export function Button({
   children,
   variant = "ghost",
+  className = "",
   ...props
 }: { children: ReactNode; variant?: "primary" | "ghost" } & ComponentProps<"button">) {
   const style =
@@ -153,7 +154,7 @@ export function Button({
     <button
       type="button"
       {...props}
-      className={`no-drag cursor-default rounded-full px-4 py-2 outline-none transition-[background-color,filter] duration-200 disabled:cursor-not-allowed ${style}`}
+      className={`no-drag cursor-default rounded-full px-4 py-2 outline-none transition-[background-color,filter] duration-200 disabled:cursor-not-allowed ${style} ${className}`}
     >
       {children}
     </button>

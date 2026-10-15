@@ -3,7 +3,7 @@ import { QueueHero } from "@/components/QueueHero";
 import { Pill, Tile } from "@/components/Tile";
 import { WorktreeAccordion } from "@/components/WorktreeAccordion";
 import { useOverviewModel } from "./overview/model";
-import { Loadable, Unavailable } from "./overview/parts";
+import { Loadable, NoUsage, Unavailable } from "./overview/parts";
 
 export function OverviewView() {
   const model = useOverviewModel();
@@ -12,18 +12,22 @@ export function OverviewView() {
   return (
     <div className="grid h-full grid-cols-12 gap-3">
       <div className="col-span-9 grid min-h-0 grid-cols-3 grid-rows-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3">
-        <Tile index={0} title="5-hour usage" to="usage" action={usage && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
+        <Tile index={0} title="5-hour usage" to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
           <Loadable model={model}>
-            {usage ? (
+            {usage && usage.fiveHour !== null ? (
               <div className="flex min-h-0 flex-1 flex-col justify-between">
                 <BigNumber value={String(usage.fiveHour)} unit="%" />
                 <div className="my-3 min-h-0 flex-1">
-                  <AreaChart values={usage.fiveHourSeries} color="var(--accent)" />
+                  {usage.fiveHourSeries.length >= 2 ? (
+                    <AreaChart values={usage.fiveHourSeries} color="var(--accent)" />
+                  ) : (
+                    <p className="text-xs text-[var(--text-muted)]">Collecting samples…</p>
+                  )}
                 </div>
                 <Meter value={usage.fiveHour} />
               </div>
             ) : (
-              <Unavailable model={model} what="Claude usage" />
+              <NoUsage />
             )}
           </Loadable>
         </Tile>
@@ -83,9 +87,9 @@ export function OverviewView() {
             )}
           </Loadable>
         </Tile>
-        <Tile index={4} title="Weekly capacity" to="usage" action={usage && <Pill>{`resets in ${usage.weeklyResets}`}</Pill>}>
+        <Tile index={4} title="Weekly capacity" to="usage" action={usage?.weeklyResets && <Pill>{`resets in ${usage.weeklyResets}`}</Pill>}>
           <Loadable model={model}>
-            {usage ? (
+            {usage && usage.weekly !== null ? (
               <div className="flex min-h-0 flex-1 flex-col items-center justify-between">
                 <div className="flex w-full flex-1 items-center justify-center">
                   <HalfGauge value={usage.weekly} />
@@ -95,13 +99,13 @@ export function OverviewView() {
                     <span className="text-lg font-medium">{usage.weekly}%</span> <span className="text-[var(--text-secondary)]">used</span>
                   </span>
                   <span className="text-right">
-                    <span className="text-lg font-medium">{usage.unused}%</span>{" "}
+                    <span className="text-lg font-medium">{usage.unused === null ? "–" : `${usage.unused}%`}</span>{" "}
                     <span className="text-[var(--text-secondary)]">likely unused</span>
                   </span>
                 </div>
               </div>
             ) : (
-              <Unavailable model={model} what="Weekly capacity" />
+              <NoUsage />
             )}
           </Loadable>
         </Tile>

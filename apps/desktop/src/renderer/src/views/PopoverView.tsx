@@ -7,6 +7,7 @@ import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
 import type { Health } from "@/lib/status";
 import { useOverviewModel } from "./overview/model";
+import { NoUsage } from "./overview/parts";
 
 const DOT: Record<Health, string> = {
   ok: "bg-[var(--ok)]",
@@ -87,14 +88,14 @@ export function PopoverView() {
         {idle?.atRisk && <Pill tone="warn">idle risk</Pill>}
       </header>
       <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2">
-        <Card index={0} title="Claude usage" to="usage" action={usage && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
-          {usage ? (
+        <Card index={0} title="Claude usage" to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
+          {usage && (usage.fiveHour !== null || usage.weekly !== null) ? (
             <div className="flex gap-5">
-              <Stat label="5-hour" value={String(usage.fiveHour)} unit="%" percent={usage.fiveHour} color="var(--accent)" />
-              <Stat label="Weekly" value={String(usage.weekly)} unit="%" percent={usage.weekly} color="var(--accent)" />
+              <Stat label="5-hour" value={usage.fiveHour === null ? "–" : String(usage.fiveHour)} unit="%" percent={usage.fiveHour ?? 0} color="var(--accent)" />
+              <Stat label="Weekly" value={usage.weekly === null ? "–" : String(usage.weekly)} unit="%" percent={usage.weekly ?? 0} color="var(--accent)" />
             </div>
           ) : (
-            <p className="text-xs text-[var(--text-muted)]">Usage isn't available yet.</p>
+            <NoUsage />
           )}
         </Card>
         <Card index={1} title="VM health" to="overview" action={vm && <Pill>{`${connection.latencyMs ?? "–"} ms`}</Pill>}>
