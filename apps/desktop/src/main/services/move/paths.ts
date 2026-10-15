@@ -68,3 +68,13 @@ export async function mergeNewer(source: string, destination: string): Promise<{
   }
   return { copied, kept };
 }
+
+export async function listFiles(root: string, prefix = ""): Promise<string[]> {
+  const found: string[] = [];
+  for (const entry of await readdir(join(root, prefix), { withFileTypes: true })) {
+    const relative = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) found.push(...(await listFiles(root, relative)));
+    else if (entry.isFile() && !entry.name.startsWith("._")) found.push(relative);
+  }
+  return found.sort();
+}

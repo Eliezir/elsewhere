@@ -127,4 +127,86 @@ describe.skipIf(!live)("move against the real VM", () => {
       await runSsh(target, `rm -rf ${shq(paths.hub)} ${shq(`${home}/Developer/worktrees/${repoName}`)}`, { timeout: 60000 });
     }
   }, 600000);
+
+  for (const scenario of ["with-env", "no-env"] as const) {
+    it(`sends with the .env option on (${scenario})`, async () => {
+      const repoName = `vmclive${Date.now()}${scenario === "with-env" ? "a" : "b"}`;
+      const root = realpathSync(await mkdtemp(join(tmpdir(), "vmc-live-env-")));
+      const repo = join(root, repoName);
+      await mkdir(repo, { recursive: true });
+      git(repo, "init", "-q", "-b", "main");
+      git(repo, "config", "user.name", "Live Test");
+      git(repo, "config", "user.email", "live@example.com");
+      await writeFile(join(repo, "a.txt"), "one\n");
+      git(repo, "add", ".");
+      git(repo, "commit", "-q", "-m", "init");
+      const macPath = join(root, "wt", "feature");
+      git(repo, "worktree", "add", "-q", "-b", "feature", macPath);
+      if (scenario === "with-env") await writeFile(join(macPath, ".env"), "SECRET=1\n");
+
+      const remote = sshRemote(target);
+      const home = await remote.home();
+      const paths = vmPathsFor(home, repoName, "feature");
+      const request: MoveRequest = { direction: "to-vm", target, repo: repoName, name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: true, removeSource: false };
+      const events: MoveProgress[] = [];
+      try {
+        const result = await runMove(request, remote, (event) => events.push(event), join(root, "claude"));
+        expect(events.filter((event) => event.status === "failed")).toEqual([]);
+        expect(result.error).toBeNull();
+        if (scenario === "with-env") {
+          const check = await runSsh(target, `cat ${shq(`${paths.worktree}/.env`)}`, { timeout: 60000 });
+          expect(check.stdout).toContain("SECRET=1");
+        }
+      } finally {
+        await runSsh(target, `rm -rf ${shq(paths.hub)} ${shq(`${home}/Developer/worktrees/${repoName}`)}`, { timeout: 60000 });
+      }
+    }, 600000);
+  }
+
+  it("sends the same project twice and keeps the VM free of Mac metadata files", async () => {
+    const repoName = `vmclive${Date.now()}c`;
+    const root = realpathSync(await mkdtemp(join(tmpdir(), "vmc-live-twice-")));
+    const repo = join(root, repoName);
+    await mkdir(repo, { recursive: true });
+    git(repo, "init", "-q", "-b", "main");
+    git(repo, "config", "user.name", "Live Test");
+    git(repo, "config", "user.email", "live@example.com");
+    await writeFile(join(repo, ".gitignore"), ".env*\n");
+    await writeFile(join(repo, "a.txt"), "one\n");
+    git(repo, "add", ".");
+    git(repo, "commit", "-q", "-m", "init");
+    const macPath = join(root, "wt", "feature");
+    git(repo, "worktree", "add", "-q", "-b", "feature", macPath);
+    await writeFile(join(macPath, ".env"), "SECRET=1\n");
+    const sessionDir = join(root, "claude", encodeProjectPath(macPath));
+    await mkdir(sessionDir, { recursive: true });
+    await writeFile(join(sessionDir, "s1.jsonl"), `${JSON.stringify({ type: "user", cwd: macPath, message: { content: "first" } })}\n${JSON.stringify({ type: "assistant", cwd: macPath })}\n`);
+
+    const remote = sshRemote(target);
+    const home = await remote.home();
+    const paths = vmPathsFor(home, repoName, "feature");
+    const request: MoveRequest = { direction: "to-vm", target, repo: repoName, name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: true, removeSource: false };
+    try {
+      expect((await runMove(request, remote, () => undefined, join(root, "claude"))).error).toBeNull();
+      await writeFile(join(macPath, "later.txt"), "more\n");
+      git(macPath, "add", ".");
+      git(macPath, "commit", "-q", "-m", "more");
+      await writeFile(join(sessionDir, "s2.jsonl"), `${JSON.stringify({ type: "user", cwd: macPath, message: { content: "second" } })}\n${JSON.stringify({ type: "assistant", cwd: macPath })}\n`);
+      const second = await runMove(request, remote, () => undefined, join(root, "claude"));
+      expect(second.error).toBeNull();
+      expect(second.ok).toBe(true);
+
+      const check = await runSsh(
+        target,
+        `cd ${shq(paths.worktree)} && cat later.txt .env && echo --- && find ${shq(paths.worktree)} ${shq(`${home}/.claude/projects/${encodeProjectPath(paths.worktree)}`)} -name '._*' | wc -l && ls ${shq(`${home}/.claude/projects/${encodeProjectPath(paths.worktree)}`)}`,
+        { timeout: 60000 },
+      );
+      expect(check.stdout).toContain("more");
+      expect(check.stdout).toContain("SECRET=1");
+      expect(check.stdout).toMatch(/---\n0\n/);
+      expect(check.stdout).toContain("s2.jsonl");
+    } finally {
+      await runSsh(target, `rm -rf ${shq(paths.hub)} ${shq(`${home}/Developer/worktrees/${repoName}`)} ${shq(`${home}/.claude/projects/${encodeProjectPath(paths.worktree)}`)}`, { timeout: 60000 });
+    }
+  }, 600000);
 });

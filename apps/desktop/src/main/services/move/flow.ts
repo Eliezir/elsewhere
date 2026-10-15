@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { cp, mkdir, mkdtemp, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, mkdtemp, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -7,7 +7,7 @@ import type { MoveProgress, MoveRequest, MoveResult } from "@vmc/shared";
 import { deleteMacWorktree, deleteVmWorktree } from "../cleanup";
 import { encodeProjectPath, projectsDir } from "../sessions";
 import { shq } from "../ssh";
-import { copyRewritten, mergeNewer, vmPathsFor } from "./paths";
+import { copyRewritten, listFiles, mergeNewer, vmPathsFor } from "./paths";
 import type { Remote } from "./remote";
 
 const exec = promisify(execFile);
@@ -133,7 +133,8 @@ async function moveToVm(request: MoveRequest, remote: Remote, emit: Emit, projec
       try {
         const vmEncoded = encodeProjectPath(paths.worktree);
         const count = await copyRewritten(sessionsDir, join(staging, vmEncoded), request.macPath, paths.worktree);
-        const result = await remote.upload(staging, vmEncoded, `${home}/.claude/projects`);
+        const files = (await listFiles(join(staging, vmEncoded))).map((file) => `${vmEncoded}/${file}`);
+        const result = await remote.upload(staging, files, `${home}/.claude/projects`);
         if (result.code !== 0) throw new StepError(`Couldn't copy the sessions (${result.stderr.trim().split("\n").pop() ?? "tar failed"})`);
         return count;
       } finally {
@@ -143,18 +144,20 @@ async function moveToVm(request: MoveRequest, remote: Remote, emit: Emit, projec
   }
 
   if (request.includeEnv) {
-    const names = (await readdir(request.macPath)).filter((name) => name === ".env" || name.startsWith(".env."));
+    const candidates = (await readdir(request.macPath)).filter((name) => name === ".env" || name.startsWith(".env."));
+    const names: string[] = [];
+    for (const name of candidates) if ((await lstat(join(request.macPath, name))).isFile()) names.push(name);
     if (names.length > 0) {
       await step(emit, "env", async () => {
         const staging = await mkdtemp(join(tmpdir(), "vmc-env-"));
         try {
           for (const name of names) await cp(join(request.macPath, name), join(staging, name));
-          const result = await remote.upload(staging, ".", paths.worktree);
-          if (result.code !== 0) throw new StepError("Couldn't copy the .env files");
+          const result = await remote.upload(staging, names, paths.worktree);
+          if (result.code !== 0) throw new StepError(`Couldn't copy the .env files (${result.stderr.trim().split("\n").pop() ?? "tar failed"})`);
         } finally {
           await rm(staging, { recursive: true, force: true });
         }
-      });
+      }, () => `${names.length} ${names.length === 1 ? "file" : "files"}`);
     }
   }
 

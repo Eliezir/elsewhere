@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync, readdirSync, realpathSync } from "node:fs";
 import { appendFile, mkdir, mkdtemp, readFile, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -164,5 +164,68 @@ describe("removing the original after the move", () => {
     await runMove(w.request, w.remote, quiet, w.macProjects);
     expect(existsSync(w.macPath)).toBe(true);
     expect(existsSync(w.paths.worktree)).toBe(true);
+  });
+});
+
+describe("copying .env files", () => {
+  it("copies .env files only when asked, as plain files with no Mac metadata", async () => {
+    const w = await world();
+    await writeFile(join(w.repo, ".gitignore"), ".env*\n");
+    git(w.repo, "add", ".");
+    git(w.repo, "commit", "-q", "-m", "ignore env");
+    git(w.macPath, "merge", "-q", "main");
+    await writeFile(join(w.macPath, ".env"), "SECRET=1\n");
+    await writeFile(join(w.macPath, ".env.local"), "LOCAL=2\n");
+    const events: MoveProgress[] = [];
+
+    const result = await runMove({ ...w.request, includeEnv: true }, w.remote, (event) => events.push(event), w.macProjects);
+    expect(result.ok).toBe(true);
+    expect(await readFile(join(w.paths.worktree, ".env"), "utf8")).toBe("SECRET=1\n");
+    expect(await readFile(join(w.paths.worktree, ".env.local"), "utf8")).toBe("LOCAL=2\n");
+    expect(events.filter((event) => event.step === "env").pop()).toMatchObject({ status: "done", detail: "2 files" });
+    expect(readdirSync(w.paths.worktree).filter((name) => name.startsWith("._"))).toEqual([]);
+  });
+
+  it("does not copy them when the option is off", async () => {
+    const w = await world();
+    await writeFile(join(w.repo, ".gitignore"), ".env*\n");
+    git(w.repo, "add", ".");
+    git(w.repo, "commit", "-q", "-m", "ignore env");
+    git(w.macPath, "merge", "-q", "main");
+    await writeFile(join(w.macPath, ".env"), "SECRET=1\n");
+    await runMove(w.request, w.remote, quiet, w.macProjects);
+    expect(existsSync(join(w.paths.worktree, ".env"))).toBe(false);
+  });
+
+  it("skips the step quietly when the option is on but the project has none", async () => {
+    const w = await world();
+    const events: MoveProgress[] = [];
+    const result = await runMove({ ...w.request, includeEnv: true }, w.remote, (event) => events.push(event), w.macProjects);
+    expect(result.ok).toBe(true);
+    expect(events.some((event) => event.step === "env")).toBe(false);
+  });
+
+  it("ignores a .env that is a folder instead of failing", async () => {
+    const w = await world();
+    await mkdir(join(w.macPath, ".env"));
+    await writeFile(join(w.macPath, ".env", "inner.txt"), "x\n");
+    await writeFile(join(w.repo, ".gitignore"), ".env*\n");
+    git(w.repo, "add", ".");
+    git(w.repo, "commit", "-q", "-m", "ignore env");
+    git(w.macPath, "merge", "-q", "main");
+    const result = await runMove({ ...w.request, includeEnv: true }, w.remote, quiet, w.macProjects);
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(w.paths.worktree, ".env"))).toBe(false);
+  });
+
+  it("sends the same project twice, updating the sessions the second time", async () => {
+    const w = await world();
+    expect((await runMove(w.request, w.remote, quiet, w.macProjects)).ok).toBe(true);
+    await writeFile(join(w.macPath, "later.txt"), "more\n");
+    git(w.macPath, "add", ".");
+    git(w.macPath, "commit", "-q", "-m", "more work");
+    const again = await runMove(w.request, w.remote, quiet, w.macProjects);
+    expect(again.ok).toBe(true);
+    expect(await readFile(join(w.paths.worktree, "later.txt"), "utf8")).toBe("more\n");
   });
 });
