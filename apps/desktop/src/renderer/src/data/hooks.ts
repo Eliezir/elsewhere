@@ -140,3 +140,16 @@ export function useVmStorage() {
     retry: false,
   });
 }
+
+export function useTwinSync(mac: Worktree | null, vm: Worktree | null, enabled: boolean) {
+  const [settings] = useSettings();
+  const target = { host: settings.host.trim(), user: settings.user.trim() };
+  const input = mac && vm && mac.branch ? { target, branch: mac.branch, macPath: mac.path, vmPath: vm.path } : null;
+  return useQuery({
+    queryKey: ["twin-sync", mac?.path, vm?.path, mac?.head, vm?.head],
+    queryFn: () => (input ? window.api.compareTwins(input) : Promise.reject(new Error("No pair"))),
+    enabled: enabled && input !== null,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}

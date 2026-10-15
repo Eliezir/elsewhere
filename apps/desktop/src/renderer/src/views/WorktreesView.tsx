@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { MacTerminalButton } from "@/components/TerminalButtons";
 import { OpenInToolButton } from "@/components/OpenInToolButton";
+import { TwinSyncCard } from "@/components/TwinSyncCard";
 import { OpenVmInClaudeButton } from "@/components/OpenVmInClaudeButton";
 import { OpenVmInT3Button } from "@/components/OpenVmInT3Button";
 import { OriginBadge } from "@/components/OriginBadge";
@@ -58,8 +59,8 @@ function Row({ tree, icon, size, stale, origin, tools, selected, index, hasTwin,
     >
       <ProjectIcon repo={tree.repo} icon={icon} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-[15px]">{tree.name}</span>
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="min-w-[3.5rem] shrink-0 truncate text-[15px]">{tree.name}</span>
           <Pill tone={tree.location === "vm" ? "ok" : "neutral"}>{PLACE[tree.location]}</Pill>
           {hasTwin && <Pill>{tree.location === "mac" ? "also on VM" : "also on Mac"}</Pill>}
           {(origin.kind === "conductor" || origin.kind === "t3code" || origin.kind === "claude") && <OriginBadge origin={origin} tools={tools} />}
@@ -279,6 +280,7 @@ export function WorktreesView() {
     (tree) => (filter === "all" || tree.location === filter) && (needle === "" || `${tree.name} ${tree.branch ?? ""} ${tree.repo}`.toLowerCase().includes(needle)),
   );
   const selected = visible.find((tree) => tree.id === selectedId) ?? visible[0] ?? null;
+  const selectedTwin = selected ? counterpartOf(selected, worktrees) : null;
   const vmProblem = vm.data && !vm.data.reachable ? vm.data.error : null;
 
   const refresh = () => {
@@ -348,6 +350,9 @@ export function WorktreesView() {
               <Stat label="Last active" value={timeAgo(selected.lastActive).replace(" ago", "")} />
               <Stat label="Disk size" value={typeof sizes[selected.id] === "number" ? formatBytes(sizes[selected.id] ?? 0) : "…"} />
             </div>
+            {selectedTwin && (
+              <TwinSyncCard key={`${selected.id}-${selectedTwin.id}`} mac={selected.location === "mac" ? selected : selectedTwin} vm={selected.location === "vm" ? selected : selectedTwin} vmReachable={vm.data?.reachable ?? false} onSynced={refresh} />
+            )}
             {staleIds.has(selected.id) && <p className="mt-2 shrink-0 text-xs text-[var(--warn)]">{`Stale: ${staleInfo(selected, settings.staleDays).reasons.join(" · ")}`}</p>}
             <div className="mb-1.5 mt-4 shrink-0 text-xs text-[var(--text-secondary)]">Claude sessions</div>
             <div className="max-h-32 shrink-0 space-y-1.5 overflow-y-auto">
@@ -367,7 +372,7 @@ export function WorktreesView() {
               ))}
             </div>
             <MovePanel key={selected.id} tree={selected} all={worktrees} vm={vm.data} onMoved={refresh} />
-            <DeleteWorktreePanel key={`delete-${selected.id}`} tree={selected} vmReachable={vm.data?.reachable ?? false} size={sizes[selected.id]} onDeleted={refresh} />
+            <DeleteWorktreePanel key={`delete-${selected.id}`} tree={selected} twin={selectedTwin} vmReachable={vm.data?.reachable ?? false} sizes={sizes} onDeleted={refresh} />
           </div>
         ) : (
           <p className="text-xs text-[var(--text-muted)]">Select a worktree to see its sessions and move it.</p>

@@ -38,3 +38,20 @@ export const MoveResultSchema = z.object({
 export type MoveRequest = z.infer<typeof MoveRequestSchema>;
 export type MoveProgress = z.infer<typeof MoveProgressSchema>;
 export type MoveResult = z.infer<typeof MoveResultSchema>;
+
+export const TwinSyncInputSchema = z.object({
+  target: VmTargetSchema,
+  branch: safeBranch,
+  macPath: absolutePath,
+  vmPath: absolutePath,
+});
+
+export const TwinSyncResultSchema = z.object({
+  ok: z.boolean(),
+  macOnly: z.number().int().min(0),
+  vmOnly: z.number().int().min(0),
+  error: z.string().nullable(),
+});
+
+export type TwinSyncInput = z.infer<typeof TwinSyncInputSchema>;
+export type TwinSyncResult = z.infer<typeof TwinSyncResultSchema>;

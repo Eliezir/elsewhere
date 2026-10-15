@@ -16,7 +16,7 @@ export type Emit = (progress: MoveProgress) => void;
 
 class StepError extends Error {}
 
-async function localGit(cwd: string, args: readonly string[], env: Record<string, string> = {}): Promise<string> {
+export async function localGit(cwd: string, args: readonly string[], env: Record<string, string> = {}): Promise<string> {
   try {
     const { stdout } = await exec("git", ["-C", cwd, ...args], {
       timeout: 10 * 60 * 1000,

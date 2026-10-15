@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, IPC, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, VmT3InputSchema, VmT3OpenSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, ClaudeDesktopOpenSchema, IPC, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, VmT3InputSchema, VmT3OpenSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -10,6 +10,7 @@ import { connectTailscale, disconnectTailscale } from "./services/tailscaleContr
 import { openMacTerminal, openVmTerminal } from "./services/terminal";
 import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
+import { compareTwins } from "./services/move/twin";
 import { setForward } from "./services/forwards";
 import { openInClaudeDesktop } from "./services/claudeDesktop";
 import { getVmPorts, killVmPort } from "./services/vmPorts";
@@ -125,6 +126,7 @@ export function registerIpc(actions: IpcActions): void {
   ipcMain.handle(IPC.iconClear, async (_event, input: unknown) => clearCustomIcon(IconRepoSchema.parse(input).repo));
   ipcMain.handle(IPC.openMacTerminal, (_event, path: unknown) => openMacTerminal(path));
   ipcMain.handle(IPC.openTerminal, (_event, input: unknown) => openVmTerminal(TerminalInputSchema.parse(input)));
+  ipcMain.handle(IPC.twinSync, (_event, input: unknown) => compareTwins(TwinSyncInputSchema.parse(input)));
   ipcMain.handle(IPC.moveStart, async (_event, input: unknown): Promise<MoveResult> => {
     const request = MoveRequestSchema.parse(input);
     if (moving) return { ok: false, error: "Another move is already running.", note: null, vmPath: null };

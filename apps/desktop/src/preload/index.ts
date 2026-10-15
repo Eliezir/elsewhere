@@ -13,6 +13,7 @@ const api: Api = {
   openLocalPort: (port) => ipcRenderer.invoke(IPC.openLocalPort, port),
   getVmStorage: (input) => ipcRenderer.invoke(IPC.vmStorage, input),
   getVmSnapshot: (input) => ipcRenderer.invoke(IPC.vmSnapshot, input),
+  compareTwins: (input) => ipcRenderer.invoke(IPC.twinSync, input),
   startMove: (request) => ipcRenderer.invoke(IPC.moveStart, request),
   onMoveProgress: (listener) => {
     const handler = (_event: Electron.IpcRendererEvent, progress: Parameters<typeof listener>[0]) => listener(progress);

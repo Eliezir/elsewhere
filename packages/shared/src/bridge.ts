@@ -1,6 +1,6 @@
 import type { TailscaleStatus } from "./status";
 import type { TailscaleControlResult } from "./status";
-import type { MoveProgress, MoveRequest, MoveResult } from "./move";
+import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
 import type { UsageSnapshot } from "./usage";
 import type { VmTarget } from "./worktree";
 import type { KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput } from "./ports";
@@ -15,6 +15,7 @@ export const IPC = {
   macWorktrees: "worktrees:mac",
   vmSnapshot: "vm:snapshot",
   moveStart: "move:start",
+  twinSync: "move:twin-sync",
   moveProgress: "move:progress",
   openTerminal: "vm:open-terminal",
   openMacTerminal: "terminal:open-mac",
@@ -51,6 +52,7 @@ export interface Api {
   getMacWorktrees(repos: string[]): Promise<Worktree[]>;
   getVmSnapshot(input: VmInput): Promise<VmSnapshot>;
   startMove(request: MoveRequest): Promise<MoveResult>;
+  compareTwins(input: TwinSyncInput): Promise<TwinSyncResult>;
   onMoveProgress(listener: (progress: MoveProgress) => void): () => void;
   openVmTerminal(input: TerminalInput): Promise<string | null>;
   openMacTerminal(path: string): Promise<string | null>;
