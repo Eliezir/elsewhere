@@ -47,7 +47,7 @@
 **At a glance**
 - Claude usage (5-hour and weekly) with reset timers, VM health and the 7-day idle gauge.
 - A menu bar popover with usage, health and the ports of your running projects.
-- Tailscale state, SSH approval prompts and reconnecting, without leaving the app.
+- Tailscale state, SSH approval prompts and reconnecting, without leaving the app. The menu bar icon shows a dot when Tailscale SSH needs your approval and a ring when the VM is unreachable.
 
 ## Install
 
@@ -80,6 +80,7 @@ In Claude Desktop, where `/plugin` does not run: click + next to the prompt box,
 ## Troubleshooting
 
 - **The VM tab is empty or says it can't reach the VM.** Check Tailscale is connected and that `ssh <user>@<vm-host> echo ok` prints `ok` without a prompt.
+- **Tailscale keeps asking for SSH approval.** Elsewhere shows a dot on its menu bar icon and an **Approve SSH access** button. To stop the prompts, open your tailnet's access rules and set **Check mode** to **Off** for the SSH rule (`"action": "accept"`), or raise `checkPeriod` up to `168h`.
 - **`localhost:5173` opens a different project.** Something else on your Mac holds that port. Use the link on the port's row, or pin a port.
 - **Remote Control, phone apps and similar features** depend on your Claude plan. Elsewhere does not need them.
 
