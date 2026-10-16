@@ -4,7 +4,7 @@ import { getLinkStatus, linkTooltip, onLinkChange, trayIconName } from "./servic
 import { getPrefs, keepsRunningInBackground, loadPrefs, onPrefsChange } from "./services/prefs";
 import type { LinkState } from "@vmc/shared";
 import { join } from "node:path";
-import { app, BrowserWindow, Menu, nativeImage, nativeTheme, Tray } from "electron";
+import { app, BrowserWindow, Menu, nativeImage, nativeTheme, powerMonitor, Tray } from "electron";
 import { IPC } from "@vmc/shared";
 import { runScreenshotDebug } from "./debug";
 import { registerIpc } from "./ipc";
@@ -23,6 +23,12 @@ const screenshotPath = process.env.VMC_DEBUG_SCREENSHOT;
 const debugView = process.env.VMC_DEBUG_VIEW ?? "main";
 
 let mainWindow: BrowserWindow | null = null;
+let quitRequested = false;
+
+function quitForReal(): void {
+  quitRequested = true;
+  app.quit();
+}
 
 function sendSection(window: BrowserWindow, section: string | undefined): void {
   if (section === undefined) return;
@@ -79,7 +85,7 @@ function syncTray(popover: BrowserWindow): void {
         { label: "Open Elsewhere", click: () => showMainWindow() },
         { label: "Ports", click: () => showMainWindow("vm") },
         { type: "separator" },
-        { label: "Quit Elsewhere", click: () => app.quit() },
+        { label: "Quit Elsewhere", click: quitForReal },
       ]),
     ),
   );
@@ -87,6 +93,9 @@ function syncTray(popover: BrowserWindow): void {
 }
 
 void app.whenReady().then(async () => {
+  powerMonitor.on("shutdown", () => {
+    quitRequested = true;
+  });
   await loadPrefs();
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
   registerIpc({ openMainWindow: showMainWindow });
@@ -123,7 +132,13 @@ app.on("activate", () => {
   if (mainWindow === null || mainWindow.isDestroyed() || !mainWindow.isVisible()) showMainWindow();
 });
 app.on("window-all-closed", () => undefined);
-app.on("before-quit", () => {
+app.on("before-quit", (event) => {
+  if (!quitRequested && screenshotPath === undefined && keepsRunningInBackground(getPrefs())) {
+    event.preventDefault();
+    if (mainWindow !== null && !mainWindow.isDestroyed()) mainWindow.close();
+    applyDock();
+    return;
+  }
   stopForwardLoop();
   stopAllForwards();
 });
