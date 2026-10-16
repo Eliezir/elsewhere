@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, ForwardConfigSchema, IPC, PortPinSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -14,6 +14,7 @@ import { compareTwins } from "./services/move/twin";
 import { setForward, setPortPin } from "./services/forwards";
 import { refreshLink, setForwardConfig } from "./services/forwardLoop";
 import { getLinkStatus } from "./services/link";
+import { setPrefs } from "./services/prefs";
 import { openInClaudeDesktop } from "./services/claudeDesktop";
 import { getVmPorts, killVmPort } from "./services/vmPorts";
 import { getVmStorage } from "./services/vmStorage";
@@ -74,6 +75,7 @@ export function registerIpc(actions: IpcActions): void {
   });
   ipcMain.handle(IPC.linkStatus, () => getLinkStatus());
   ipcMain.handle(IPC.linkRefresh, () => refreshLink());
+  ipcMain.handle(IPC.appPrefs, (_event, input: unknown) => setPrefs(AppPrefsSchema.parse(input)));
   ipcMain.handle(IPC.portPin, (_event, input: unknown) => setPortPin(PortPinSchema.parse(input)));
   ipcMain.handle(IPC.forwardConfig, (_event, input: unknown) => setForwardConfig(ForwardConfigSchema.parse(input)));
   ipcMain.handle(IPC.vmPortKill, (_event, input: unknown) => {

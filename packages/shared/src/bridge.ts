@@ -3,7 +3,7 @@ import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
 import type { UsageSnapshot } from "./usage";
 import type { VmTarget } from "./worktree";
-import type { ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput } from "./ports";
+import type { AppPrefs, ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput } from "./ports";
 import type { ClaudeDesktopOpenResult, T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
@@ -40,6 +40,7 @@ export const IPC = {
   vmPortKill: "vm:port-kill",
   forwardConfig: "vm:forward-config",
   portPin: "vm:port-pin",
+  appPrefs: "app:prefs",
   linkStatus: "vm:link-status",
   linkRefresh: "vm:link-refresh",
   linkChanged: "vm:link-changed",
@@ -80,6 +81,7 @@ export interface Api {
   killVmPort(input: KillPortInput): Promise<KillPortResult>;
   setForwardConfig(input: ForwardConfig): Promise<void>;
   setPortPin(input: PortPin): Promise<void>;
+  setAppPrefs(input: AppPrefs): Promise<void>;
   getLinkStatus(): Promise<LinkStatus>;
   refreshLinkStatus(): Promise<LinkStatus>;
   onLinkStatus(listener: (status: LinkStatus) => void): () => void;

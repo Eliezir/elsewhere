@@ -123,6 +123,13 @@ export function SettingsView() {
         <div className="flex min-h-0 flex-1 flex-col">
           <ToggleRow label="Start at login" checked={settings.startAtLogin} onChange={(startAtLogin) => update({ startAtLogin })} />
           <ToggleRow label="Show in the menu bar" checked={settings.showInMenuBar} onChange={(showInMenuBar) => update({ showInMenuBar })} />
+          <ToggleRow
+            label="Keep running when the window is closed"
+            hint="Hides the Dock icon and keeps forwarding ports from the menu bar. Right-click the menu bar icon to quit."
+            checked={settings.runInBackground}
+            onChange={(runInBackground) => update({ runInBackground })}
+            disabled={!settings.showInMenuBar}
+          />
           <div className="flex items-center justify-between py-2">
             <span>Appearance</span>
             <span className="text-[var(--text-secondary)]">Dark</span>

@@ -71,6 +71,13 @@ export const LinkStatusSchema = z.object({
 });
 export type LinkStatus = z.infer<typeof LinkStatusSchema>;
 
+export const AppPrefsSchema = z.object({
+  startAtLogin: z.boolean(),
+  runInBackground: z.boolean(),
+  showInMenuBar: z.boolean(),
+});
+export type AppPrefs = z.infer<typeof AppPrefsSchema>;
+
 export const PortPinSchema = z.object({
   key: z.string().min(1).max(400),
   local: z.number().int().min(1024).max(65535).nullable(),

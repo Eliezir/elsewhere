@@ -1,9 +1,10 @@
 import { stopAllForwards } from "./services/forwards";
 import { startForwardLoop, stopForwardLoop } from "./services/forwardLoop";
 import { getLinkStatus, linkTooltip, onLinkChange, trayIconName } from "./services/link";
+import { getPrefs, keepsRunningInBackground, loadPrefs, onPrefsChange } from "./services/prefs";
 import type { LinkState } from "@vmc/shared";
 import { join } from "node:path";
-import { app, BrowserWindow, nativeImage, nativeTheme, Tray } from "electron";
+import { app, BrowserWindow, Menu, nativeImage, nativeTheme, Tray } from "electron";
 import { IPC } from "@vmc/shared";
 import { runScreenshotDebug } from "./debug";
 import { registerIpc } from "./ipc";
@@ -30,11 +31,20 @@ function sendSection(window: BrowserWindow, section: string | undefined): void {
   else send();
 }
 
+function applyDock(): void {
+  if (process.platform !== "darwin" || screenshotPath !== undefined) return;
+  const windowOpen = mainWindow !== null && !mainWindow.isDestroyed() && mainWindow.isVisible();
+  if (windowOpen || !keepsRunningInBackground(getPrefs())) void app.dock?.show();
+  else app.dock?.hide();
+}
+
 function showMainWindow(section?: string): void {
+  if (process.platform === "darwin" && screenshotPath === undefined) void app.dock?.show();
   if (mainWindow === null || mainWindow.isDestroyed()) {
     mainWindow = createMainWindow(screenshotPath !== undefined);
     mainWindow.on("closed", () => {
       mainWindow = null;
+      applyDock();
     });
     sendSection(mainWindow, section);
     return;
@@ -50,7 +60,34 @@ function trayImage(state: LinkState): Electron.NativeImage {
   return nativeImage.createFromPath(join(app.getAppPath(), `resources/${trayIconName(state)}.png`));
 }
 
-void app.whenReady().then(() => {
+let tray: Tray | null = null;
+
+function syncTray(popover: BrowserWindow): void {
+  const wanted = getPrefs().showInMenuBar || screenshotPath !== undefined;
+  if (!wanted) {
+    tray?.destroy();
+    tray = null;
+    return;
+  }
+  if (tray !== null) return;
+  const created = new Tray(trayImage(getLinkStatus().state));
+  created.setToolTip(linkTooltip(getLinkStatus()));
+  created.on("click", () => togglePopover(popover, created.getBounds()));
+  created.on("right-click", () =>
+    created.popUpContextMenu(
+      Menu.buildFromTemplate([
+        { label: "Open Elsewhere", click: () => showMainWindow() },
+        { label: "Ports", click: () => showMainWindow("vm") },
+        { type: "separator" },
+        { label: "Quit Elsewhere", click: () => app.quit() },
+      ]),
+    ),
+  );
+  tray = created;
+}
+
+void app.whenReady().then(async () => {
+  await loadPrefs();
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
   registerIpc({ openMainWindow: showMainWindow });
   startForwardLoop();
@@ -59,22 +96,32 @@ void app.whenReady().then(() => {
     setInterval(() => void refreshUsage(), USAGE_POLL_MS);
   }
   const popover = createPopover();
-  const tray = new Tray(trayImage(getLinkStatus().state));
-  tray.setToolTip(linkTooltip(getLinkStatus()));
+  syncTray(popover);
   onLinkChange((status) => {
-    tray.setImage(trayImage(status.state));
-    tray.setToolTip(linkTooltip(status));
+    tray?.setImage(trayImage(status.state));
+    tray?.setToolTip(linkTooltip(status));
   });
-  tray.on("click", () => togglePopover(popover, tray.getBounds()));
+  onPrefsChange(() => {
+    syncTray(popover);
+    applyDock();
+  });
   const debuggingPopover = screenshotPath !== undefined && debugView === "popover";
   if (debuggingPopover) popover.removeAllListeners("blur");
+  else if (startedHidden()) applyDock();
   else showMainWindow();
 
   const target = debuggingPopover ? popover : mainWindow;
   if (screenshotPath && target) runScreenshotDebug(target, screenshotPath);
 });
 
-app.on("activate", () => showMainWindow());
+function startedHidden(): boolean {
+  if (screenshotPath !== undefined || !keepsRunningInBackground(getPrefs())) return false;
+  return process.argv.includes("--hidden") || (process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin);
+}
+
+app.on("activate", () => {
+  if (mainWindow === null || mainWindow.isDestroyed() || !mainWindow.isVisible()) showMainWindow();
+});
 app.on("window-all-closed", () => undefined);
 app.on("before-quit", () => {
   stopForwardLoop();

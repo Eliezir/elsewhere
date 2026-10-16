@@ -18,6 +18,7 @@ const api: Api = {
       ipcRenderer.removeListener(IPC.linkChanged, handler);
     };
   },
+  setAppPrefs: (input) => ipcRenderer.invoke(IPC.appPrefs, input),
   setPortPin: (input) => ipcRenderer.invoke(IPC.portPin, input),
   setForwardConfig: (input) => ipcRenderer.invoke(IPC.forwardConfig, input),
   killVmPort: (input) => ipcRenderer.invoke(IPC.vmPortKill, input),
