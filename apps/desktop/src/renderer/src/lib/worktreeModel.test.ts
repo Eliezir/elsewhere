@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Worktree } from "@/data/types";
-import { ageDays, groupByProject, matchesMode, stateOf, suggestLabel } from "./worktreeModel";
+import { ageDays, groupByProject, matchesMode, sortTrees, stateOf, suggestLabel } from "./worktreeModel";
 
 const NOW = 1_800_000_000;
 const DAY = 86400;
@@ -60,5 +60,26 @@ describe("suggestLabel", () => {
   it("leaves meaningful names and main checkouts alone", () => {
     expect(suggestLabel({ name: "vm-companion", branch: "main", isMain: false })).toBeNull();
     expect(suggestLabel({ name: "adt-studio-main", branch: "develop", isMain: true })).toBeNull();
+  });
+});
+
+describe("sorting", () => {
+  const a = tree({ id: "a", name: "zeta", lastActive: NOW - DAY, modified: 4 });
+  const b = tree({ id: "b", name: "alpha", lastActive: NOW - 90 * DAY, merged: true });
+  const c = tree({ id: "c", name: "mid", lastActive: NOW - 40 * DAY });
+  const sizes = { a: 10, b: 500, c: null };
+  const ids = (key: Parameters<typeof sortTrees>[1]) => sortTrees([a, b, c], key, sizes, {}, NOW, 30).map((entry) => entry.id);
+
+  it("orders by activity, size, name and changes", () => {
+    expect(ids("recent")).toEqual(["a", "c", "b"]);
+    expect(ids("oldest")).toEqual(["b", "c", "a"]);
+    expect(ids("size")).toEqual(["b", "a", "c"]);
+    expect(ids("name")).toEqual(["b", "c", "a"]);
+    expect(ids("changes")).toEqual(["a", "b", "c"]);
+  });
+
+  it("puts the safest deletions first for cleanup and uses aliases for names", () => {
+    expect(ids("cleanup")).toEqual(["b", "c", "a"]);
+    expect(sortTrees([a, b], "name", sizes, { [a.path]: "aaa" }, NOW, 30).map((entry) => entry.id)).toEqual(["a", "b"]);
   });
 });

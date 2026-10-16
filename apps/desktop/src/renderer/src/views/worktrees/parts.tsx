@@ -1,6 +1,8 @@
+import { Popover } from "@base-ui/react/popover";
+import { AnimatePresence, motion } from "motion/react";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import type { Worktree } from "@/data/types";
-import { isMerged, isOld, suggestLabel, type StaleMode, type TreeState } from "@/lib/worktreeModel";
+import { isMerged, isOld, suggestLabel, type SortKey, type StaleMode, type TreeState } from "@/lib/worktreeModel";
 
 export const STATE_META: Record<TreeState, { label: string; color: string; soft: string }> = {
   active: { label: "Active", color: "oklch(0.78 0.16 165)", soft: "oklch(0.78 0.16 165 / 0.16)" },
@@ -112,61 +114,132 @@ export function Rename({ tree, alias, onAlias }: RenameProps) {
   );
 }
 
+export const SORTS: { value: SortKey; label: string; hint: string }[] = [
+  { value: "recent", label: "Last active", hint: "Most recent work first" },
+  { value: "oldest", label: "Oldest first", hint: "Longest untouched first" },
+  { value: "cleanup", label: "Cleanup priority", hint: "Old and merged first, biggest first" },
+  { value: "size", label: "Size", hint: "Largest on disk first" },
+  { value: "changes", label: "Uncommitted work", hint: "Most modified files and unpushed commits first" },
+  { value: "name", label: "Name", hint: "A to Z" },
+];
+
+const STALE_RULES = MODES.filter((entry) => entry.value !== "all");
+
+const POPUP = "z-50 rounded-2xl border border-[var(--hairline)] bg-[oklch(0.15_0.05_285)] p-2 shadow-2xl outline-none transition-[opacity,transform] duration-150 data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0";
+
+const TRIGGER = "no-drag flex cursor-default items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--hairline)] bg-[var(--glass-strong)] px-3 py-1.5 text-xs outline-none transition-colors duration-200 hover:bg-white/10 data-[popup-open]:bg-white/10";
+
+function Option({ active, label, hint, onClick }: { active: boolean; label: string; hint?: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={`no-drag flex w-full cursor-default items-center gap-2.5 rounded-xl px-2.5 py-2 text-left outline-none transition-colors duration-150 ${active ? "bg-[var(--accent)]/30" : "hover:bg-white/8"}`}
+    >
+      <span className={`flex size-3.5 shrink-0 items-center justify-center rounded-full border transition-colors duration-150 ${active ? "border-[var(--accent)]" : "border-white/25"}`}>
+        <span className={`size-1.5 rounded-full bg-[var(--accent)] transition-transform duration-150 ${active ? "scale-100" : "scale-0"}`} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-xs">{label}</span>
+        {hint && <span className="block text-[11px] leading-snug text-[var(--text-muted)]">{hint}</span>}
+      </span>
+    </button>
+  );
+}
+
 interface FilterBarProps {
   mode: StaleMode;
   days: number;
   query: string;
+  sort: SortKey;
   counts: Record<StaleMode, number>;
   onMode: (mode: StaleMode) => void;
   onDays: (days: number) => void;
   onQuery: (query: string) => void;
+  onSort: (sort: SortKey) => void;
 }
 
-export function FilterBar({ mode, days, query, counts, onMode, onDays, onQuery }: FilterBarProps) {
+export function FilterBar({ mode, days, query, sort, counts, onMode, onDays, onQuery, onSort }: FilterBarProps) {
+  const staleOn = mode !== "all";
+  const rule = STALE_RULES.find((entry) => entry.value === mode);
+  const sortLabel = SORTS.find((entry) => entry.value === sort)?.label ?? "";
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <div className="flex gap-1 rounded-full border border-[var(--hairline)] bg-[var(--glass-strong)] p-1" role="radiogroup" aria-label="Show">
-        {MODES.map((entry) => {
-          const active = mode === entry.value;
-          return (
-            <button
-              key={entry.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              title={entry.hint}
-              onClick={() => onMode(entry.value)}
-              className={`no-drag flex cursor-default items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs outline-none transition-colors duration-200 ${active ? "bg-[var(--accent)]/45 text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
-            >
-              {entry.label}
-              <span className="text-[10px] tabular-nums opacity-70">{counts[entry.value]}</span>
-            </button>
-          );
-        })}
+        <button type="button" role="radio" aria-checked={!staleOn} onClick={() => onMode("all")} className={`no-drag flex cursor-default items-center gap-1.5 rounded-full px-3 py-1 text-xs outline-none transition-colors duration-200 ${!staleOn ? "bg-[var(--accent)]/45" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+          All
+          <span className="text-[10px] tabular-nums opacity-70">{counts.all}</span>
+        </button>
+        <button type="button" role="radio" aria-checked={staleOn} onClick={() => onMode(staleOn ? mode : "either")} className={`no-drag flex cursor-default items-center gap-1.5 rounded-full px-3 py-1 text-xs outline-none transition-colors duration-200 ${staleOn ? "bg-[var(--accent)]/45" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+          Stale
+          <span className="text-[10px] tabular-nums opacity-70">{counts[staleOn ? mode : "either"]}</span>
+        </button>
       </div>
-      <div className="flex items-center gap-1 rounded-full border border-[var(--hairline)] bg-[var(--glass-strong)] p-1" role="radiogroup" aria-label="Old means">
-        <span className="px-2 text-[11px] text-[var(--text-muted)]">Old after</span>
-        {DAY_OPTIONS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={days === option}
-            onClick={() => onDays(option)}
-            className={`no-drag cursor-default rounded-full px-2.5 py-1 text-xs tabular-nums outline-none transition-colors duration-200 ${days === option ? "bg-white/15 text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
-          >
-            {`${option} d`}
-          </button>
-        ))}
+      <AnimatePresence initial={false}>
+        {staleOn && (
+          <motion.div initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }} transition={{ duration: 0.18 }}>
+            <Popover.Root>
+              <Popover.Trigger className={TRIGGER} aria-label="What counts as stale">
+                <span className="text-[var(--text-muted)]">Stale means</span>
+                <span>{`${rule?.label ?? ""} · ${days} d`}</span>
+                <span aria-hidden="true" className="text-[10px] text-[var(--text-muted)]">▾</span>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Positioner sideOffset={8} align="start" className="z-50">
+                  <Popover.Popup className={`${POPUP} w-72`}>
+                    <div className="px-2.5 pb-1 pt-1.5 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">Count a worktree when it is</div>
+                    <div role="radiogroup" aria-label="Stale rule">
+                      {STALE_RULES.map((entry) => (
+                        <Option key={entry.value} active={mode === entry.value} label={`${entry.label} (${counts[entry.value]})`} hint={entry.hint} onClick={() => onMode(entry.value)} />
+                      ))}
+                    </div>
+                    <div className="mx-2.5 my-2 h-px bg-[var(--hairline)]" />
+                    <div className="px-2.5 pb-1.5 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">Old after</div>
+                    <div className="flex gap-1 px-1.5 pb-1" role="radiogroup" aria-label="Old after">
+                      {DAY_OPTIONS.map((option) => (
+                        <button key={option} type="button" role="radio" aria-checked={days === option} onClick={() => onDays(option)} className={`no-drag flex-1 cursor-default rounded-full py-1 text-xs tabular-nums outline-none transition-colors duration-200 ${days === option ? "bg-[var(--accent)]/45" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"}`}>
+                          {`${option} d`}
+                        </button>
+                      ))}
+                    </div>
+                  </Popover.Popup>
+                </Popover.Positioner>
+              </Popover.Portal>
+            </Popover.Root>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="ml-auto flex items-center gap-2.5">
+        <Popover.Root>
+          <Popover.Trigger className={TRIGGER} aria-label="Sort worktrees">
+            <span aria-hidden="true" className="text-[var(--text-muted)]">⇅</span>
+            <span className="text-[var(--text-muted)]">Sort</span>
+            <span>{sortLabel}</span>
+            <span aria-hidden="true" className="text-[10px] text-[var(--text-muted)]">▾</span>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Positioner sideOffset={8} align="end" className="z-50">
+              <Popover.Popup className={`${POPUP} w-64`}>
+                <div role="radiogroup" aria-label="Sort by">
+                  {SORTS.map((entry) => (
+                    <Option key={entry.value} active={sort === entry.value} label={entry.label} hint={entry.hint} onClick={() => onSort(entry.value)} />
+                  ))}
+                </div>
+              </Popover.Popup>
+            </Popover.Positioner>
+          </Popover.Portal>
+        </Popover.Root>
+        <input
+          value={query}
+          onChange={(event) => onQuery(event.target.value)}
+          placeholder="Search"
+          spellCheck={false}
+          aria-label="Search worktrees"
+          className="no-drag w-40 rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-3.5 py-1.5 text-xs outline-none transition-[box-shadow] duration-200 focus:shadow-[0_0_0_3px_oklch(0.62_0.24_285/0.45)]"
+        />
       </div>
-      <input
-        value={query}
-        onChange={(event) => onQuery(event.target.value)}
-        placeholder="Search"
-        spellCheck={false}
-        aria-label="Search worktrees"
-        className="no-drag w-40 rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-3.5 py-1.5 text-xs outline-none transition-[box-shadow] duration-200 focus:shadow-[0_0_0_3px_oklch(0.62_0.24_285/0.45)]"
-      />
     </div>
   );
 }

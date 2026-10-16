@@ -98,3 +98,29 @@ export function suggestLabel(tree: Pick<Worktree, "name" | "branch" | "isMain">,
   }
   return null;
 }
+
+export type SortKey = "recent" | "oldest" | "size" | "name" | "changes" | "cleanup";
+
+const CLEANUP_RANK: Record<TreeState, number> = { both: 4, merged: 3, stale: 2, idle: 1, active: 0 };
+
+export function sortTrees(trees: readonly Worktree[], key: SortKey, sizes: SizeMap, names: Record<string, string>, now: number, days: number): Worktree[] {
+  const label = (tree: Worktree) => (names[tree.path] ?? tree.name).toLowerCase();
+  const size = (tree: Worktree) => sizes[tree.id] ?? -1;
+  const compare = (a: Worktree, b: Worktree): number => {
+    switch (key) {
+      case "recent":
+        return b.lastActive - a.lastActive;
+      case "oldest":
+        return a.lastActive - b.lastActive;
+      case "size":
+        return size(b) - size(a);
+      case "name":
+        return label(a).localeCompare(label(b));
+      case "changes":
+        return b.modified + b.ahead - (a.modified + a.ahead);
+      case "cleanup":
+        return CLEANUP_RANK[stateOf(b, now, days)] - CLEANUP_RANK[stateOf(a, now, days)] || size(b) - size(a);
+    }
+  };
+  return [...trees].sort((a, b) => compare(a, b) || a.id.localeCompare(b.id));
+}
