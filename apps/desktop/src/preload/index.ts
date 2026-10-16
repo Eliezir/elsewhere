@@ -9,6 +9,15 @@ const api: Api = {
   getMacWorktrees: (repos) => ipcRenderer.invoke(IPC.macWorktrees, { repos }),
   getVmPorts: (input) => ipcRenderer.invoke(IPC.vmPorts, input),
   setPortForward: (input) => ipcRenderer.invoke(IPC.vmPortForward, input),
+  getLinkStatus: () => ipcRenderer.invoke(IPC.linkStatus),
+  refreshLinkStatus: () => ipcRenderer.invoke(IPC.linkRefresh),
+  onLinkStatus: (listener) => {
+    const handler = (_event: Electron.IpcRendererEvent, status: Parameters<typeof listener>[0]) => listener(status);
+    ipcRenderer.on(IPC.linkChanged, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC.linkChanged, handler);
+    };
+  },
   setPortPin: (input) => ipcRenderer.invoke(IPC.portPin, input),
   setForwardConfig: (input) => ipcRenderer.invoke(IPC.forwardConfig, input),
   killVmPort: (input) => ipcRenderer.invoke(IPC.vmPortKill, input),

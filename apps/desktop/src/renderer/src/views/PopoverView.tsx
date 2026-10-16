@@ -6,7 +6,8 @@ import { Meter } from "@/components/charts";
 import { ClaudeMark } from "@/components/ClaudeMark";
 import { Button } from "@/components/controls";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { useProjectIcons, useVmPorts, useVmSnapshot } from "@/data/hooks";
+import { useLinkStatus, useProjectIcons, useVmPorts, useVmSnapshot } from "@/data/hooks";
+import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { groupPorts } from "@/lib/ports";
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
@@ -88,12 +89,15 @@ export function PopoverView() {
   const model = useOverviewModel();
   const icons = useProjectIcons().data ?? {};
   const { connection, usage, vm, idle } = model;
+  const link = useLinkStatus();
+  const health: Health = link.state === "approval" ? "warn" : link.state === "offline" ? "down" : connection.health;
+  const headline = link.state === "approval" ? "Tailscale SSH needs your approval" : link.state === "offline" ? "Can't reach the VM" : connection.headline;
   const ports = useVmPorts();
   const snapshot = useVmSnapshot();
   const projectPorts = (ports.data?.ports ?? []).filter((port) => port.kind === "project");
   const groups = useMemo(() => groupPorts(projectPorts, snapshot.data?.worktrees ?? []), [projectPorts, snapshot.data]);
   const projectCount = groups.length;
-  const reachable = connection.health === "ok";
+  const reachable = link.state === "unknown" ? connection.health === "ok" : link.state === "ok";
 
   return (
     <div className="eclipse-bg-soft flex h-full flex-col overflow-hidden rounded-[18px] border border-[var(--hairline)]">
@@ -102,21 +106,30 @@ export function PopoverView() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium leading-tight">adt-dev</span>
-            <span aria-hidden="true" className={`size-2 rounded-full transition-colors duration-300 ${DOT[connection.health]}`} />
+            <span aria-hidden="true" className={`size-2 rounded-full transition-colors duration-300 ${DOT[health]}`} />
           </div>
           <motion.div
-            key={connection.headline}
+            key={headline}
             initial={{ opacity: 0, y: 2 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
             className="truncate text-xs text-[var(--text-secondary)]"
           >
-            {connection.headline}
+            {headline}
           </motion.div>
         </div>
         {idle?.atRisk && <Pill tone="warn">idle risk</Pill>}
       </header>
-      {connection.health !== "ok" && !vm && (
+      {link.state === "approval" && link.approvalUrl !== null && (
+        <div className="mx-3 mb-1 mt-1 rounded-2xl border border-[var(--warn)]/40 bg-[var(--inset)] px-3.5 py-2.5">
+          <div className="mb-2 text-xs leading-snug text-[var(--warn)]">Tailscale SSH needs your approval before it lets this Mac in. Ports and the VM stay disconnected until you approve.</div>
+          <ApproveSshButton url={link.approvalUrl} />
+        </div>
+      )}
+      {link.state === "offline" && connection.health === "ok" && (
+        <div className="mx-3 mb-1 mt-1 rounded-2xl border border-[var(--down)]/40 bg-[var(--inset)] px-3.5 py-2.5 text-xs leading-snug text-[var(--down)]">{link.message ?? "Can't reach the VM."}</div>
+      )}
+      {connection.health !== "ok" && !vm && link.state !== "approval" && (
         <div className="mx-3 mb-1 mt-1 rounded-2xl border border-[var(--hairline)] bg-[var(--inset)] px-3.5 py-2.5">
           <ConnectTailscaleButton />
         </div>

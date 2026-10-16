@@ -1,8 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { ForwardConfigSchema, type ForwardConfig } from "@vmc/shared";
+import { ForwardConfigSchema, type ForwardConfig, type LinkStatus } from "@vmc/shared";
 import { stopStaleForwards } from "./forwards";
+import { getLinkStatus, setLinkStatus } from "./link";
 import { getVmPorts } from "./vmPorts";
 
 const POLL_MS = 6000;
@@ -28,16 +29,43 @@ async function loadConfig(): Promise<void> {
   if (parsed.success) config = parsed.data;
 }
 
+export function linkFromPorts(result: { reachable: boolean; error: string | null; approvalUrl: string | null }): LinkStatus {
+  if (result.reachable) return { state: "ok", approvalUrl: null, message: null };
+  if (result.approvalUrl) return { state: "approval", approvalUrl: result.approvalUrl, message: result.error };
+  return { state: "offline", approvalUrl: null, message: result.error };
+}
+
+function forcedLink(): LinkStatus | null {
+  const forced = process.env.VMC_DEBUG_LINK;
+  if (forced === "approval") return { state: "approval", approvalUrl: "https://login.tailscale.com/a/example", message: "Tailscale SSH needs your approval before it lets this Mac in." };
+  if (forced === "offline") return { state: "offline", approvalUrl: null, message: "Can't reach the VM. Is Tailscale connected?" };
+  return null;
+}
+
 async function tick(): Promise<void> {
-  if (running || config.target === null || !config.autoForward) return;
+  const forced = forcedLink();
+  if (forced) {
+    setLinkStatus(forced);
+    return;
+  }
+  if (config.target === null) {
+    setLinkStatus({ state: "unknown", approvalUrl: null, message: null });
+    return;
+  }
+  if (running) return;
   running = true;
   try {
-    await getVmPorts(config.target, true);
+    setLinkStatus(linkFromPorts(await getVmPorts(config.target, config.autoForward)));
   } catch {
     return;
   } finally {
     running = false;
   }
+}
+
+export async function refreshLink(): Promise<LinkStatus> {
+  await tick();
+  return getLinkStatus();
 }
 
 export function startForwardLoop(): void {

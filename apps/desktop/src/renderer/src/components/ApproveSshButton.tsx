@@ -10,7 +10,10 @@ export function ApproveSshButton({ url, className = "" }: { url: string; classNa
     setWaiting(true);
     void window.api.openApproval(url);
     for (const delay of [6000, 12000, 20000]) {
-      setTimeout(() => void queryClient.invalidateQueries({ queryKey: ["vm-snapshot"] }), delay);
+      setTimeout(() => {
+        void window.api.refreshLinkStatus();
+        void queryClient.invalidateQueries({ queryKey: ["vm-snapshot"] });
+      }, delay);
     }
     setTimeout(() => setWaiting(false), 20000);
   };

@@ -12,7 +12,8 @@ import { readUsage, refreshUsage } from "./services/usage";
 import { getVmSnapshot } from "./services/vm";
 import { compareTwins } from "./services/move/twin";
 import { setForward, setPortPin } from "./services/forwards";
-import { setForwardConfig } from "./services/forwardLoop";
+import { refreshLink, setForwardConfig } from "./services/forwardLoop";
+import { getLinkStatus } from "./services/link";
 import { openInClaudeDesktop } from "./services/claudeDesktop";
 import { getVmPorts, killVmPort } from "./services/vmPorts";
 import { getVmStorage } from "./services/vmStorage";
@@ -71,6 +72,8 @@ export function registerIpc(actions: IpcActions): void {
     const parsed = ClaudeDesktopOpenSchema.parse(input);
     return openInClaudeDesktop(parsed.target, parsed.path, parsed.sessionId);
   });
+  ipcMain.handle(IPC.linkStatus, () => getLinkStatus());
+  ipcMain.handle(IPC.linkRefresh, () => refreshLink());
   ipcMain.handle(IPC.portPin, (_event, input: unknown) => setPortPin(PortPinSchema.parse(input)));
   ipcMain.handle(IPC.forwardConfig, (_event, input: unknown) => setForwardConfig(ForwardConfigSchema.parse(input)));
   ipcMain.handle(IPC.vmPortKill, (_event, input: unknown) => {

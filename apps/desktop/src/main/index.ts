@@ -1,5 +1,7 @@
 import { stopAllForwards } from "./services/forwards";
 import { startForwardLoop, stopForwardLoop } from "./services/forwardLoop";
+import { getLinkStatus, linkTooltip, onLinkChange, trayIconName } from "./services/link";
+import type { LinkState } from "@vmc/shared";
 import { join } from "node:path";
 import { app, BrowserWindow, nativeImage, nativeTheme, Tray } from "electron";
 import { IPC } from "@vmc/shared";
@@ -43,6 +45,11 @@ function showMainWindow(section?: string): void {
   sendSection(mainWindow, section);
 }
 
+function trayImage(state: LinkState): Electron.NativeImage {
+  if (process.platform !== "darwin") return nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")).resize({ width: 16, height: 16, quality: "best" });
+  return nativeImage.createFromPath(join(app.getAppPath(), `resources/${trayIconName(state)}.png`));
+}
+
 void app.whenReady().then(() => {
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
   registerIpc({ openMainWindow: showMainWindow });
@@ -52,12 +59,12 @@ void app.whenReady().then(() => {
     setInterval(() => void refreshUsage(), USAGE_POLL_MS);
   }
   const popover = createPopover();
-  const tray = new Tray(
-    process.platform === "darwin"
-      ? nativeImage.createFromPath(join(app.getAppPath(), "resources/trayTemplate.png"))
-      : nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")).resize({ width: 16, height: 16, quality: "best" }),
-  );
-  tray.setToolTip("Elsewhere");
+  const tray = new Tray(trayImage(getLinkStatus().state));
+  tray.setToolTip(linkTooltip(getLinkStatus()));
+  onLinkChange((status) => {
+    tray.setImage(trayImage(status.state));
+    tray.setToolTip(linkTooltip(status));
+  });
   tray.on("click", () => togglePopover(popover, tray.getBounds()));
   const debuggingPopover = screenshotPath !== undefined && debugView === "popover";
   if (debuggingPopover) popover.removeAllListeners("blur");

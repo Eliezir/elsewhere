@@ -30,6 +30,7 @@ export type VmPort = z.infer<typeof VmPortSchema>;
 export const VmPortsSchema = z.object({
   reachable: z.boolean(),
   error: z.string().nullable(),
+  approvalUrl: z.string().nullable(),
   ports: z.array(VmPortSchema),
 });
 export type VmPorts = z.infer<typeof VmPortsSchema>;
@@ -59,6 +60,16 @@ export const ForwardConfigSchema = z.object({
   autoForward: z.boolean(),
 });
 export type ForwardConfig = z.infer<typeof ForwardConfigSchema>;
+
+export const LinkStateSchema = z.enum(["unknown", "ok", "approval", "offline"]);
+export type LinkState = z.infer<typeof LinkStateSchema>;
+
+export const LinkStatusSchema = z.object({
+  state: LinkStateSchema,
+  approvalUrl: z.string().nullable(),
+  message: z.string().nullable(),
+});
+export type LinkStatus = z.infer<typeof LinkStatusSchema>;
 
 export const PortPinSchema = z.object({
   key: z.string().min(1).max(400),

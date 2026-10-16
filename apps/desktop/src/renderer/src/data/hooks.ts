@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { VmTargetSchema } from "@vmc/shared";
+import { useEffect, useState } from "react";
+import { VmTargetSchema, type LinkStatus } from "@vmc/shared";
 import { splitLines, useSettings } from "@/lib/settings";
 import { toUsageData } from "@/lib/usage";
 import { SAMPLE_IDLE, SAMPLE_PACER, SAMPLE_TASKS } from "./mock";
@@ -139,4 +140,13 @@ export function useTwinSync(mac: Worktree | null, vm: Worktree | null, enabled: 
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+}
+
+export function useLinkStatus(): LinkStatus {
+  const [status, setStatus] = useState<LinkStatus>({ state: "unknown", approvalUrl: null, message: null });
+  useEffect(() => {
+    void window.api.getLinkStatus().then(setStatus);
+    return window.api.onLinkStatus(setStatus);
+  }, []);
+  return status;
 }
