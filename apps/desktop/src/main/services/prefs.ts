@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { AppPrefsSchema, type AppPrefs } from "@vmc/shared";
 
-const DEFAULTS: AppPrefs = { startAtLogin: false, runInBackground: true, showInMenuBar: true };
+const DEFAULTS: AppPrefs = { startAtLogin: false, runInBackground: true, showInMenuBar: true, hideFromDock: false };
 
 let prefs: AppPrefs = DEFAULTS;
 const listeners = new Set<(prefs: AppPrefs) => void>();
@@ -24,6 +24,10 @@ export function onPrefsChange(listener: (prefs: AppPrefs) => void): () => void {
 
 export function keepsRunningInBackground(value: AppPrefs): boolean {
   return value.runInBackground && value.showInMenuBar;
+}
+
+export function hidesFromDock(value: AppPrefs): boolean {
+  return value.hideFromDock && value.showInMenuBar;
 }
 
 export async function loadPrefs(): Promise<void> {

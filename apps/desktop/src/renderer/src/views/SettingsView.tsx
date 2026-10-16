@@ -130,6 +130,13 @@ export function SettingsView() {
             onChange={(runInBackground) => update({ runInBackground })}
             disabled={!settings.showInMenuBar}
           />
+          <ToggleRow
+            label="Hide from the Dock"
+            hint="Elsewhere lives only in the menu bar, even while its window is open. Open and quit it from the menu bar icon."
+            checked={settings.hideFromDock}
+            onChange={(hideFromDock) => update({ hideFromDock })}
+            disabled={!settings.showInMenuBar}
+          />
           <div className="flex items-center justify-between py-2">
             <span>Appearance</span>
             <span className="text-[var(--text-secondary)]">Dark</span>

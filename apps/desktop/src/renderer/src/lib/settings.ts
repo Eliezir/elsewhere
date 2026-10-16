@@ -17,6 +17,7 @@ export interface Settings {
   notifyDigest: boolean;
   startAtLogin: boolean;
   showInMenuBar: boolean;
+  hideFromDock: boolean;
   runInBackground: boolean;
   autoForward: boolean;
 }
@@ -38,6 +39,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifyDigest: false,
   startAtLogin: false,
   showInMenuBar: true,
+  hideFromDock: false,
   runInBackground: true,
   autoForward: true,
 };

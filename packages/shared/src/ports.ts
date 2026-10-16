@@ -75,6 +75,7 @@ export const AppPrefsSchema = z.object({
   startAtLogin: z.boolean(),
   runInBackground: z.boolean(),
   showInMenuBar: z.boolean(),
+  hideFromDock: z.boolean().default(false),
 });
 export type AppPrefs = z.infer<typeof AppPrefsSchema>;
 

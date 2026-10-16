@@ -33,8 +33,8 @@ function MainWindow() {
   }, [settings.host, settings.user, settings.autoForward]);
 
   useEffect(() => {
-    void window.api.setAppPrefs({ startAtLogin: settings.startAtLogin, runInBackground: settings.runInBackground, showInMenuBar: settings.showInMenuBar });
-  }, [settings.startAtLogin, settings.runInBackground, settings.showInMenuBar]);
+    void window.api.setAppPrefs({ startAtLogin: settings.startAtLogin, runInBackground: settings.runInBackground, showInMenuBar: settings.showInMenuBar, hideFromDock: settings.hideFromDock });
+  }, [settings.startAtLogin, settings.runInBackground, settings.showInMenuBar, settings.hideFromDock]);
 
   useEffect(
     () =>

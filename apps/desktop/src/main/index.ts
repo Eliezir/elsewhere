@@ -1,7 +1,7 @@
 import { stopAllForwards } from "./services/forwards";
 import { startForwardLoop, stopForwardLoop } from "./services/forwardLoop";
 import { getLinkStatus, linkTooltip, onLinkChange, trayIconName } from "./services/link";
-import { getPrefs, keepsRunningInBackground, loadPrefs, onPrefsChange } from "./services/prefs";
+import { getPrefs, hidesFromDock, keepsRunningInBackground, loadPrefs, onPrefsChange } from "./services/prefs";
 import type { LinkState } from "@vmc/shared";
 import { join } from "node:path";
 import { app, BrowserWindow, Menu, nativeImage, nativeTheme, powerMonitor, Tray } from "electron";
@@ -39,13 +39,17 @@ function sendSection(window: BrowserWindow, section: string | undefined): void {
 
 function applyDock(): void {
   if (process.platform !== "darwin" || screenshotPath !== undefined) return;
+  if (hidesFromDock(getPrefs())) {
+    app.dock?.hide();
+    return;
+  }
   const windowOpen = mainWindow !== null && !mainWindow.isDestroyed() && mainWindow.isVisible();
   if (windowOpen || !keepsRunningInBackground(getPrefs())) void app.dock?.show();
   else app.dock?.hide();
 }
 
 function showMainWindow(section?: string): void {
-  if (process.platform === "darwin" && screenshotPath === undefined) void app.dock?.show();
+  if (process.platform === "darwin" && screenshotPath === undefined && !hidesFromDock(getPrefs())) void app.dock?.show();
   if (mainWindow === null || mainWindow.isDestroyed()) {
     mainWindow = createMainWindow(screenshotPath !== undefined);
     mainWindow.on("closed", () => {
@@ -113,6 +117,7 @@ void app.whenReady().then(async () => {
   onPrefsChange(() => {
     syncTray(popover);
     applyDock();
+    if (hidesFromDock(getPrefs()) && mainWindow !== null && !mainWindow.isDestroyed() && mainWindow.isVisible()) mainWindow.show();
   });
   const debuggingPopover = screenshotPath !== undefined && debugView === "popover";
   if (debuggingPopover) popover.removeAllListeners("blur");
