@@ -57,17 +57,38 @@ export function findTailscaleCli(): string | null {
   return TAILSCALE_CLI_CANDIDATES.find((path) => existsSync(path)) ?? null;
 }
 
-export async function getTailscaleStatus(): Promise<TailscaleStatus> {
-  const cli = findTailscaleCli();
+const GRACE_MS = 60_000;
+const RETRY_MS = 1200;
+const SETTLED_BACKENDS = new Set(["Running", "NeedsLogin", "Stopped"]);
+
+let lastConnected: TailscaleStatus | null = null;
+
+export function settleStatus(fresh: TailscaleStatus, lastGood: TailscaleStatus | null, now: number): TailscaleStatus {
+  if (fresh.state === "connected" || lastGood === null || now - lastGood.checkedAt > GRACE_MS) return fresh;
+  if (fresh.state === "unknown" || !SETTLED_BACKENDS.has(fresh.backend)) return { ...lastGood, checkedAt: now };
+  return fresh;
+}
+
+async function readStatus(cli: string): Promise<TailscaleStatus> {
   const now = Date.now();
-  if (cli === null) {
-    return { ...EMPTY, backend: "NotInstalled", checkedAt: now };
-  }
   try {
-    const { stdout } = await run(cli, ["status", "--json"], { timeout: 5000 });
+    const { stdout } = await run(cli, ["status", "--json"], { timeout: 10000 });
     return parseTailscaleStatus(JSON.parse(stdout), VM_NAME, now);
   } catch (error) {
     console.error("tailscale status failed:", error instanceof Error ? error.message : error);
     return { ...EMPTY, backend: "NotRunning", checkedAt: now };
   }
+}
+
+export async function getTailscaleStatus(): Promise<TailscaleStatus> {
+  const cli = findTailscaleCli();
+  if (cli === null) return { ...EMPTY, backend: "NotInstalled", checkedAt: Date.now() };
+  let fresh = await readStatus(cli);
+  if (fresh.state !== "connected" && !SETTLED_BACKENDS.has(fresh.backend)) {
+    await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
+    fresh = await readStatus(cli);
+  }
+  const settled = settleStatus(fresh, lastConnected, Date.now());
+  if (settled.state === "connected") lastConnected = settled;
+  return settled;
 }

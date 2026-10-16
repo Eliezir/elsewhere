@@ -40,6 +40,7 @@ export function SettingsView() {
   const { connection } = useOverviewModel();
   const vm = useVmSnapshot();
   const tailscale = useTailscaleControl();
+  const tailscaleLabel = tailscale.needsLogin ? "sign-in needed" : tailscale.connected ? "connected" : tailscale.status === undefined || tailscale.status.state === "unknown" ? "checking" : "disconnected";
   const snapshot = vm.data;
   const health = snapshot?.health ?? null;
   const testing = vm.isFetching;
@@ -54,7 +55,7 @@ export function SettingsView() {
               <TextField label="SSH user" value={settings.user} onChange={(event) => update({ user: event.target.value })} />
             </div>
             <div className="space-y-2 rounded-2xl bg-[var(--inset)] px-3.5 py-3">
-              <StatusRow label="Tailscale" value={tailscale.needsLogin ? "sign-in needed" : tailscale.connected ? "connected" : "disconnected"} tone={tailscale.connected ? "ok" : "warn"} />
+              <StatusRow label="Tailscale" value={tailscaleLabel} tone={tailscale.connected ? "ok" : "warn"} />
               <StatusRow label="SSH" value={snapshot ? (snapshot.reachable ? `connected · ${snapshot.latencyMs ?? "–"} ms` : (snapshot.error ?? "unreachable")) : "checking…"} tone={snapshot?.reachable ? "ok" : "warn"} />
               <StatusRow label="Git on the VM" value={health?.gitVersion ?? "unknown"} />
               <StatusRow label="Claude Code on the VM" value={health ? (health.claudeInstalled ? "installed" : "not found") : "unknown"} tone={health ? (health.claudeInstalled ? "ok" : "warn") : undefined} />
@@ -69,7 +70,7 @@ export function SettingsView() {
             {snapshot?.approvalUrl && <ApproveSshButton url={snapshot.approvalUrl} />}
           </div>
         </Tile>
-        <Tile className="col-span-6" index={1} title="Tailscale" action={<Pill tone={tailscale.connected ? "ok" : "warn"}>{tailscale.needsLogin ? "sign-in needed" : tailscale.connected ? "connected" : "disconnected"}</Pill>}>
+        <Tile className="col-span-6" index={1} title="Tailscale" action={<Pill tone={tailscale.connected ? "ok" : "warn"}>{tailscaleLabel}</Pill>}>
           <div className="flex min-h-0 flex-1 flex-col">
             <ToggleRow
               label={tailscale.needsLogin ? "Sign in to your tailnet" : "Connected to your tailnet"}

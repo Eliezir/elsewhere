@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseTailscaleStatus } from "./tailscale";
+import { parseTailscaleStatus, settleStatus } from "./tailscale";
 
 const sample = {
   BackendState: "Running",
@@ -39,5 +39,25 @@ describe("parseTailscaleStatus", () => {
 
   it("returns unknown for unparseable input", () => {
     expect(parseTailscaleStatus("nonsense", "adt-dev", 10).state).toBe("unknown");
+  });
+});
+
+describe("settleStatus", () => {
+  const good = parseTailscaleStatus(sample, "adt-dev", 1000);
+  const failed = parseTailscaleStatus(null, "adt-dev", 1010);
+  const starting = parseTailscaleStatus({ ...sample, BackendState: "Starting" }, "adt-dev", 1010);
+
+  it("keeps showing connected through a failed or transient read", () => {
+    expect(settleStatus(failed, good, 1010).state).toBe("connected");
+    expect(settleStatus(starting, good, 1010).state).toBe("connected");
+  });
+
+  it("reports real changes straight away", () => {
+    const stopped = parseTailscaleStatus({ ...sample, BackendState: "Stopped" }, "adt-dev", 1010);
+    expect(settleStatus(stopped, good, 1010).state).toBe("disconnected");
+  });
+
+  it("gives up on the old reading after a minute", () => {
+    expect(settleStatus(failed, good, 1000 + 61_000).state).toBe("unknown");
   });
 });
