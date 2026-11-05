@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -23,6 +23,7 @@ import { clearCustomIcon, getProjectIcons, saveCustomIcon } from "./services/pro
 import { getT3Threads, getToolsInfo, openInTool } from "./services/tools";
 import { sizeService } from "./services/sizes";
 import { listMacWorktrees } from "./services/worktrees";
+import { wakeHost } from "./services/wake";
 
 export interface IpcActions {
   openMainWindow: (section?: string) => void;
@@ -48,6 +49,7 @@ export function registerIpc(actions: IpcActions): void {
     await shell.openExternal(url);
     return true;
   });
+  ipcMain.handle(IPC.wakeHost, (_event, input: unknown) => wakeHost(WakeInputSchema.parse(input).mac));
   ipcMain.handle(IPC.openTailscale, async () => {
     const error = await shell.openPath(TAILSCALE_APP);
     return error === "" ? null : error;

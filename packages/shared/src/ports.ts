@@ -79,6 +79,18 @@ export const AppPrefsSchema = z.object({
 });
 export type AppPrefs = z.infer<typeof AppPrefsSchema>;
 
+export const WakeInputSchema = z.object({
+  mac: z.string().regex(/^([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}$/, "Use the format aa:bb:cc:dd:ee:ff"),
+});
+export type WakeInput = z.infer<typeof WakeInputSchema>;
+
+export const WakeResultSchema = z.object({
+  ok: z.boolean(),
+  sent: z.number(),
+  error: z.string().nullable(),
+});
+export type WakeResult = z.infer<typeof WakeResultSchema>;
+
 export const PortPinSchema = z.object({
   key: z.string().min(1).max(400),
   local: z.number().int().min(1024).max(65535).nullable(),

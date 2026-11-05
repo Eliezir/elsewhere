@@ -1,4 +1,14 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { syncActive } from "./hosts";
+
+export interface HostProfile {
+  id: string;
+  name: string;
+  host: string;
+  user: string;
+  vmRepos: string;
+  mac: string;
+}
 
 export interface Settings {
   host: string;
@@ -6,6 +16,8 @@ export interface Settings {
   daemonPort: number;
   macRepos: string;
   vmRepos: string;
+  hosts: HostProfile[];
+  activeHostId: string;
   diskWarn: number;
   idleLine: number;
   pacerCap: number;
@@ -28,6 +40,8 @@ export const DEFAULT_SETTINGS: Settings = {
   daemonPort: 7420,
   macRepos: "",
   vmRepos: "",
+  hosts: [],
+  activeHostId: "default",
   diskWarn: 80,
   idleLine: 20,
   pacerCap: 80,
@@ -81,7 +95,7 @@ function snapshot(): Settings {
 export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
   const settings = useSyncExternalStore(subscribe, snapshot);
   const update = useCallback((patch: Partial<Settings>) => {
-    current = { ...current, ...patch };
+    current = syncActive({ ...current, ...patch });
     try {
       localStorage.setItem(KEY, JSON.stringify(current));
     } catch {

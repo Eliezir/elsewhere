@@ -3,7 +3,7 @@ import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
 import type { UsageSnapshot } from "./usage";
 import type { VmTarget } from "./worktree";
-import type { AppPrefs, ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput } from "./ports";
+import type { AppPrefs, ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput, WakeInput, WakeResult } from "./ports";
 import type { ClaudeDesktopOpenResult, T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
@@ -20,6 +20,7 @@ export const IPC = {
   openTerminal: "vm:open-terminal",
   openMacTerminal: "terminal:open-mac",
   openTailscale: "app:open-tailscale",
+  wakeHost: "host:wake",
   openApproval: "app:open-approval",
   projectIcons: "icons:get",
   sizes: "worktrees:sizes",
@@ -61,6 +62,7 @@ export interface Api {
   openVmTerminal(input: TerminalInput): Promise<string | null>;
   openMacTerminal(path: string): Promise<string | null>;
   openTailscale(): Promise<string | null>;
+  wakeHost(input: WakeInput): Promise<WakeResult>;
   openApproval(url: string): Promise<boolean>;
   getProjectIcons(input: IconInput): Promise<ProjectIcons>;
   getTools(): Promise<ToolsInfo>;

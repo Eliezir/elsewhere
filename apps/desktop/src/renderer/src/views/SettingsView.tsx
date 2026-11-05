@@ -1,5 +1,6 @@
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
+import { HostSwitcher } from "@/components/HostSwitcher";
 import { VmTerminalButton } from "@/components/TerminalButtons";
 import { Pill, Tile } from "@/components/Tile";
 import { useVmSnapshot } from "@/data/hooks";
@@ -50,6 +51,7 @@ export function SettingsView() {
       <div className="grid auto-rows-[minmax(300px,auto)] grid-cols-12 gap-3">
         <Tile className="col-span-6" title="Connection" action={<Pill tone={snapshot?.reachable ? "ok" : "warn"}>{snapshot?.reachable ? "VM reachable" : HEALTH_LABEL[connection.health]}</Pill>}>
           <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <HostSwitcher />
             <div className="grid grid-cols-2 gap-3">
               <TextField label="VM host" value={settings.host} onChange={(event) => update({ host: event.target.value })} />
               <TextField label="SSH user" value={settings.user} onChange={(event) => update({ user: event.target.value })} />

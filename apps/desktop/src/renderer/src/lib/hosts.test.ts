@@ -1,0 +1,44 @@
+import { describe, expect, it } from "vitest";
+import { activeOf, addHost, editActive, profilesOf, removeActive, selectHost, syncActive } from "./hosts";
+
+type Fields = Parameters<typeof profilesOf>[0];
+
+const base: Fields = { hosts: [], activeHostId: "default", host: "adt-dev", user: "dev", vmRepos: "~/a" };
+
+const merge = (state: Fields, patch: Partial<Fields>): Fields => ({ ...state, ...patch });
+
+describe("host profiles", () => {
+  it("builds a profile from the existing single host settings", () => {
+    expect(profilesOf(base)).toEqual([{ id: "default", name: "VM", host: "adt-dev", user: "dev", vmRepos: "~/a", mac: "" }]);
+  });
+
+  it("keeps the active profile in step with the top level fields", () => {
+    const synced = syncActive({ ...base, host: "new-host" });
+    expect(synced.hosts[0]?.host).toBe("new-host");
+  });
+
+  it("adds a host, switches to it and switches back", () => {
+    const added = merge(syncActive(base), addHost(syncActive(base), "pc"));
+    expect(added.activeHostId).toBe("pc");
+    expect(added.host).toBe("");
+    const withPc = syncActive(merge(added, { host: "adt-pc", vmRepos: "~/work" }));
+    const back = merge(withPc, selectHost(withPc, "default"));
+    expect(back.host).toBe("adt-dev");
+    expect(syncActive(back).hosts.find((profile) => profile.id === "pc")?.host).toBe("adt-pc");
+  });
+
+  it("edits the name and MAC of the active host only", () => {
+    const state = syncActive(base);
+    const edited = merge(state, editActive(state, { mac: "aa:bb:cc:dd:ee:ff" }));
+    expect(activeOf(edited).mac).toBe("aa:bb:cc:dd:ee:ff");
+  });
+
+  it("removes the active host but never the last one", () => {
+    const single = syncActive(base);
+    expect(removeActive(single)).toEqual({});
+    const two = syncActive(merge(single, addHost(single, "pc")));
+    const after = merge(two, removeActive(two));
+    expect(after.activeHostId).toBe("default");
+    expect(profilesOf(after)).toHaveLength(1);
+  });
+});

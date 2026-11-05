@@ -35,6 +35,7 @@ const api: Api = {
     };
   },
   openTailscale: () => ipcRenderer.invoke(IPC.openTailscale),
+  wakeHost: (input) => ipcRenderer.invoke(IPC.wakeHost, input),
   getProjectIcons: (input) => ipcRenderer.invoke(IPC.projectIcons, input),
   getTools: () => ipcRenderer.invoke(IPC.toolsInfo),
   openInClaudeDesktop: (input) => ipcRenderer.invoke(IPC.claudeDesktopOpen, input),
