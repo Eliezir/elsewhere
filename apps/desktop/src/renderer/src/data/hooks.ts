@@ -156,6 +156,18 @@ export function useShutdownStatus(host: string, user: string) {
   });
 }
 
+export function useTasks() {
+  const [settings] = useSettings();
+  const repos = splitLines(settings.macRepos);
+  return useQuery({
+    queryKey: ["tasks", repos],
+    queryFn: () => window.api.scanTasks(repos),
+    refetchInterval: 5000,
+    staleTime: 2000,
+    retry: false,
+  });
+}
+
 export function useTwinSync(mac: Worktree | null, vm: Worktree | null, enabled: boolean) {
   const [settings] = useSettings();
   const target = { host: settings.host.trim(), user: settings.user.trim() };

@@ -7,3 +7,4 @@ export * from "./move-plan";
 export * from "./bridge";
 export * from "./ports";
 export * from "./shutdown";
+export * from "./tasks";

@@ -1,14 +1,15 @@
 import { motion } from "motion/react";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import type { VmPort } from "@vmc/shared";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { ClaudeMark } from "@/components/ClaudeMark";
 import { Button } from "@/components/controls";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { useLinkStatus, useProjectIcons, useVmPorts, useVmSnapshot } from "@/data/hooks";
+import { useLinkStatus, useProjectIcons, useTasks, useVmPorts, useVmSnapshot } from "@/data/hooks";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { groupPorts } from "@/lib/ports";
+import { groupTasks } from "@/lib/taskModel";
 import { useHostName } from "@/lib/useHost";
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
@@ -99,6 +100,12 @@ export function PopoverView() {
   const projectPorts = (ports.data?.ports ?? []).filter((port) => port.kind === "project");
   const groups = useMemo(() => groupPorts(projectPorts, snapshot.data?.worktrees ?? []), [projectPorts, snapshot.data]);
   const projectCount = groups.length;
+  const tasks = useTasks();
+  const taskGroups = useMemo(() => groupTasks(tasks.data ?? []).filter((group) => group.open > 0), [tasks.data]);
+  const openItems = taskGroups.reduce((sum, group) => sum + group.open, 0);
+  useEffect(() => {
+    void window.api.setTaskBadge(openItems);
+  }, [openItems]);
   const reachable = link.state === "unknown" ? connection.health === "ok" : link.state === "ok";
 
   return (
@@ -158,7 +165,19 @@ export function PopoverView() {
             <p className="text-xs text-[var(--text-muted)]">{reachable ? "VM health isn't available yet." : `${connection.headline}.`}</p>
           )}
         </Card>
-        <Card index={2} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
+        {taskGroups.length > 0 && (
+          <Card index={2} title="Tasks" to="tasks" action={<Pill>{`${openItems} open`}</Pill>}>
+            <div className="space-y-1.5">
+              {taskGroups.slice(0, 3).map((group) => (
+                <button key={group.key} type="button" onClick={() => open("tasks")} className="no-drag flex w-full cursor-default items-center justify-between gap-3 text-left outline-none">
+                  <span className="min-w-0 truncate">{group.key}</span>
+                  <span className="shrink-0 text-[11px] tabular-nums text-[var(--text-secondary)]">{`${group.open} open`}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
+        <Card index={3} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
           {groups.length > 0 ? (
             <div className="space-y-2.5">
               {groups.slice(0, MAX_GROUPS).map((group) => (

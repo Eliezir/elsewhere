@@ -71,6 +71,11 @@ function trayImage(state: LinkState): Electron.NativeImage {
 }
 
 let tray: Tray | null = null;
+let badge = 0;
+
+function applyBadge(): void {
+  if (process.platform === "darwin") tray?.setTitle(badge > 0 ? ` ${badge}` : "");
+}
 
 function syncTray(popover: BrowserWindow): void {
   const wanted = getPrefs().showInMenuBar || screenshotPath !== undefined;
@@ -94,6 +99,7 @@ function syncTray(popover: BrowserWindow): void {
     ),
   );
   tray = created;
+  applyBadge();
 }
 
 void app.whenReady().then(async () => {
@@ -102,7 +108,13 @@ void app.whenReady().then(async () => {
   });
   await loadPrefs();
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
-  registerIpc({ openMainWindow: showMainWindow });
+  registerIpc({
+    openMainWindow: showMainWindow,
+    setBadge: (count) => {
+      badge = count;
+      applyBadge();
+    },
+  });
   startForwardLoop();
   if (screenshotPath === undefined) {
     void refreshUsage();
