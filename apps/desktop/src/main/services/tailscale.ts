@@ -61,7 +61,7 @@ const GRACE_MS = 60_000;
 const RETRY_MS = 1200;
 const SETTLED_BACKENDS = new Set(["Running", "NeedsLogin", "Stopped"]);
 
-let lastConnected: TailscaleStatus | null = null;
+let lastConnected: { name: string; status: TailscaleStatus } | null = null;
 
 export function settleStatus(fresh: TailscaleStatus, lastGood: TailscaleStatus | null, now: number): TailscaleStatus {
   if (fresh.state === "connected" || lastGood === null || now - lastGood.checkedAt > GRACE_MS) return fresh;
@@ -69,26 +69,27 @@ export function settleStatus(fresh: TailscaleStatus, lastGood: TailscaleStatus |
   return fresh;
 }
 
-async function readStatus(cli: string): Promise<TailscaleStatus> {
+async function readStatus(cli: string, vmName: string): Promise<TailscaleStatus> {
   const now = Date.now();
   try {
     const { stdout } = await run(cli, ["status", "--json"], { timeout: 10000 });
-    return parseTailscaleStatus(JSON.parse(stdout), VM_NAME, now);
+    return parseTailscaleStatus(JSON.parse(stdout), vmName, now);
   } catch (error) {
     console.error("tailscale status failed:", error instanceof Error ? error.message : error);
     return { ...EMPTY, backend: "NotRunning", checkedAt: now };
   }
 }
 
-export async function getTailscaleStatus(): Promise<TailscaleStatus> {
+export async function getTailscaleStatus(vmName: string = VM_NAME): Promise<TailscaleStatus> {
   const cli = findTailscaleCli();
   if (cli === null) return { ...EMPTY, backend: "NotInstalled", checkedAt: Date.now() };
-  let fresh = await readStatus(cli);
+  let fresh = await readStatus(cli, vmName);
   if (fresh.state !== "connected" && !SETTLED_BACKENDS.has(fresh.backend)) {
     await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
-    fresh = await readStatus(cli);
+    fresh = await readStatus(cli, vmName);
   }
-  const settled = settleStatus(fresh, lastConnected, Date.now());
-  if (settled.state === "connected") lastConnected = settled;
+  const previous = lastConnected !== null && lastConnected.name === vmName ? lastConnected.status : null;
+  const settled = settleStatus(fresh, previous, Date.now());
+  if (settled.state === "connected") lastConnected = { name: vmName, status: settled };
   return settled;
 }

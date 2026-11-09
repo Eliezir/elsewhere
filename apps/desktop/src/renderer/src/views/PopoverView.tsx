@@ -9,6 +9,7 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import { useLinkStatus, useProjectIcons, useVmPorts, useVmSnapshot } from "@/data/hooks";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { groupPorts } from "@/lib/ports";
+import { useHostName } from "@/lib/useHost";
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
@@ -90,6 +91,7 @@ export function PopoverView() {
   const icons = useProjectIcons().data ?? {};
   const { connection, usage, vm, idle } = model;
   const link = useLinkStatus();
+  const host = useHostName();
   const health: Health = link.state === "approval" ? "warn" : link.state === "offline" ? "down" : connection.health;
   const headline = link.state === "approval" ? "Tailscale SSH needs your approval" : link.state === "offline" ? "Can't reach the VM" : connection.headline;
   const ports = useVmPorts();
@@ -105,7 +107,7 @@ export function PopoverView() {
         <img src={mark} alt="" className="size-8 rounded-[9px]" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium leading-tight">adt-dev</span>
+            <span className="text-sm font-medium leading-tight">{host}</span>
             <span aria-hidden="true" className={`size-2 rounded-full transition-colors duration-300 ${DOT[health]}`} />
           </div>
           <motion.div

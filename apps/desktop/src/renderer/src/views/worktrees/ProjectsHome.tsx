@@ -6,6 +6,7 @@ import type { Worktree } from "@/data/types";
 import { formatBytes } from "@/lib/format";
 import { originOf } from "@/lib/origin";
 import { staleInfo } from "@/lib/stale";
+import { useHostName } from "@/lib/useHost";
 import { ageDays, type ProjectGroup, type SizeMap } from "@/lib/worktreeModel";
 import { Pill } from "@/components/Tile";
 import { formatAge, ProjectMark, StateBar, STATE_META } from "./parts";
@@ -80,6 +81,7 @@ interface ProjectsHomeProps {
 }
 
 export function ProjectsHome({ groups, sizes, icons, now, days, loading, problem, onOpen, onCleanup }: ProjectsHomeProps) {
+  const host = useHostName();
   const go = useNavigate();
   const stats = groups.map((group) => statsFor(group, sizes, days));
   const worktrees = stats.reduce((sum, entry) => sum + entry.group.trees.length, 0);
@@ -149,7 +151,7 @@ export function ProjectsHome({ groups, sizes, icons, now, days, loading, problem
               </div>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {entry.onVm > 0 && <Pill tone="ok">{`${entry.onVm} on the VM`}</Pill>}
+              {entry.onVm > 0 && <Pill tone="ok">{`${entry.onVm} on ${host}`}</Pill>}
               {entry.modified > 0 && <Pill tone="warn">{`${entry.modified} with changes`}</Pill>}
               {entry.origins.slice(0, 3).map((origin) => (
                 <Pill key={origin.label}>{`${origin.count} ${origin.label}`}</Pill>

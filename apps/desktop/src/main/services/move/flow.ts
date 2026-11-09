@@ -75,7 +75,71 @@ async function removeOriginal(request: MoveRequest, remote: Remote, emit: Emit, 
   return `The ${label} copy was kept: ${reason}.`;
 }
 
+function expandHome(path: string, home: string): string {
+  return path.startsWith("~/") ? `${home}/${path.slice(2)}` : path;
+}
+
+async function moveBranchToHost(request: MoveRequest, remote: Remote, emit: Emit, projects: string): Promise<MoveResult> {
+  const hostRepo = request.hostRepo ?? "";
+  const { repoPath } = await step(emit, "preflight", async () => {
+    const home = await remote.home();
+    if (home === "") throw new StepError("Can't reach the host. Is Tailscale connected?");
+    const resolved = expandHome(hostRepo, home);
+    await remoteOk(remote, `git --version >/dev/null\ngit -C ${shq(resolved)} rev-parse --git-dir >/dev/null`, `${resolved} isn't a git repository on the host`);
+    return { repoPath: resolved };
+  });
+
+  const status = await localGit(request.macPath, ["status", "--porcelain"]);
+  if (status !== "") {
+    await step(emit, "commit", async () => {
+      await localGit(request.macPath, ["add", "-A"]);
+      await localGit(request.macPath, ["commit", "-q", "--no-verify", "-m", "WIP: moved to the VM"]);
+    });
+  }
+  const head = await localGit(request.macPath, ["rev-parse", "HEAD"]);
+
+  const incoming = `refs/vmc/incoming/${request.branch}`;
+  await step(emit, "push", () => localGit(request.macPath, ["push", "-q", remote.url(repoPath), `${request.branch}:${incoming}`], remote.gitEnv).then(() => undefined));
+
+  const branchRef = `refs/heads/${request.branch}`;
+  await step(emit, "branch", () =>
+    remoteOk(
+      remote,
+      [
+        `repo=${shq(repoPath)}`,
+        `inc=$(git -C "$repo" rev-parse ${shq(incoming)})`,
+        `if git -C "$repo" show-ref --verify --quiet ${shq(branchRef)}; then`,
+        `  cur=$(git -C "$repo" rev-parse ${shq(branchRef)})`,
+        '  if [ "$cur" != "$inc" ]; then',
+        '    if git -C "$repo" merge-base --is-ancestor "$cur" "$inc"; then',
+        `      if git -C "$repo" worktree list --porcelain | grep -Fqx ${shq(`branch ${branchRef}`)}; then`,
+        '        echo "This branch is checked out on the host, so it was not updated. Work there, or bring it back first." >&2',
+        "        exit 1",
+        "      fi",
+        `      git -C "$repo" update-ref ${shq(branchRef)} "$inc" "$cur"`,
+        "    else",
+        '      echo "The host has commits on this branch that the Mac doesn\'t. Bring it back first." >&2',
+        "      exit 1",
+        "    fi",
+        "  fi",
+        "else",
+        `  git -C "$repo" branch ${shq(request.branch)} "$inc"`,
+        "fi",
+        `git -C "$repo" rev-parse ${shq(branchRef)}`,
+      ].join("\n"),
+      "Couldn't create the branch on the host",
+    ).then((hostHead) => {
+      if (hostHead !== head) throw new StepError("The branch on the host is at a different commit than the Mac.");
+    }),
+  );
+
+  const notes = [`${request.branch} is in ${repoPath} on the host. Start a thread on that branch in T3. Claude sessions aren't copied in this mode.`];
+  if (request.removeSource) notes.push(await removeOriginal(request, remote, emit, projects, "mac"));
+  return { ok: true, error: null, note: notes.join(" "), vmPath: null };
+}
+
 async function moveToVm(request: MoveRequest, remote: Remote, emit: Emit, projects: string): Promise<MoveResult> {
+  if (request.hostRepo) return moveBranchToHost(request, remote, emit, projects);
   const home = await step(emit, "preflight", async () => {
     const value = await remote.home();
     if (value === "") throw new StepError("Can't reach the VM. Is Tailscale connected?");

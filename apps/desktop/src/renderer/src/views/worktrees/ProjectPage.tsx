@@ -6,6 +6,7 @@ import type { Location, VmSnapshot, Worktree } from "@/data/types";
 import { formatBytes } from "@/lib/format";
 import type { Origin } from "@/lib/origin";
 import { useSettings } from "@/lib/settings";
+import { useHostName } from "@/lib/useHost";
 import { staleInfo } from "@/lib/stale";
 import { counterpartOf } from "@/lib/worktrees";
 import { matchesMode, sortTrees, type SizeMap, type SortKey, type StaleMode } from "@/lib/worktreeModel";
@@ -15,11 +16,6 @@ import { ROW_STYLES, TERMINAL_COLUMNS, WorktreeRow, type RowStyle } from "./Work
 
 type Place = "all" | Location;
 
-const PLACES = [
-  { value: "all", label: "All" },
-  { value: "mac", label: "Mac" },
-  { value: "vm", label: "VM" },
-] as const;
 
 const STYLE_KEY = "vmc:row-style";
 
@@ -82,6 +78,12 @@ interface ProjectPageProps {
 
 export function ProjectPage({ repo, trees, all, icons, tools, t3Threads, originFor, sizes, vm, now, names, problem, onAlias, onBack, onChanged, onCleanup }: ProjectPageProps) {
   const [settings, update] = useSettings();
+  const host = useHostName();
+  const places = [
+    { value: "all", label: "All" },
+    { value: "mac", label: "Mac" },
+    { value: "vm", label: host },
+  ] as const;
   const [mode, setMode] = useState<StaleMode>("all");
   const [place, setPlace] = useState<Place>("all");
   const [query, setQuery] = useState("");
@@ -133,7 +135,7 @@ export function ProjectPage({ repo, trees, all, icons, tools, t3Threads, originF
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Segmented id="worktree-place" label="Location" options={PLACES} value={place} onChange={setPlace} />
+          <Segmented id="worktree-place" label="Location" options={places} value={place} onChange={setPlace} />
           <Button variant="primary" disabled={stale.length === 0} onClick={() => onCleanup(stale)} className="!px-4 !py-1.5 text-xs">
             {stale.length === 0 ? "Nothing to clean" : pending > 0 ? `Clean up ${stale.length}` : `Clean up ${stale.length} · ${formatBytes(staleBytes)}`}
           </Button>

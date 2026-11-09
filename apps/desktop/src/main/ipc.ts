@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
-import { BrowserWindow, dialog, ipcMain, shell } from "electron";
+import { BrowserWindow, clipboard, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -24,6 +24,7 @@ import { getT3Threads, getToolsInfo, openInTool } from "./services/tools";
 import { sizeService } from "./services/sizes";
 import { listMacWorktrees } from "./services/worktrees";
 import { wakeHost } from "./services/wake";
+import { openInRemoteT3 } from "./services/t3Remote";
 
 export interface IpcActions {
   openMainWindow: (section?: string) => void;
@@ -41,7 +42,7 @@ export function registerIpc(actions: IpcActions): void {
     await refreshUsage();
     return readUsage();
   });
-  ipcMain.handle(IPC.tailscaleStatus, () => getTailscaleStatus());
+  ipcMain.handle(IPC.tailscaleStatus, (_event, name: unknown) => getTailscaleStatus(typeof name === "string" && /^[A-Za-z0-9-]{1,63}$/.test(name) ? name : undefined));
   ipcMain.handle(IPC.tailscaleConnect, () => connectTailscale());
   ipcMain.handle(IPC.tailscaleDisconnect, () => disconnectTailscale());
   ipcMain.handle(IPC.openApproval, async (_event, url: unknown) => {
@@ -49,6 +50,7 @@ export function registerIpc(actions: IpcActions): void {
     await shell.openExternal(url);
     return true;
   });
+  ipcMain.handle(IPC.remoteT3Open, (_event, input: unknown) => openInRemoteT3(RemoteT3InputSchema.parse(input)));
   ipcMain.handle(IPC.wakeHost, (_event, input: unknown) => wakeHost(WakeInputSchema.parse(input).mac));
   ipcMain.handle(IPC.openTailscale, async () => {
     const error = await shell.openPath(TAILSCALE_APP);
@@ -135,6 +137,10 @@ export function registerIpc(actions: IpcActions): void {
     try {
       const result = await runMove(request, sshRemote(request.target), (progress) => broadcast(IPC.moveProgress, progress));
       await writeMoveRecord(request, result, defaultRecordDir());
+      if (result.ok && request.direction === "to-vm" && request.hostRepo) {
+        clipboard.writeText(request.branch);
+        return { ...result, note: `${result.note ?? ""} The branch name is on your clipboard.`.trim() };
+      }
       return result;
     } finally {
       moving = false;

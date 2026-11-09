@@ -210,3 +210,51 @@ describe.skipIf(!live)("move against the real VM", () => {
     }
   }, 600000);
 });
+
+describe.skipIf(!live)("send a branch into a project on the real host", () => {
+  it("creates the branch in a throwaway project clone and cleans up", async () => {
+    const stamp = Date.now();
+    const repoName = `vmcbranch${stamp}`;
+    const root = realpathSync(await mkdtemp(join(tmpdir(), "vmc-live-branch-")));
+    const repo = join(root, repoName);
+    await mkdir(repo, { recursive: true });
+    git(repo, "init", "-q", "-b", "main");
+    git(repo, "config", "user.name", "Live Test");
+    git(repo, "config", "user.email", "live@example.com");
+    await writeFile(join(repo, "a.txt"), "one\n");
+    git(repo, "add", ".");
+    git(repo, "commit", "-q", "-m", "init");
+    const macPath = join(root, "wt", "feature");
+    git(repo, "worktree", "add", "-q", "-b", "feature", macPath);
+    await writeFile(join(macPath, "work.txt"), "unsaved work\n");
+
+    const remote = sshRemote(target);
+    const home = await remote.home();
+    expect(home).not.toBe("");
+    const hostRoot = `${home}/vmc-live-${stamp}`;
+    const project = `${hostRoot}/${repoName}`;
+    const cleanup = () => runSsh(target, `rm -rf ${shq(hostRoot)}`, { timeout: 60000 });
+    try {
+      const setup = await runSsh(target, `mkdir -p ${shq(project)} && git -C ${shq(project)} init -q -b scratch`, { timeout: 60000 });
+      expect(setup.code).toBe(0);
+      git(repo, "push", "-q", `ssh://${target.user}@${target.host}${project}`, "main:refs/heads/main");
+      const checkout = await runSsh(target, `git -C ${shq(project)} checkout -q main`, { timeout: 60000 });
+      expect(checkout.code).toBe(0);
+
+      const request: MoveRequest = { direction: "to-vm", target, repo: repoName, name: "feature", branch: "feature", macPath, vmPath: null, includeEnv: false, removeSource: false, hostRepo: project };
+      const events: MoveProgress[] = [];
+      const result = await runMove(request, remote, (event) => events.push(event), join(root, "mac-claude"));
+      expect(result.error).toBeNull();
+      expect(result.ok).toBe(true);
+
+      const check = await runSsh(target, `git -C ${shq(project)} rev-parse refs/heads/feature && git -C ${shq(project)} log -1 --format=%s refs/heads/feature && git -C ${shq(project)} worktree list | wc -l`, { timeout: 60000 });
+      expect(check.code).toBe(0);
+      expect(check.stdout).toContain(git(macPath, "rev-parse", "HEAD"));
+      expect(check.stdout).toContain("WIP: moved to the VM");
+      expect(check.stdout.trim().split("\n").pop()).toBe("1");
+      expect(events.filter((event) => event.status === "failed")).toEqual([]);
+    } finally {
+      await cleanup();
+    }
+  }, 180000);
+});

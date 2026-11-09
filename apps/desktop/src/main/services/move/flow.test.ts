@@ -229,3 +229,82 @@ describe("copying .env files", () => {
     expect(await readFile(join(w.paths.worktree, "later.txt"), "utf8")).toBe("more\n");
   });
 });
+
+describe("send a branch into the host project", () => {
+  async function hostWorld() {
+    const w = await world();
+    const project = join(w.vmHome, "proj", "demo");
+    await mkdir(join(w.vmHome, "proj"), { recursive: true });
+    execFileSync("git", ["clone", "-q", w.repo, project]);
+    git(project, "config", "user.name", "Test");
+    git(project, "config", "user.email", "test@example.com");
+    const request: MoveRequest = { ...w.request, hostRepo: project };
+    return { ...w, project, request };
+  }
+
+  it("commits unsaved work and creates the branch in the project without making a worktree", async () => {
+    const w = await hostWorld();
+    const events: MoveProgress[] = [];
+    const result = await runMove(w.request, w.remote, (event) => events.push(event), w.macProjects);
+
+    expect(result.ok).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.note).toContain("Start a thread on that branch in T3");
+    expect(git(w.project, "rev-parse", "refs/heads/feature")).toBe(git(w.macPath, "rev-parse", "HEAD"));
+    expect(git(w.macPath, "log", "-1", "--format=%s")).toBe("WIP: moved to the VM");
+    expect(existsSync(w.paths.worktree)).toBe(false);
+    expect(events.map((event) => event.step)).toEqual(expect.arrayContaining(["preflight", "commit", "push", "branch"]));
+    expect(events.filter((event) => event.status === "failed")).toEqual([]);
+  });
+
+  it("fast-forwards the branch on a second send and expands a leading tilde", async () => {
+    const w = await hostWorld();
+    await runMove(w.request, w.remote, quiet, w.macProjects);
+    await appendFile(join(w.macPath, "work.txt"), "more\n");
+    git(w.macPath, "add", "-A");
+    git(w.macPath, "commit", "-q", "-m", "more work");
+    const tilde = `~/${w.project.slice(w.vmHome.length + 1)}`;
+    const again = await runMove({ ...w.request, hostRepo: tilde }, w.remote, quiet, w.macProjects);
+    expect(again.ok).toBe(true);
+    expect(git(w.project, "rev-parse", "refs/heads/feature")).toBe(git(w.macPath, "rev-parse", "HEAD"));
+  });
+
+  it("refuses when the host branch has commits the Mac does not", async () => {
+    const w = await hostWorld();
+    await runMove(w.request, w.remote, quiet, w.macProjects);
+    git(w.project, "checkout", "-q", "main");
+    git(w.project, "checkout", "-q", "feature");
+    await writeFile(join(w.project, "host.txt"), "host only\n");
+    git(w.project, "add", "-A");
+    git(w.project, "commit", "-q", "-m", "host commit");
+    git(w.project, "checkout", "-q", "main");
+    await appendFile(join(w.macPath, "work.txt"), "mac\n");
+    git(w.macPath, "add", "-A");
+    git(w.macPath, "commit", "-q", "-m", "mac commit");
+    const result = await runMove(w.request, w.remote, quiet, w.macProjects);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("Bring it back first");
+  });
+
+  it("does not move a branch that is checked out on the host", async () => {
+    const w = await hostWorld();
+    await runMove(w.request, w.remote, quiet, w.macProjects);
+    git(w.project, "checkout", "-q", "feature");
+    await appendFile(join(w.macPath, "work.txt"), "later\n");
+    git(w.macPath, "add", "-A");
+    git(w.macPath, "commit", "-q", "-m", "later");
+    const before = git(w.project, "rev-parse", "refs/heads/feature");
+    const result = await runMove(w.request, w.remote, quiet, w.macProjects);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("checked out on the host");
+    expect(git(w.project, "rev-parse", "refs/heads/feature")).toBe(before);
+  });
+
+  it("can remove the Mac copy afterwards", async () => {
+    const w = await hostWorld();
+    const result = await runMove({ ...w.request, removeSource: true }, w.remote, quiet, w.macProjects);
+    expect(result.ok).toBe(true);
+    expect(existsSync(w.macPath)).toBe(false);
+    expect(git(w.project, "rev-parse", "--verify", "refs/heads/feature")).not.toBe("");
+  });
+});

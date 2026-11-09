@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeOf, addHost, editActive, profilesOf, removeActive, selectHost, syncActive } from "./hosts";
+import { activeOf, addHost, editActive, findHostRepo, profilesOf, removeActive, selectHost, syncActive } from "./hosts";
 
 type Fields = Parameters<typeof profilesOf>[0];
 
@@ -40,5 +40,19 @@ describe("host profiles", () => {
     const after = merge(two, removeActive(two));
     expect(after.activeHostId).toBe("default");
     expect(profilesOf(after)).toHaveLength(1);
+  });
+});
+
+describe("findHostRepo", () => {
+  const repos = "~/Developer/other\n  ~/trabalho/unicef/adt-studio/\n\n/home/u/lip";
+
+  it("finds the clone whose folder name matches the repo, ignoring blanks and trailing slashes", () => {
+    expect(findHostRepo(repos, "adt-studio")).toBe("~/trabalho/unicef/adt-studio");
+    expect(findHostRepo(repos, "lip")).toBe("/home/u/lip");
+  });
+
+  it("returns null when no listed clone matches", () => {
+    expect(findHostRepo(repos, "missing")).toBeNull();
+    expect(findHostRepo("", "adt-studio")).toBeNull();
   });
 });

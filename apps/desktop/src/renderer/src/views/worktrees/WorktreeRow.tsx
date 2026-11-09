@@ -5,7 +5,8 @@ import { Pill } from "@/components/Tile";
 import type { Worktree } from "@/data/types";
 import { formatBytes } from "@/lib/format";
 import type { Origin } from "@/lib/origin";
-import { PLACE } from "@/lib/worktrees";
+import { useHostName } from "@/lib/useHost";
+import { placeLabel } from "@/lib/worktrees";
 import { ageDays, stateOf } from "@/lib/worktreeModel";
 import { formatAge, Rename, SizeBar, StateChip, STATE_META } from "./parts";
 
@@ -36,10 +37,11 @@ interface WorktreeRowProps {
 const ENTER = (index: number) => ({ initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.22, delay: Math.min(index, 10) * 0.025 } });
 
 function Badges({ tree, origin, tools, hasTwin }: Pick<WorktreeRowProps, "tree" | "origin" | "tools" | "hasTwin">) {
+  const host = useHostName();
   return (
     <>
-      <Pill tone={tree.location === "vm" ? "ok" : "neutral"}>{PLACE[tree.location]}</Pill>
-      {hasTwin && <Pill>{tree.location === "mac" ? "also on VM" : "also on Mac"}</Pill>}
+      <Pill tone={tree.location === "vm" ? "ok" : "neutral"}>{placeLabel(tree.location, host)}</Pill>
+      {hasTwin && <Pill>{tree.location === "mac" ? `also on ${host}` : "also on Mac"}</Pill>}
       {(origin.kind === "conductor" || origin.kind === "t3code" || origin.kind === "claude") && <OriginBadge origin={origin} tools={tools} />}
     </>
   );
@@ -100,6 +102,7 @@ export const TERMINAL_COLUMNS = "grid-cols-[14px_minmax(0,1.3fr)_minmax(0,1.2fr)
 
 function TerminalRow(props: WorktreeRowProps) {
   const { tree, alias, size, now, days, selected, index, hasTwin, onSelect } = props;
+  const host = useHostName();
   const state = stateOf(tree, now, days);
   const meta = STATE_META[state];
   const work = [tree.modified > 0 ? `${tree.modified}~` : "", tree.ahead > 0 ? `↑${tree.ahead}` : "", tree.behind > 0 ? `↓${tree.behind}` : ""].filter(Boolean).join(" ");
@@ -113,7 +116,7 @@ function TerminalRow(props: WorktreeRowProps) {
       <span className="size-2 rounded-full" style={{ background: meta.color, boxShadow: `0 0 8px ${meta.color}` }} />
       <span className="flex min-w-0 items-center gap-2">
         <span className="truncate text-[13px] text-[var(--text-primary)]">{alias ?? tree.name}</span>
-        <span className="shrink-0 text-[10px] uppercase text-[var(--text-muted)]">{PLACE[tree.location]}</span>
+        <span className="shrink-0 text-[10px] uppercase text-[var(--text-muted)]">{placeLabel(tree.location, host)}</span>
         {hasTwin && <span className="shrink-0 text-[10px] text-[var(--text-muted)]">⇄</span>}
       </span>
       <span className="truncate text-[var(--text-secondary)]">{tree.branch ?? "detached"}</span>

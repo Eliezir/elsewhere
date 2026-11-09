@@ -19,6 +19,14 @@ export function syncActive<T extends HostFields>(settings: T): T {
   return { ...settings, hosts, activeHostId: activeId };
 }
 
+export function findHostRepo(vmRepos: string, repo: string): string | null {
+  for (const line of vmRepos.split("\n")) {
+    const path = line.trim().replace(/\/+$/, "");
+    if (path !== "" && path.split("/").pop() === repo) return path;
+  }
+  return null;
+}
+
 export function selectHost(settings: HostFields, id: string): Partial<Settings> {
   const target = profilesOf(settings).find((profile) => profile.id === id);
   if (!target) return {};

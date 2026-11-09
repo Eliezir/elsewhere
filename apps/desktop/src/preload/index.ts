@@ -3,7 +3,7 @@ import { IPC, type Api } from "@vmc/shared/bridge";
 
 const api: Api = {
   platform: process.platform,
-  getTailscaleStatus: () => ipcRenderer.invoke(IPC.tailscaleStatus),
+  getTailscaleStatus: (vmName) => ipcRenderer.invoke(IPC.tailscaleStatus, vmName),
   getUsage: () => ipcRenderer.invoke(IPC.usage),
   refreshUsage: () => ipcRenderer.invoke(IPC.usageRefresh),
   getMacWorktrees: (repos) => ipcRenderer.invoke(IPC.macWorktrees, { repos }),
@@ -36,6 +36,7 @@ const api: Api = {
   },
   openTailscale: () => ipcRenderer.invoke(IPC.openTailscale),
   wakeHost: (input) => ipcRenderer.invoke(IPC.wakeHost, input),
+  openInRemoteT3: (input) => ipcRenderer.invoke(IPC.remoteT3Open, input),
   getProjectIcons: (input) => ipcRenderer.invoke(IPC.projectIcons, input),
   getTools: () => ipcRenderer.invoke(IPC.toolsInfo),
   openInClaudeDesktop: (input) => ipcRenderer.invoke(IPC.claudeDesktopOpen, input),

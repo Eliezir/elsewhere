@@ -189,6 +189,20 @@ export const ToolOpenResultSchema = z.object({
   error: z.string().nullable(),
 });
 
+export const RemoteT3InputSchema = z.object({
+  target: VmTargetSchema,
+  path: z.string().min(2).max(1024).startsWith("/"),
+  branch: z.string().min(1).max(200).regex(/^[A-Za-z0-9._/-]+$/).nullable().optional(),
+});
+
+export const RemoteT3ResultSchema = z.object({
+  ok: z.boolean(),
+  opened: z.enum(["thread", "app"]).nullable(),
+  title: z.string().nullable(),
+  copied: z.enum(["branch", "path"]).nullable(),
+  error: z.string().nullable(),
+});
+
 export const PathsInputSchema = z.object({
   paths: z.array(z.string().min(2).max(1024).startsWith("/")).max(400),
 });
@@ -199,6 +213,8 @@ export type ToolsInfo = Record<Tool, ToolInfo>;
 export type T3Threads = Record<string, { url: string; title: string }>;
 export type ToolOpenInput = z.infer<typeof ToolOpenInputSchema>;
 export type ToolOpenResult = z.infer<typeof ToolOpenResultSchema>;
+export type RemoteT3Input = z.infer<typeof RemoteT3InputSchema>;
+export type RemoteT3Result = z.infer<typeof RemoteT3ResultSchema>;
 
 export const ClaudeDesktopOpenSchema = z.object({
   target: VmTargetSchema,

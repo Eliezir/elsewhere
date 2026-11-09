@@ -6,6 +6,7 @@ import type { Worktree } from "@/data/types";
 import { buildDeleteRequest } from "@/lib/delete";
 import { formatBytes } from "@/lib/format";
 import { useSettings } from "@/lib/settings";
+import { useHostName } from "@/lib/useHost";
 
 type Step = "idle" | "confirm" | "force" | "done";
 type Scope = "mac" | "vm" | "both";
@@ -24,10 +25,10 @@ function blockedReason(tree: Worktree, vmReachable: boolean): string | null {
   return null;
 }
 
-const PLACE = { mac: "Mac", vm: "VM" } as const;
-
 export function DeleteWorktreePanel({ tree, twin, vmReachable, sizes, onDeleted }: DeleteWorktreePanelProps) {
   const [settings] = useSettings();
+  const host = useHostName();
+  const PLACE = { mac: "Mac", vm: host } as const;
   const [step, setStep] = useState<Step>("idle");
   const [scope, setScope] = useState<Scope>(tree.location);
   const [deleteBranch, setDeleteBranch] = useState(false);

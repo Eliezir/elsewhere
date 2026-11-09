@@ -9,6 +9,7 @@ const safeBranch = z
   .regex(/^[A-Za-z0-9._/-]+$/)
   .refine((value) => !value.includes("..") && !value.startsWith("/") && !value.endsWith("/") && !value.endsWith(".lock"));
 const absolutePath = z.string().min(2).max(1024).startsWith("/");
+const hostRepoPath = z.string().min(2).max(1024).regex(/^(~\/|\/)[^\0\n]*$/).refine((value) => !value.split("/").includes(".."));
 
 export const MoveRequestSchema = z.object({
   direction: z.enum(["to-vm", "to-mac"]),
@@ -20,6 +21,7 @@ export const MoveRequestSchema = z.object({
   vmPath: absolutePath.nullable(),
   includeEnv: z.boolean(),
   removeSource: z.boolean(),
+  hostRepo: hostRepoPath.nullable().optional(),
 });
 
 export const MoveProgressSchema = z.object({

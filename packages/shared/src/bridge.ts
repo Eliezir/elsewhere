@@ -4,7 +4,7 @@ import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResu
 import type { UsageSnapshot } from "./usage";
 import type { VmTarget } from "./worktree";
 import type { AppPrefs, ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput, WakeInput, WakeResult } from "./ports";
-import type { ClaudeDesktopOpenResult, T3Threads, ToolOpenInput, ToolOpenResult, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
+import type { ClaudeDesktopOpenResult, T3Threads, ToolOpenInput, ToolOpenResult, RemoteT3Input, RemoteT3Result, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
   tailscaleStatus: "tailscale:status",
@@ -21,6 +21,7 @@ export const IPC = {
   openMacTerminal: "terminal:open-mac",
   openTailscale: "app:open-tailscale",
   wakeHost: "host:wake",
+  remoteT3Open: "tools:remote-t3-open",
   openApproval: "app:open-approval",
   projectIcons: "icons:get",
   sizes: "worktrees:sizes",
@@ -51,7 +52,7 @@ export const IPC = {
 
 export interface Api {
   platform: string;
-  getTailscaleStatus(): Promise<TailscaleStatus>;
+  getTailscaleStatus(vmName?: string): Promise<TailscaleStatus>;
   getUsage(): Promise<UsageSnapshot>;
   refreshUsage(): Promise<UsageSnapshot>;
   getMacWorktrees(repos: string[]): Promise<Worktree[]>;
@@ -63,6 +64,7 @@ export interface Api {
   openMacTerminal(path: string): Promise<string | null>;
   openTailscale(): Promise<string | null>;
   wakeHost(input: WakeInput): Promise<WakeResult>;
+  openInRemoteT3(input: RemoteT3Input): Promise<RemoteT3Result>;
   openApproval(url: string): Promise<boolean>;
   getProjectIcons(input: IconInput): Promise<ProjectIcons>;
   getTools(): Promise<ToolsInfo>;

@@ -13,8 +13,9 @@ import type { Origin } from "@/lib/origin";
 import { useSettings } from "@/lib/settings";
 import { staleInfo } from "@/lib/stale";
 import { timeAgo } from "@/lib/time";
-import { PLACE } from "@/lib/worktrees";
-import { MovePanel, Stat } from "./MovePanel";
+import { useHostName } from "@/lib/useHost";
+import { placeLabel } from "@/lib/worktrees";
+import { HostActions, MoveFooter, Stat } from "./MovePanel";
 import { Rename } from "./parts";
 
 interface WorktreeDetailProps {
@@ -34,10 +35,12 @@ interface WorktreeDetailProps {
 
 export function WorktreeDetail({ selected, twin, worktrees, icons, tools, t3Threads, originFor, sizes, vm, alias, onAlias, onChanged }: WorktreeDetailProps) {
   const [settings] = useSettings();
+  const host = useHostName();
   return (
-    <Tile className="min-h-0" tone="light" index={1} title="Selected" action={selected && <Pill>{PLACE[selected.location]}</Pill>}>
+    <Tile className="min-h-0" tone="light" index={1} title="Selected" action={selected && <Pill>{placeLabel(selected.location, host)}</Pill>}>
       {selected ? (
-        <div key={selected.id} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div key={selected.id} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-3">
           <div className="flex shrink-0 items-center gap-3">
             <ProjectIconEditor repo={selected.repo} info={icons[selected.repo]} />
             <div className="min-w-0">
@@ -92,8 +95,10 @@ export function WorktreeDetail({ selected, twin, worktrees, icons, tools, t3Thre
               </div>
             ))}
           </div>
-          <MovePanel key={selected.id} tree={selected} all={worktrees} vm={vm} onMoved={onChanged} />
+          <HostActions tree={selected} all={worktrees} vm={vm} />
           <DeleteWorktreePanel key={`delete-${selected.id}`} tree={selected} twin={twin} vmReachable={vm?.reachable ?? false} sizes={sizes} onDeleted={onChanged} />
+          </div>
+          <MoveFooter key={selected.id} tree={selected} all={worktrees} vm={vm} onMoved={onChanged} />
         </div>
       ) : (
         <p className="text-xs text-[var(--text-muted)]">Select a worktree to see its sessions and move it.</p>
