@@ -22,6 +22,8 @@ export interface Settings {
   idleLine: number;
   pacerCap: number;
   staleDays: number;
+  shutdownIdle: number;
+  shutdownGrace: number;
   notifyUnreachable: boolean;
   notifyDisk: boolean;
   notifyIdle: boolean;
@@ -46,6 +48,8 @@ export const DEFAULT_SETTINGS: Settings = {
   idleLine: 20,
   pacerCap: 80,
   staleDays: 30,
+  shutdownIdle: 20,
+  shutdownGrace: 120,
   notifyUnreachable: true,
   notifyDisk: true,
   notifyIdle: true,

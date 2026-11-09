@@ -1,6 +1,7 @@
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { HostSwitcher } from "@/components/HostSwitcher";
+import { ShutdownCard } from "@/components/ShutdownCard";
 import { VmTerminalButton } from "@/components/TerminalButtons";
 import { Pill, Tile } from "@/components/Tile";
 import { useVmSnapshot } from "@/data/hooks";
@@ -99,6 +100,7 @@ export function SettingsView() {
             </div>
           </div>
         </Tile>
+        <ShutdownCard index={2} />
         <Tile className="col-span-6" index={2} title="Repositories">
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <RepoField label="On this Mac" hint="One repository per line. Every worktree of each one is listed." value={settings.macRepos} onChange={(macRepos) => update({ macRepos })} />

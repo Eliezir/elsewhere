@@ -2,6 +2,7 @@ import type { TailscaleStatus } from "./status";
 import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
 import type { UsageSnapshot } from "./usage";
+import type { ShutdownArm, ShutdownStatus, ShutdownTarget } from "./shutdown";
 import type { VmTarget } from "./worktree";
 import type { AppPrefs, ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput, WakeInput, WakeResult } from "./ports";
 import type { ClaudeDesktopOpenResult, T3Threads, ToolOpenInput, ToolOpenResult, RemoteT3Input, RemoteT3Result, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
@@ -48,6 +49,10 @@ export const IPC = {
   linkChanged: "vm:link-changed",
   openLocalPort: "app:open-local-port",
   vmStorage: "vm:storage",
+  macStorage: "storage:mac",
+  shutdownStatus: "shutdown:status",
+  shutdownArm: "shutdown:arm",
+  shutdownDisarm: "shutdown:disarm",
 } as const;
 
 export interface Api {
@@ -91,6 +96,10 @@ export interface Api {
   onLinkStatus(listener: (status: LinkStatus) => void): () => void;
   openLocalPort(port: number): Promise<boolean>;
   getVmStorage(input: VmStorageInput): Promise<VmStorage>;
+  getMacStorage(): Promise<VmStorage>;
+  getShutdownStatus(input: ShutdownTarget): Promise<ShutdownStatus>;
+  armShutdown(input: ShutdownArm): Promise<ShutdownStatus>;
+  disarmShutdown(input: ShutdownTarget): Promise<ShutdownStatus>;
   openMainWindow(section?: string): Promise<void>;
   onNavigate(listener: (section: string) => void): () => void;
 }

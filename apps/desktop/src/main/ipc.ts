@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, clipboard, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, ShutdownArmSchema, ShutdownTargetSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -18,6 +18,8 @@ import { setPrefs } from "./services/prefs";
 import { openInClaudeDesktop } from "./services/claudeDesktop";
 import { getVmPorts, killVmPort } from "./services/vmPorts";
 import { getVmStorage } from "./services/vmStorage";
+import { getMacStorage } from "./services/macStorage";
+import { armShutdown, disarmShutdown, getShutdownStatus } from "./services/shutdown";
 import { deleteWorktree, prune } from "./services/cleanup";
 import { clearCustomIcon, getProjectIcons, saveCustomIcon } from "./services/projectIcon";
 import { getT3Threads, getToolsInfo, openInTool } from "./services/tools";
@@ -93,6 +95,13 @@ export function registerIpc(actions: IpcActions): void {
     return true;
   });
   ipcMain.handle(IPC.vmStorage, (_event, input: unknown) => getVmStorage(VmStorageInputSchema.parse(input).target));
+  ipcMain.handle(IPC.macStorage, () => getMacStorage());
+  ipcMain.handle(IPC.shutdownStatus, (_event, input: unknown) => getShutdownStatus(ShutdownTargetSchema.parse(input).target));
+  ipcMain.handle(IPC.shutdownArm, (_event, input: unknown) => {
+    const parsed = ShutdownArmSchema.parse(input);
+    return armShutdown(parsed.target, parsed);
+  });
+  ipcMain.handle(IPC.shutdownDisarm, (_event, input: unknown) => disarmShutdown(ShutdownTargetSchema.parse(input).target));
   ipcMain.handle(IPC.projectIcons, (_event, input: unknown) => getProjectIcons(IconInputSchema.parse(input).projects));
   ipcMain.handle(IPC.toolsInfo, () => getToolsInfo());
   ipcMain.handle(IPC.t3Threads, (_event, input: unknown) => getT3Threads(PathsInputSchema.parse(input).paths));

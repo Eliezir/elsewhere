@@ -129,6 +129,33 @@ export function useVmStorage() {
   });
 }
 
+export function useMacStorage() {
+  return useQuery({ queryKey: ["mac-storage"], queryFn: () => window.api.getMacStorage(), staleTime: 5 * 60 * 1000, retry: false });
+}
+
+export function useHostStorage(host: string, user: string) {
+  const target = { host: host.trim(), user: user.trim() };
+  return useQuery({
+    queryKey: ["vm-storage", target.host, target.user],
+    queryFn: () => window.api.getVmStorage({ target }),
+    enabled: VmTargetSchema.safeParse(target).success,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
+
+export function useShutdownStatus(host: string, user: string) {
+  const target = { host: host.trim(), user: user.trim() };
+  return useQuery({
+    queryKey: ["shutdown-status", target.host, target.user],
+    queryFn: () => window.api.getShutdownStatus({ target }),
+    enabled: VmTargetSchema.safeParse(target).success,
+    refetchInterval: 15000,
+    staleTime: 5000,
+    retry: false,
+  });
+}
+
 export function useTwinSync(mac: Worktree | null, vm: Worktree | null, enabled: boolean) {
   const [settings] = useSettings();
   const target = { host: settings.host.trim(), user: settings.user.trim() };
