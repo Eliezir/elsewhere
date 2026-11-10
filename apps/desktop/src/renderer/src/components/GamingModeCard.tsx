@@ -3,11 +3,13 @@ import { Pill, Tile } from "@/components/Tile";
 import { useGamingMode } from "@/lib/useGamingMode";
 
 export function GamingModeCard() {
-  const { profile, reachable, gaming, step, setStep, start } = useGamingMode();
+  const { profile, reachable, gaming, stopping, step, setStep, start } = useGamingMode();
 
   return (
-    <Tile index={5} title="PC mode" action={<Pill tone={gaming ? "warn" : "ok"}>{gaming ? "Gaming mode" : "Dev mode"}</Pill>}>
-      {gaming ? (
+    <Tile index={5} title="PC mode" action={<Pill tone={gaming || stopping ? "warn" : "ok"}>{gaming ? "Gaming mode" : stopping ? "Stopping…" : "Dev mode"}</Pill>}>
+      {stopping ? (
+        <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{`Stopping WSL and Lan Mouse on ${profile.name}. It goes offline in a few seconds and comes back in dev mode the next time the PC is turned on.`}</p>
+      ) : gaming ? (
         <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{`Dev tools on ${profile.name} are stopped and its memory is free for games. It goes back to dev mode the next time the PC is turned on, by Alexa or Wake.`}</p>
       ) : step.kind === "confirm" || step.kind === "working" || step.kind === "busy" ? (
         <div className="space-y-2.5">

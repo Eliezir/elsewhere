@@ -170,13 +170,13 @@ export function PopoverView() {
           )}
         </Card>
         {kind === "pc" && (
-          <Card index={2} title="Lan Mouse" to="settings">
-            <LanMouseQuick />
+          <Card index={2} title="PC mode" to="overview">
+            <PopoverGamingMode />
           </Card>
         )}
         {kind === "pc" && (
-          <Card index={3} title="PC mode" to="overview">
-            <PopoverGamingMode />
+          <Card index={3} title="Lan Mouse" to="settings">
+            <LanMouseQuick />
           </Card>
         )}
         {taskGroups.length > 0 && (

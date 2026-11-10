@@ -54,7 +54,7 @@ export function LanMouseQuick() {
             {!macRunning ? "Open Lan Mouse on this Mac" : sharing ? (left === null ? "Going to the PC" : `Back on the Mac in ${left} min`) : "Staying on this Mac"}
           </div>
         </div>
-        <Button variant={sharing ? "danger" : "primary"} className="!px-3 !py-1 text-xs" disabled={!macRunning || busy} onClick={() => void toggleShare()}>
+        <Button variant={sharing ? "ghost" : "primary"} className="!px-3 !py-1 text-xs" disabled={!macRunning || busy} onClick={() => void toggleShare()}>
           {sharing ? "Bring back" : `Use for ${SHARE_MINUTES} min`}
         </Button>
       </div>
