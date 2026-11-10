@@ -1,61 +1,9 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/controls";
 import { Pill, Tile } from "@/components/Tile";
-import { useVmSnapshot } from "@/data/hooks";
-import { activeOf } from "@/lib/hosts";
-import { useSettings } from "@/lib/settings";
-
-const KEY = "vmc:pc-mode";
-
-type Mode = "dev" | "gaming";
-
-function loadMode(): Mode {
-  try {
-    return localStorage.getItem(KEY) === "gaming" ? "gaming" : "dev";
-  } catch {
-    return "dev";
-  }
-}
-
-function saveMode(mode: Mode): void {
-  try {
-    localStorage.setItem(KEY, mode);
-  } catch {
-    return;
-  }
-}
-
-type Step = { kind: "idle" } | { kind: "confirm" } | { kind: "working" } | { kind: "busy"; reason: string } | { kind: "error"; message: string };
+import { useGamingMode } from "@/lib/useGamingMode";
 
 export function GamingModeCard() {
-  const [settings] = useSettings();
-  const profile = activeOf(settings);
-  const snapshot = useVmSnapshot();
-  const reachable = snapshot.data?.reachable === true;
-  const [mode, setMode] = useState<Mode>(loadMode);
-  const [step, setStep] = useState<Step>({ kind: "idle" });
-
-  useEffect(() => {
-    if (!reachable || mode === "dev") return;
-    saveMode("dev");
-    setMode("dev");
-  }, [reachable, mode]);
-
-  const start = async (force: boolean) => {
-    setStep({ kind: "working" });
-    const result = await window.api.startGamingMode({ target: { host: profile.host.trim(), user: profile.user.trim() }, force });
-    if (result.ok) {
-      saveMode("gaming");
-      setMode("gaming");
-      setStep({ kind: "idle" });
-    } else if (result.busy) {
-      setStep({ kind: "busy", reason: result.reason ?? "something is running" });
-    } else {
-      setStep({ kind: "error", message: result.error ?? "Couldn't start gaming mode." });
-    }
-  };
-
-  const gaming = mode === "gaming" && !reachable;
+  const { profile, reachable, gaming, step, setStep, start } = useGamingMode();
 
   return (
     <Tile index={5} title="PC mode" action={<Pill tone={gaming ? "warn" : "ok"}>{gaming ? "Gaming mode" : "Dev mode"}</Pill>}>

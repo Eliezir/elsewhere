@@ -40,11 +40,11 @@ export function LanMouseQuick() {
     <div className="space-y-2.5">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="leading-tight">{`On ${profile.name}`}</div>
+          <div className="leading-tight">{`Lan Mouse on ${profile.name}`}</div>
           <div className="text-[11px] leading-tight text-[var(--text-secondary)]">{!appReachable ? "Not reachable" : appState === "not-set-up" ? "Needs one-time setup" : appRunning ? "Running" : "Closed"}</div>
         </div>
         <Button className="!px-3 !py-1 text-xs" disabled={!appReachable || busy || appState === "not-installed"} onClick={() => void toggleApp()}>
-          {appState === "not-set-up" ? "Set up" : appRunning ? "Close" : "Open"}
+          {appState === "not-set-up" ? "Set up" : appRunning ? "Close Lan Mouse" : "Open Lan Mouse"}
         </Button>
       </div>
       <div className="flex items-center justify-between gap-3">

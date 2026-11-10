@@ -6,6 +6,7 @@ import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { ClaudeMark } from "@/components/ClaudeMark";
 import { LanMouseQuick } from "@/components/LanMouseQuick";
+import { PopoverGamingMode } from "@/components/PopoverGamingMode";
 import { Button } from "@/components/controls";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { useLinkStatus, useProjectIcons, useTasks, useVmPorts, useVmSnapshot } from "@/data/hooks";
@@ -173,8 +174,13 @@ export function PopoverView() {
             <LanMouseQuick />
           </Card>
         )}
+        {kind === "pc" && (
+          <Card index={3} title="PC mode" to="overview">
+            <PopoverGamingMode />
+          </Card>
+        )}
         {taskGroups.length > 0 && (
-          <Card index={3} title="Tasks" to="tasks" action={<Pill>{`${openItems} open`}</Pill>}>
+          <Card index={4} title="Tasks" to="tasks" action={<Pill>{`${openItems} open`}</Pill>}>
             <div className="space-y-1.5">
               {taskGroups.slice(0, 3).map((group) => (
                 <button key={group.key} type="button" onClick={() => open("tasks")} className="no-drag flex w-full cursor-default items-center justify-between gap-3 text-left outline-none">
@@ -185,7 +191,7 @@ export function PopoverView() {
             </div>
           </Card>
         )}
-        <Card index={4} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
+        <Card index={5} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
           {groups.length > 0 ? (
             <div className="space-y-2.5">
               {groups.slice(0, MAX_GROUPS).map((group) => (
