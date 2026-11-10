@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import json, os, subprocess, sys
+import json, os, shlex, subprocess, sys
 from pathlib import Path
 
 HQ = Path(__file__).resolve().parent
@@ -30,21 +30,56 @@ def rsync(src, dst, excludes=()):
     return result.returncode, lines
 
 
+def ensure_line(machine, rel, line):
+    dst, ssh = target(machine, rel)
+    if ssh:
+        path = dst.split(":", 1)[1]
+        have = subprocess.run(["ssh", ssh, f"grep -qxF {shlex.quote(line)} {path}"]).returncode == 0
+    else:
+        path = Path(dst)
+        have = path.exists() and line in path.read_text().splitlines()
+    if have:
+        print(f"ok {machine}:{rel} already has the line")
+        return 0
+    if DRY:
+        print(f"would append to {machine}:{rel}: {line}")
+        return 0
+    if ssh:
+        return subprocess.run(["ssh", ssh, f"mkdir -p $(dirname {path}) && printf '%s\\n' {shlex.quote(line)} >> {path}"]).returncode
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as handle:
+        handle.write(line + "\n")
+    print(f"appended to {machine}:{rel}")
+    return 0
+
+
+def make_remote_dir(machine, rel):
+    dst, ssh = target(machine, rel)
+    if ssh and not DRY:
+        subprocess.run(["ssh", ssh, f"mkdir -p $(dirname {dst.split(':', 1)[1]})"])
+
+
 def sync():
     status = 0
     for src, spec in CONFIG["files"].items():
         for machine in spec["to"]:
             dst, ssh = target(machine, spec["dest"])
-            if not ssh:
-                Path(dst).parent.mkdir(parents=True, exist_ok=True) if not DRY else None
+            if not ssh and not DRY:
+                Path(dst).parent.mkdir(parents=True, exist_ok=True)
+            make_remote_dir(machine, spec["dest"])
             code, lines = rsync(HQ / src, dst)
-            print(f"{'would update' if DRY else 'updated'} {machine}:{spec['dest']} {'(no change)' if not lines else ''}")
+            note = "(folder will be created)" if code else ("(no change)" if not lines else "")
+            print(f"{'would update' if DRY else 'updated'} {machine}:{spec['dest']} {note}")
             status |= code
+    for item in CONFIG.get("lines", []):
+        for machine in item["to"]:
+            status |= ensure_line(machine, item["file"], item["line"])
     skills = CONFIG["skills"]
     for machine in skills["to"]:
         dst, ssh = target(machine, skills["dest"] + "/")
         if not ssh and not DRY:
             Path(dst).mkdir(parents=True, exist_ok=True)
+        make_remote_dir(machine, skills["dest"] + "/x")
         code, lines = rsync(str(HQ / "skills") + "/", dst, skills["exclude"])
         print(f"{'would sync' if DRY else 'synced'} skills to {machine}: {len(lines)} changes")
         status |= code

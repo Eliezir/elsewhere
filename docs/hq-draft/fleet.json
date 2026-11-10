@@ -1,11 +1,43 @@
 {
   "machines": {
-    "mac": { "ssh": null, "home": "~" },
-    "pc": { "ssh": "adt-pc", "home": "~" }
+    "mac": {
+      "ssh": null,
+      "home": "~"
+    },
+    "pc": {
+      "ssh": "adt-pc",
+      "home": "~"
+    }
   },
   "files": {
-    "global/CLAUDE.md": { "dest": ".claude/CLAUDE.md", "to": ["mac", "pc"] },
-    "global/SHARED.md": { "dest": ".agents/SHARED.md", "to": ["mac", "pc"] }
+    "global/SHARED.md": {
+      "dest": ".agents/SHARED.md",
+      "to": [
+        "mac",
+        "pc"
+      ]
+    }
   },
-  "skills": { "to": ["mac", "pc"], "dest": ".claude/skills", "exclude": [".env", "*.local", "node_modules"] }
+  "skills": {
+    "to": [
+      "pc"
+    ],
+    "dest": ".claude/skills",
+    "exclude": [
+      ".env",
+      "*.local",
+      "node_modules",
+      "synced"
+    ]
+  },
+  "lines": [
+    {
+      "file": ".claude/CLAUDE.md",
+      "line": "@~/.agents/SHARED.md",
+      "to": [
+        "mac",
+        "pc"
+      ]
+    }
+  ]
 }

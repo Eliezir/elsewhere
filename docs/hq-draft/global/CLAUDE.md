@@ -1,1 +1,0 @@
-@~/.agents/SHARED.md
