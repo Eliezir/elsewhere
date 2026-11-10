@@ -1,6 +1,7 @@
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { HostSwitcher } from "@/components/HostSwitcher";
+import { HostAppsCard } from "@/components/HostAppsCard";
 import { ShutdownCard } from "@/components/ShutdownCard";
 import { VmTerminalButton } from "@/components/TerminalButtons";
 import { Pill, Tile } from "@/components/Tile";
@@ -100,6 +101,7 @@ export function SettingsView() {
             </div>
           </div>
         </Tile>
+        <HostAppsCard index={2} />
         <ShutdownCard index={2} />
         <Tile className="col-span-6" index={2} title="Repositories">
           <div className="flex min-h-0 flex-1 flex-col gap-3">

@@ -2,6 +2,7 @@ import type { TailscaleStatus } from "./status";
 import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
 import type { UsageSnapshot } from "./usage";
+import type { HostAppInput, HostAppResult } from "./hostApp";
 import type { TaskContent, TaskCreateInput, TaskCreateResult, TaskEntry, TaskWriteInput } from "./tasks";
 import type { ShutdownArm, ShutdownStatus, ShutdownTarget } from "./shutdown";
 import type { VmTarget } from "./worktree";
@@ -52,6 +53,7 @@ export const IPC = {
   vmStorage: "vm:storage",
   macStorage: "storage:mac",
   shutdownStatus: "shutdown:status",
+  hostApp: "host:app",
   tasksScan: "tasks:scan",
   tasksRead: "tasks:read",
   tasksWrite: "tasks:write",
@@ -103,6 +105,7 @@ export interface Api {
   openLocalPort(port: number): Promise<boolean>;
   getVmStorage(input: VmStorageInput): Promise<VmStorage>;
   getMacStorage(): Promise<VmStorage>;
+  controlHostApp(input: HostAppInput): Promise<HostAppResult>;
   scanTasks(repos: string[]): Promise<TaskEntry[]>;
   readTask(file: string): Promise<TaskContent>;
   writeTask(input: TaskWriteInput): Promise<TaskContent>;

@@ -8,3 +8,4 @@ export * from "./bridge";
 export * from "./ports";
 export * from "./shutdown";
 export * from "./tasks";
+export * from "./hostApp";

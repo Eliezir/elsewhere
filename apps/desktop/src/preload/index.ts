@@ -25,6 +25,7 @@ const api: Api = {
   openLocalPort: (port) => ipcRenderer.invoke(IPC.openLocalPort, port),
   getVmStorage: (input) => ipcRenderer.invoke(IPC.vmStorage, input),
   getMacStorage: () => ipcRenderer.invoke(IPC.macStorage),
+  controlHostApp: (input) => ipcRenderer.invoke(IPC.hostApp, input),
   scanTasks: (repos) => ipcRenderer.invoke(IPC.tasksScan, { repos }),
   readTask: (file) => ipcRenderer.invoke(IPC.tasksRead, { file }),
   writeTask: (input) => ipcRenderer.invoke(IPC.tasksWrite, input),

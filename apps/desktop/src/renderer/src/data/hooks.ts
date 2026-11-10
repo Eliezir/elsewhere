@@ -168,6 +168,18 @@ export function useTasks() {
   });
 }
 
+export function useHostAppStatus(host: string, user: string) {
+  const target = { host: host.trim(), user: user.trim() };
+  return useQuery({
+    queryKey: ["host-app", "lan-mouse", target.host, target.user],
+    queryFn: () => window.api.controlHostApp({ target, app: "lan-mouse", action: "status" }),
+    enabled: VmTargetSchema.safeParse(target).success,
+    refetchInterval: 10000,
+    staleTime: 4000,
+    retry: false,
+  });
+}
+
 export function useTwinSync(mac: Worktree | null, vm: Worktree | null, enabled: boolean) {
   const [settings] = useSettings();
   const target = { host: settings.host.trim(), user: settings.user.trim() };
