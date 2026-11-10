@@ -180,6 +180,16 @@ export function useHostAppStatus(host: string, user: string) {
   });
 }
 
+export function useLanMouse() {
+  return useQuery({
+    queryKey: ["lan-mouse"],
+    queryFn: () => window.api.controlLanMouse({ action: "status" }),
+    refetchInterval: 4000,
+    staleTime: 2000,
+    retry: false,
+  });
+}
+
 export function useTwinSync(mac: Worktree | null, vm: Worktree | null, enabled: boolean) {
   const [settings] = useSettings();
   const target = { host: settings.host.trim(), user: settings.user.trim() };

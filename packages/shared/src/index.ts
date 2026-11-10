@@ -9,3 +9,4 @@ export * from "./ports";
 export * from "./shutdown";
 export * from "./tasks";
 export * from "./hostApp";
+export * from "./lanMouse";

@@ -1,9 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { HostAppAction, HostAppState } from "@vmc/shared";
 import { useState } from "react";
-import { Button } from "@/components/controls";
+import { Button, SelectField, ToggleRow } from "@/components/controls";
 import { Pill, Tile } from "@/components/Tile";
-import { useHostAppStatus } from "@/data/hooks";
+import { useHostAppStatus, useLanMouse } from "@/data/hooks";
 import { activeOf } from "@/lib/hosts";
 import { useSettings } from "@/lib/settings";
 
@@ -18,6 +18,64 @@ const LABEL: Record<HostAppState, string> = {
 };
 
 const RUNNING: readonly HostAppState[] = ["running", "started"];
+
+const DURATIONS = [
+  { value: "0", label: "Until I turn it off" },
+  { value: "15", label: "For 15 minutes" },
+  { value: "30", label: "For 30 minutes" },
+  { value: "60", label: "For 1 hour" },
+] as const;
+
+function minutesLeft(backAt: number | null, now: number): number | null {
+  return backAt === null ? null : Math.max(1, Math.ceil((backAt - now) / 60000));
+}
+
+function ShareRow({ host }: { host: string }) {
+  const queryClient = useQueryClient();
+  const status = useLanMouse();
+  const [busy, setBusy] = useState(false);
+  const [duration, setDuration] = useState("15");
+  const data = status.data;
+  const running = data?.running === true;
+  const left = minutesLeft(data?.backAt ?? null, Date.now());
+
+  const apply = async (share: boolean) => {
+    setBusy(true);
+    const minutes = Number(duration);
+    const result = await window.api.controlLanMouse(share ? { action: "share", minutes: minutes > 0 ? minutes : null } : { action: "stop" });
+    setBusy(false);
+    queryClient.setQueryData(["lan-mouse"], result);
+  };
+
+  return (
+    <div className="border-t border-white/5 pt-2">
+      <ToggleRow
+        label={`Use this Mac's keyboard and mouse on ${host}`}
+        hint={
+          !running
+            ? "Open Lan Mouse on this Mac first."
+            : data?.active
+              ? left === null
+                ? "On. Moving the cursor to the screen edge goes to the PC."
+                : `On. Comes back to the Mac by itself in ${left} min.`
+              : "Off. The cursor stays on this Mac, so it can't wander into a screen you aren't looking at."
+        }
+        checked={data?.active === true}
+        disabled={!running || busy}
+        onChange={(checked) => void apply(checked)}
+      />
+      <SelectField label="Switch back" value={duration} disabled={!running || busy || data?.active === true} onChange={(event) => setDuration(event.target.value)}>
+        {DURATIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </SelectField>
+      <p className="mt-1.5 text-[11px] leading-snug text-[var(--text-secondary)]">If the cursor gets stuck on the PC, press the release shortcut set in Lan Mouse, or wait for the time above.</p>
+      {data?.error && <p className="mt-1 text-xs text-[var(--warn)]">{data.error}</p>}
+    </div>
+  );
+}
 
 export function HostAppsCard({ index }: { index: number }) {
   const [settings] = useSettings();
@@ -65,6 +123,7 @@ export function HostAppsCard({ index }: { index: number }) {
         </div>
       </div>
       {data?.error && !reachable && <p className="text-xs text-[var(--warn)]">{data.error}</p>}
+      <ShareRow host={profile.name} />
       {state === "failed" && reachable && <p className="text-xs text-[var(--warn)]">It didn't open. The PC may be locked or signed out.</p>}
     </Tile>
   );
