@@ -14,10 +14,19 @@ function fakeHome(): string {
   return home;
 }
 
-function runWatcher(home: string, idle: number, grace: number) {
+function killGroup(pid: number | undefined): void {
+  if (pid === undefined) return;
+  try {
+    process.kill(-pid);
+  } catch {
+    process.exitCode = process.exitCode ?? 0;
+  }
+}
+
+function runWatcher(home: string, idle: number, grace: number, action = "shutdown", pattern = "no-such-process-xyz") {
   writeFileSync(join(home, "watch.sh"), WATCHER_SCRIPT);
-  const child = spawn("sh", [join(home, "watch.sh"), String(idle), String(grace)], {
-    env: { ...process.env, HOME: home, VMC_POLL: "1", VMC_BUSY_PATTERN: "no-such-process-xyz", VMC_LOAD_LIMIT: "100000", VMC_SHUTDOWN_CMD: `touch "${home}/fired"` },
+  const child = spawn("sh", [join(home, "watch.sh"), String(idle), String(grace), action], {
+    env: { ...process.env, HOME: home, VMC_POLL: "1", VMC_BUSY_PATTERN: pattern, VMC_LOAD_LIMIT: "100000", VMC_SHUTDOWN_CMD: `touch "${home}/fired"`, VMC_SLEEP_CMD: `touch "${home}/slept"` },
     detached: true,
     stdio: "ignore",
   });
@@ -74,11 +83,40 @@ describe("shutdown watcher", () => {
   }, 15000);
 });
 
+describe("sleep mode", () => {
+  it("sleeps instead of shutting down once the warning passes quietly", async () => {
+    const home = fakeHome();
+    const stop = runWatcher(home, 0, 2, "sleep");
+    try {
+      for (let i = 0; i < 24 && !existsSync(join(home, "slept")); i += 1) await wait(500);
+      expect(existsSync(join(home, "slept"))).toBe(true);
+      expect(existsSync(join(home, "fired"))).toBe(false);
+    } finally {
+      stop();
+    }
+  }, 20000);
+
+  it("stays awake when something starts during the warning", async () => {
+    const home = fakeHome();
+    const stop = runWatcher(home, 0, 4, "sleep", "vmc-busy-marker");
+    const busy = spawn("sh", ["-c", "sleep 20; : vmc-busy-marker"], { detached: true, stdio: "ignore" });
+    try {
+      await wait(500);
+      await wait(7000);
+      expect(existsSync(join(home, "slept"))).toBe(false);
+    } finally {
+      stop();
+      killGroup(busy.pid);
+    }
+  }, 20000);
+});
+
 describe("shutdown scripts and status", () => {
   it("embeds the watcher and the numbers in the arm script", () => {
     const script = buildArmScript({ idleMinutes: 15, graceSeconds: 120 });
     expect(script).toContain("<<'VMC_WATCHER'");
-    expect(script).toContain('watch.sh" 15 120');
+    expect(script).toContain('watch.sh" 15 120 shutdown');
+    expect(buildArmScript({ idleMinutes: 15, graceSeconds: 120, action: "sleep" })).toContain('watch.sh" 15 120 sleep');
     expect(script).toContain("@@ALIVE");
   });
 
@@ -89,9 +127,14 @@ describe("shutdown scripts and status", () => {
   it("reads off, watching and counting-down states", () => {
     expect(parseShutdownStatus("@@NOW 1000\n@@ALIVE 0\n").state).toBe("off");
     const watching = parseShutdownStatus("@@NOW 1000\n@@ALIVE 1\nstate=watching\nidle_since=400\nidle_min=15\ngrace=120\nends=0\n");
-    expect(watching).toMatchObject({ state: "watching", idleMinutes: 15, graceSeconds: 120, idleForMinutes: 10, secondsLeft: null });
+    expect(watching).toMatchObject({ action: "shutdown", state: "watching", idleMinutes: 15, graceSeconds: 120, idleForMinutes: 10, secondsLeft: null });
     const counting = parseShutdownStatus("@@NOW 1000\n@@ALIVE 1\nstate=counting-down\nidle_since=100\nidle_min=15\ngrace=120\nends=1090\n");
     expect(counting).toMatchObject({ state: "counting-down", secondsLeft: 90 });
+  });
+
+  it("reports the sleep action from the state file", () => {
+    expect(parseShutdownStatus("@@NOW 1000\n@@ALIVE 1\nstate=watching\nidle_since=0\nidle_min=15\ngrace=60\nends=0\naction=sleep\n").action).toBe("sleep");
+    expect(parseShutdownStatus("@@NOW 1\n@@ALIVE 0\n").action).toBeNull();
   });
 
   it("treats a busy watcher as zero idle minutes", () => {

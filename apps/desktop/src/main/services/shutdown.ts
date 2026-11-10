@@ -1,9 +1,11 @@
-import type { ShutdownArm, ShutdownStatus, VmTarget } from "@vmc/shared";
+import type { IdleAction, ShutdownArm, ShutdownStatus, VmTarget } from "@vmc/shared";
 import { describeSshFailure, runSsh } from "./ssh";
 
 export const WATCHER_SCRIPT = String.raw`D="$HOME/.vmc/shutdown"
 IDLE_MIN="$1"
 GRACE="$2"
+ACTION="$3"
+[ -n "$ACTION" ] || ACTION=shutdown
 POLL="$VMC_POLL"
 [ -n "$POLL" ] || POLL=30
 LOAD_LIMIT="$VMC_LOAD_LIMIT"
@@ -13,7 +15,7 @@ PATTERN="$VMC_BUSY_PATTERN"
 mkdir -p "$D"
 echo $$ > "$D/pid"
 write_state() {
-  printf 'state=%s\nidle_since=%s\nidle_min=%s\ngrace=%s\nends=%s\n' "$1" "$2" "$IDLE_MIN" "$GRACE" "$3" > "$D/state"
+  printf 'state=%s\nidle_since=%s\nidle_min=%s\ngrace=%s\nends=%s\naction=%s\n' "$1" "$2" "$IDLE_MIN" "$GRACE" "$3" "$ACTION" > "$D/state"
 }
 busy() {
   if [ -n "$(find "$HOME/.claude/projects" "$HOME/.codex/sessions" -type f -mmin -"$IDLE_MIN" 2>/dev/null | head -n 1)" ]; then return 0; fi
@@ -35,14 +37,36 @@ while :; do
     write_state watching "$idle_since" 0
     if [ $((now - idle_since)) -ge $((IDLE_MIN * 60)) ]; then
       write_state counting-down "$idle_since" $((now + GRACE))
-      if [ -n "$VMC_SHUTDOWN_CMD" ]; then
-        sh -c "$VMC_SHUTDOWN_CMD"
+      if [ "$ACTION" = sleep ]; then
+        waited=0
+        cancelled=0
+        while [ "$waited" -lt "$GRACE" ]; do
+          sleep "$POLL"
+          waited=$((waited + POLL))
+          if busy; then cancelled=1; break; fi
+        done
+        if [ "$cancelled" -eq 1 ]; then
+          idle_since=""
+          write_state watching 0 0
+          continue
+        fi
+        if [ -n "$VMC_SLEEP_CMD" ]; then
+          sh -c "$VMC_SLEEP_CMD"
+        else
+          /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -Command 'Add-Type -AssemblyName System.Windows.Forms; [void][System.Windows.Forms.Application]::SetSuspendState("Suspend", $false, $false)'
+        fi
+        idle_since=""
+        write_state watching 0 0
       else
-        /mnt/c/Windows/System32/shutdown.exe /s /t "$GRACE" /c "Elsewhere: nothing has run for $IDLE_MIN minutes. Shutting down in $GRACE seconds. Run shutdown /a to cancel."
+        if [ -n "$VMC_SHUTDOWN_CMD" ]; then
+          sh -c "$VMC_SHUTDOWN_CMD"
+        else
+          /mnt/c/Windows/System32/shutdown.exe /s /t "$GRACE" /c "Elsewhere: nothing has run for $IDLE_MIN minutes. Shutting down in $GRACE seconds. Run shutdown /a to cancel."
+        fi
+        sleep $((GRACE + POLL * 2))
+        idle_since=""
+        write_state watching 0 0
       fi
-      sleep $((GRACE + POLL * 2))
-      idle_since=""
-      write_state watching 0 0
     fi
   fi
   sleep "$POLL"
@@ -65,7 +89,8 @@ if [ -f "$D/pid" ]; then kill "$(cat "$D/pid")" 2>/dev/null; fi
 rm -f "$D/pid" "$D/state"
 ${STATUS_SCRIPT}`;
 
-export function buildArmScript(input: Pick<ShutdownArm, "idleMinutes" | "graceSeconds">): string {
+export function buildArmScript(input: Pick<ShutdownArm, "idleMinutes" | "graceSeconds"> & { action?: IdleAction }): string {
+  const action: IdleAction = input.action === "sleep" ? "sleep" : "shutdown";
   const idle = Math.trunc(input.idleMinutes);
   const grace = Math.trunc(input.graceSeconds);
   if (!Number.isFinite(idle) || !Number.isFinite(grace)) throw new Error("Invalid shutdown settings");
@@ -75,9 +100,9 @@ if [ -f "$D/pid" ] && kill -0 "$(cat "$D/pid")" 2>/dev/null; then kill "$(cat "$
 cat > "$D/watch.sh" <<'VMC_WATCHER'
 ${WATCHER_SCRIPT}VMC_WATCHER
 if command -v setsid >/dev/null 2>&1; then
-  setsid nohup sh "$D/watch.sh" ${idle} ${grace} >"$D/log" 2>&1 </dev/null &
+  setsid nohup sh "$D/watch.sh" ${idle} ${grace} ${action} >"$D/log" 2>&1 </dev/null &
 else
-  nohup sh "$D/watch.sh" ${idle} ${grace} >"$D/log" 2>&1 </dev/null &
+  nohup sh "$D/watch.sh" ${idle} ${grace} ${action} >"$D/log" 2>&1 </dev/null &
 fi
 sleep 2
 ${STATUS_SCRIPT}`;
@@ -95,7 +120,7 @@ function numberField(output: string, key: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-const OFF: Omit<ShutdownStatus, "reachable" | "error"> = { state: "off", idleMinutes: null, graceSeconds: null, idleForMinutes: null, secondsLeft: null };
+const OFF: Omit<ShutdownStatus, "reachable" | "error"> = { state: "off", action: null, idleMinutes: null, graceSeconds: null, idleForMinutes: null, secondsLeft: null };
 
 export function parseShutdownStatus(output: string): Omit<ShutdownStatus, "reachable" | "error"> {
   const now = Number(/^@@NOW (\d+)/m.exec(output)?.[1] ?? 0);
@@ -105,6 +130,7 @@ export function parseShutdownStatus(output: string): Omit<ShutdownStatus, "reach
   const ends = numberField(output, "ends") ?? 0;
   return {
     state,
+    action: field(output, "action") === "sleep" ? "sleep" : "shutdown",
     idleMinutes: numberField(output, "idle_min"),
     graceSeconds: numberField(output, "grace"),
     idleForMinutes: idleSince > 0 && now > 0 ? Math.max(0, Math.floor((now - idleSince) / 60)) : 0,
@@ -119,5 +145,5 @@ async function run(target: VmTarget, script: string): Promise<ShutdownStatus> {
 }
 
 export const getShutdownStatus = (target: VmTarget) => run(target, STATUS_SCRIPT);
-export const armShutdown = (target: VmTarget, input: Pick<ShutdownArm, "idleMinutes" | "graceSeconds">) => run(target, buildArmScript(input));
+export const armShutdown = (target: VmTarget, input: Pick<ShutdownArm, "idleMinutes" | "graceSeconds" | "action">) => run(target, buildArmScript(input));
 export const disarmShutdown = (target: VmTarget) => run(target, DISARM_SCRIPT);

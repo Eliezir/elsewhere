@@ -24,6 +24,7 @@ export interface Settings {
   staleDays: number;
   shutdownIdle: number;
   shutdownGrace: number;
+  shutdownMode: "shutdown" | "sleep";
   notifyUnreachable: boolean;
   notifyDisk: boolean;
   notifyIdle: boolean;
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   staleDays: 30,
   shutdownIdle: 20,
   shutdownGrace: 120,
+  shutdownMode: "shutdown",
   notifyUnreachable: true,
   notifyDisk: true,
   notifyIdle: true,
