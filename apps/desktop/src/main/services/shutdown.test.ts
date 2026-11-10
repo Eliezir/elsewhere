@@ -17,7 +17,7 @@ function fakeHome(): string {
 function runWatcher(home: string, idle: number, grace: number) {
   writeFileSync(join(home, "watch.sh"), WATCHER_SCRIPT);
   const child = spawn("sh", [join(home, "watch.sh"), String(idle), String(grace)], {
-    env: { ...process.env, HOME: home, VMC_POLL: "1", VMC_BUSY_PATTERN: "no-such-process-xyz", VMC_SHUTDOWN_CMD: `touch "${home}/fired"` },
+    env: { ...process.env, HOME: home, VMC_POLL: "1", VMC_BUSY_PATTERN: "no-such-process-xyz", VMC_LOAD_LIMIT: "100000", VMC_SHUTDOWN_CMD: `touch "${home}/fired"` },
     detached: true,
     stdio: "ignore",
   });

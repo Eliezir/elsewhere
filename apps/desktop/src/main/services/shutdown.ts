@@ -6,6 +6,8 @@ IDLE_MIN="$1"
 GRACE="$2"
 POLL="$VMC_POLL"
 [ -n "$POLL" ] || POLL=30
+LOAD_LIMIT="$VMC_LOAD_LIMIT"
+[ -n "$LOAD_LIMIT" ] || LOAD_LIMIT=0.8
 PATTERN="$VMC_BUSY_PATTERN"
 [ -n "$PATTERN" ] || PATTERN='vitest|playwright test|pnpm (run )?(build|test|e2e)|cargo build|tsc '
 mkdir -p "$D"
@@ -16,7 +18,7 @@ write_state() {
 busy() {
   if [ -n "$(find "$HOME/.claude/projects" "$HOME/.codex/sessions" -type f -mmin -"$IDLE_MIN" 2>/dev/null | head -n 1)" ]; then return 0; fi
   if [ -r /proc/loadavg ]; then
-    awk '{ exit !($1 >= 0.8) }' /proc/loadavg && return 0
+    awk -v limit="$LOAD_LIMIT" '{ exit !($1 >= limit) }' /proc/loadavg && return 0
   fi
   pgrep -f "$PATTERN" >/dev/null 2>&1 && return 0
   return 1
