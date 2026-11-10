@@ -5,6 +5,7 @@ import type { VmPort } from "@vmc/shared";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { ClaudeMark } from "@/components/ClaudeMark";
+import { LanMouseQuick } from "@/components/LanMouseQuick";
 import { Button } from "@/components/controls";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { useLinkStatus, useProjectIcons, useTasks, useVmPorts, useVmSnapshot } from "@/data/hooks";
@@ -145,7 +146,7 @@ export function PopoverView() {
           <ConnectTailscaleButton />
         </div>
       )}
-      <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden px-3 py-2">
+      <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2">
         <Card index={0} title="Claude usage" icon={<ClaudeMark />} to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
           {usage && (usage.fiveHour !== null || usage.weekly !== null) ? (
             <div className="flex gap-5">
@@ -167,8 +168,13 @@ export function PopoverView() {
             <p className="text-xs text-[var(--text-muted)]">{reachable ? `${host} health isn't available yet.` : `${connection.headline}.`}</p>
           )}
         </Card>
+        {kind === "pc" && (
+          <Card index={2} title="Lan Mouse" to="settings">
+            <LanMouseQuick />
+          </Card>
+        )}
         {taskGroups.length > 0 && (
-          <Card index={2} title="Tasks" to="tasks" action={<Pill>{`${openItems} open`}</Pill>}>
+          <Card index={3} title="Tasks" to="tasks" action={<Pill>{`${openItems} open`}</Pill>}>
             <div className="space-y-1.5">
               {taskGroups.slice(0, 3).map((group) => (
                 <button key={group.key} type="button" onClick={() => open("tasks")} className="no-drag flex w-full cursor-default items-center justify-between gap-3 text-left outline-none">
@@ -179,7 +185,7 @@ export function PopoverView() {
             </div>
           </Card>
         )}
-        <Card index={3} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
+        <Card index={4} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
           {groups.length > 0 ? (
             <div className="space-y-2.5">
               {groups.slice(0, MAX_GROUPS).map((group) => (
