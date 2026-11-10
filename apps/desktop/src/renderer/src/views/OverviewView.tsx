@@ -1,3 +1,4 @@
+import { useHostKind, useHostName } from "@/lib/useHost";
 import { ClaudeMark } from "@/components/ClaudeMark";
 import { AreaChart, BigNumber, DayBars, HalfGauge, Meter } from "@/components/charts";
 import { QueueHero } from "@/components/QueueHero";
@@ -7,6 +8,8 @@ import { useOverviewModel } from "./overview/model";
 import { Loadable, NoUsage, Unavailable } from "./overview/parts";
 
 export function OverviewView() {
+  const host = useHostName();
+  const kind = useHostKind();
   const model = useOverviewModel();
   const { usage, vm, idle } = model;
 
@@ -48,29 +51,45 @@ export function OverviewView() {
                 </div>
               </div>
             ) : (
-              <Unavailable model={model} what="VM health" />
+              <Unavailable model={model} what={`${host} health`} />
             )}
           </Loadable>
         </Tile>
-        <Tile index={2} title="Idle health" action={idle?.atRisk ? <Pill tone="warn">at risk</Pill> : idle ? <Pill tone="ok">healthy</Pill> : undefined}>
-          <Loadable model={model}>
-            {idle ? (
-              <div className="flex min-h-0 flex-1 flex-col justify-between">
-                <BigNumber value={String(idle.sevenDayCpu)} unit="%" tone={idle.atRisk ? "warn" : undefined} />
-                <p className="my-3 flex-1 text-xs leading-relaxed text-[var(--text-secondary)]">
-                  Oracle can reclaim the VM when CPU, network and memory stay under {idle.threshold}% for seven days.
-                </p>
-                <div>
-                  <DayBars days={idle.days} />
-                  <div className="mt-2 text-xs text-[var(--text-secondary)]">7-day CPU against the {idle.threshold}% line</div>
+        {kind === "pc" ? (
+          <Tile index={2} title="Disk" action={vm && <Pill tone={vm.diskUsedGb / vm.diskTotalGb >= 0.8 ? "warn" : "ok"}>{`${vm.diskTotalGb - vm.diskUsedGb} GB free`}</Pill>}>
+            <Loadable model={model}>
+              {vm ? (
+                <div className="flex min-h-0 flex-1 flex-col justify-between">
+                  <BigNumber value={String(Math.round((vm.diskUsedGb / vm.diskTotalGb) * 100))} unit="%" tone={vm.diskUsedGb / vm.diskTotalGb >= 0.8 ? "warn" : undefined} />
+                  <p className="my-3 flex-1 text-xs leading-relaxed text-[var(--text-secondary)]">{`${vm.diskUsedGb} of ${vm.diskTotalGb} GB used on ${host}.`}</p>
+                  <Meter value={(vm.diskUsedGb / vm.diskTotalGb) * 100} color={vm.diskUsedGb / vm.diskTotalGb >= 0.8 ? "var(--warn)" : "var(--ok)"} />
                 </div>
-              </div>
-            ) : (
-              <Unavailable model={model} what="Idle health" />
-            )}
-          </Loadable>
-        </Tile>
-        <Tile index={3} title="VM load · recent samples" className="col-span-2" action={model.connection.latencyMs !== null && <Pill>{`${model.connection.latencyMs} ms`}</Pill>}>
+              ) : (
+                <Unavailable model={model} what={`${host} disk`} />
+              )}
+            </Loadable>
+          </Tile>
+        ) : (
+          <Tile index={2} title="Idle health" action={idle?.atRisk ? <Pill tone="warn">at risk</Pill> : idle ? <Pill tone="ok">healthy</Pill> : undefined}>
+            <Loadable model={model}>
+              {idle ? (
+                <div className="flex min-h-0 flex-1 flex-col justify-between">
+                  <BigNumber value={String(idle.sevenDayCpu)} unit="%" tone={idle.atRisk ? "warn" : undefined} />
+                  <p className="my-3 flex-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+                    Oracle can reclaim the VM when CPU, network and memory stay under {idle.threshold}% for seven days.
+                  </p>
+                  <div>
+                    <DayBars days={idle.days} />
+                    <div className="mt-2 text-xs text-[var(--text-secondary)]">7-day CPU against the {idle.threshold}% line</div>
+                  </div>
+                </div>
+              ) : (
+                <Unavailable model={model} what="Idle health" />
+              )}
+            </Loadable>
+          </Tile>
+        )}
+        <Tile index={3} title={`${host} load · recent samples`} className="col-span-2" action={model.connection.latencyMs !== null && <Pill>{`${model.connection.latencyMs} ms`}</Pill>}>
           <Loadable model={model}>
             {vm ? (
               <div className="flex min-h-0 flex-1 flex-col">
@@ -84,7 +103,7 @@ export function OverviewView() {
                 </div>
               </div>
             ) : (
-              <Unavailable model={model} what="VM load" />
+              <Unavailable model={model} what={`${host} load`} />
             )}
           </Loadable>
         </Tile>
@@ -113,7 +132,7 @@ export function OverviewView() {
       </div>
       <div className="col-span-3 flex min-h-0 flex-col gap-3">
         <WorktreeAccordion model={model} />
-        <QueueHero model={model} />
+        {kind === "vm" && <QueueHero model={model} />}
       </div>
     </div>
   );

@@ -33,7 +33,13 @@ export function selectHost(settings: HostFields, id: string): Partial<Settings> 
   return { activeHostId: id, host: target.host, user: target.user, vmRepos: target.vmRepos };
 }
 
-export function editActive(settings: HostFields, patch: Partial<Pick<HostProfile, "name" | "mac">>): Partial<Settings> {
+export type HostKind = "vm" | "pc";
+
+export function hostKind(profile: Pick<HostProfile, "kind" | "mac">): HostKind {
+  return profile.kind ?? (profile.mac.trim() !== "" ? "pc" : "vm");
+}
+
+export function editActive(settings: HostFields, patch: Partial<Pick<HostProfile, "name" | "mac" | "kind">>): Partial<Settings> {
   const profiles = profilesOf(settings);
   const activeId = activeOf(settings).id;
   return { hosts: profiles.map((profile) => (profile.id === activeId ? { ...profile, ...patch } : profile)) };

@@ -1,3 +1,4 @@
+import { useHostKind, useHostName } from "@/lib/useHost";
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { HostSwitcher } from "@/components/HostSwitcher";
@@ -39,6 +40,8 @@ function RepoField({ label, hint, value, onChange }: { label: string; hint: stri
 }
 
 export function SettingsView() {
+  const host = useHostName();
+  const kind = useHostKind();
   const [settings, update] = useSettings();
   const { connection } = useOverviewModel();
   const vm = useVmSnapshot();
@@ -51,24 +54,24 @@ export function SettingsView() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="grid auto-rows-[minmax(300px,auto)] grid-cols-12 gap-3">
-        <Tile className="col-span-6" title="Connection" action={<Pill tone={snapshot?.reachable ? "ok" : "warn"}>{snapshot?.reachable ? "VM reachable" : HEALTH_LABEL[connection.health]}</Pill>}>
+        <Tile className="col-span-6" title="Connection" action={<Pill tone={snapshot?.reachable ? "ok" : "warn"}>{snapshot?.reachable ? `${host} reachable` : HEALTH_LABEL[connection.health]}</Pill>}>
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <HostSwitcher />
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="VM host" value={settings.host} onChange={(event) => update({ host: event.target.value })} />
+              <TextField label="Host address" value={settings.host} onChange={(event) => update({ host: event.target.value })} />
               <TextField label="SSH user" value={settings.user} onChange={(event) => update({ user: event.target.value })} />
             </div>
             <div className="space-y-2 rounded-2xl bg-[var(--inset)] px-3.5 py-3">
               <StatusRow label="Tailscale" value={tailscaleLabel} tone={tailscale.connected ? "ok" : "warn"} />
               <StatusRow label="SSH" value={snapshot ? (snapshot.reachable ? `connected · ${snapshot.latencyMs ?? "–"} ms` : (snapshot.error ?? "unreachable")) : "checking…"} tone={snapshot?.reachable ? "ok" : "warn"} />
-              <StatusRow label="Git on the VM" value={health?.gitVersion ?? "unknown"} />
-              <StatusRow label="Claude Code on the VM" value={health ? (health.claudeInstalled ? "installed" : "not found") : "unknown"} tone={health ? (health.claudeInstalled ? "ok" : "warn") : undefined} />
+              <StatusRow label={`Git on ${host}`} value={health?.gitVersion ?? "unknown"} />
+              <StatusRow label={`Claude Code on ${host}`} value={health ? (health.claudeInstalled ? "installed" : "not found") : "unknown"} tone={health ? (health.claudeInstalled ? "ok" : "warn") : undefined} />
             </div>
             <div className="mt-auto flex items-center gap-2">
               <Button onClick={() => void vm.refetch()} disabled={testing}>
                 {testing ? "Testing…" : "Test connection"}
               </Button>
-              <VmTerminalButton label="Open a VM terminal" disabled={!snapshot?.reachable} />
+              <VmTerminalButton disabled={!snapshot?.reachable} />
               <Button onClick={() => void window.api.openTailscale()}>Open Tailscale app</Button>
             </div>
             {snapshot?.approvalUrl && <ApproveSshButton url={snapshot.approvalUrl} />}
@@ -106,22 +109,22 @@ export function SettingsView() {
         <Tile className="col-span-6" index={2} title="Repositories">
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <RepoField label="On this Mac" hint="One repository per line. Every worktree of each one is listed." value={settings.macRepos} onChange={(macRepos) => update({ macRepos })} />
-            <RepoField label="On the VM" hint="Extra repositories to list. Projects you move are tracked automatically." value={settings.vmRepos} onChange={(vmRepos) => update({ vmRepos })} />
+            <RepoField label={`On ${host}`} hint="Extra repositories to list. Projects you move are tracked automatically." value={settings.vmRepos} onChange={(vmRepos) => update({ vmRepos })} />
           </div>
         </Tile>
       <Tile className="col-span-6" index={3} title="Thresholds">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <SliderRow label="Disk warning" hint="Alert when the VM disk is fuller than this." value={settings.diskWarn} min={50} max={95} onChange={(diskWarn) => update({ diskWarn })} />
-          <SliderRow label="Idle risk line" hint="Oracle reclaims a VM under this for seven days." value={settings.idleLine} min={5} max={40} onChange={(idleLine) => update({ idleLine })} />
+          <SliderRow label="Disk warning" hint={`Alert when the ${host} disk is fuller than this.`} value={settings.diskWarn} min={50} max={95} onChange={(diskWarn) => update({ diskWarn })} />
+          {kind === "vm" && (<SliderRow label="Idle risk line" hint="Oracle reclaims a VM under this for seven days." value={settings.idleLine} min={5} max={40} onChange={(idleLine) => update({ idleLine })} />)}
           <SliderRow label="Stale after" hint="Worktrees idle this long are suggested for clean-up." value={settings.staleDays} min={7} max={180} unit=" days" onChange={(staleDays) => update({ staleDays })} />
           <SliderRow label="Pacer cap" hint="Hold queued tasks above this 5-hour usage." value={settings.pacerCap} min={30} max={100} onChange={(pacerCap) => update({ pacerCap })} />
         </div>
       </Tile>
       <Tile className="col-span-6" index={4} title="Notifications">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <ToggleRow label="VM unreachable" checked={settings.notifyUnreachable} onChange={(notifyUnreachable) => update({ notifyUnreachable })} />
+          <ToggleRow label={`${host} unreachable`} checked={settings.notifyUnreachable} onChange={(notifyUnreachable) => update({ notifyUnreachable })} />
           <ToggleRow label="Disk almost full" checked={settings.notifyDisk} onChange={(notifyDisk) => update({ notifyDisk })} />
-          <ToggleRow label="Idle risk" hint="Before Oracle can reclaim the VM." checked={settings.notifyIdle} onChange={(notifyIdle) => update({ notifyIdle })} />
+          {kind === "vm" && (<ToggleRow label="Idle risk" hint="Before Oracle can reclaim the VM." checked={settings.notifyIdle} onChange={(notifyIdle) => update({ notifyIdle })} />)}
           <ToggleRow label="Weekly allowance going unused" checked={settings.notifyWeekly} onChange={(notifyWeekly) => update({ notifyWeekly })} />
           <ToggleRow label="Morning digest" hint="Summary of what the queue finished overnight." checked={settings.notifyDigest} onChange={(notifyDigest) => update({ notifyDigest })} />
         </div>

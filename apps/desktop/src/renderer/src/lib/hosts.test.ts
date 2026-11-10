@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeOf, addHost, editActive, findHostRepo, profilesOf, removeActive, selectHost, syncActive } from "./hosts";
+import { activeOf, addHost, editActive, findHostRepo, hostKind, profilesOf, removeActive, selectHost, syncActive } from "./hosts";
 
 type Fields = Parameters<typeof profilesOf>[0];
 
@@ -54,5 +54,17 @@ describe("findHostRepo", () => {
   it("returns null when no listed clone matches", () => {
     expect(findHostRepo(repos, "missing")).toBeNull();
     expect(findHostRepo("", "adt-studio")).toBeNull();
+  });
+});
+
+describe("host kind", () => {
+  it("uses the saved kind first", () => {
+    expect(hostKind({ kind: "vm", mac: "aa:bb:cc:dd:ee:ff" })).toBe("vm");
+    expect(hostKind({ kind: "pc", mac: "" })).toBe("pc");
+  });
+
+  it("guesses a PC when a MAC address is saved and a VM when not", () => {
+    expect(hostKind({ mac: "aa:bb:cc:dd:ee:ff" })).toBe("pc");
+    expect(hostKind({ mac: "  " })).toBe("vm");
   });
 });

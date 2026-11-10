@@ -21,11 +21,11 @@ function describeAhead(commits: number, unsaved: number): string {
   return parts.filter((part): part is string => part !== null).join(" and ");
 }
 
-export function syncPlan({ macOnly, vmOnly, macModified, vmModified }: SyncInput): SyncPlan {
+export function syncPlan({ macOnly, vmOnly, macModified, vmModified }: SyncInput, host = "VM"): SyncPlan {
   const macAhead = macOnly > 0 || macModified > 0;
   const vmAhead = vmOnly > 0 || vmModified > 0;
   if (macAhead && vmAhead) return { kind: "both-changed", message: "Both copies have changes the other doesn't. Commit or merge one side by hand first." };
-  if (macAhead) return { kind: "mac-ahead", message: `The Mac copy is ahead of the VM copy by ${describeAhead(macOnly, macModified)}.` };
-  if (vmAhead) return { kind: "vm-ahead", message: `The VM copy is ahead of the Mac copy by ${describeAhead(vmOnly, vmModified)}.` };
-  return { kind: "in-sync", message: "The Mac and VM copies match." };
+  if (macAhead) return { kind: "mac-ahead", message: `The Mac copy is ahead of the ${host} copy by ${describeAhead(macOnly, macModified)}.` };
+  if (vmAhead) return { kind: "vm-ahead", message: `The ${host} copy is ahead of the Mac copy by ${describeAhead(vmOnly, vmModified)}.` };
+  return { kind: "in-sync", message: `The Mac and ${host} copies match.` };
 }

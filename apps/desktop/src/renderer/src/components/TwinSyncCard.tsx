@@ -1,3 +1,4 @@
+import { useHostName } from "@/lib/useHost";
 import { MoveRequestSchema } from "@vmc/shared";
 import { useState } from "react";
 import type { Worktree } from "@/data/types";
@@ -14,13 +15,14 @@ interface TwinSyncCardProps {
 }
 
 export function TwinSyncCard({ mac, vm, vmReachable, onSynced }: TwinSyncCardProps) {
+  const host = useHostName();
   const [settings] = useSettings();
   const comparison = useTwinSync(mac, vm, vmReachable);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const data = comparison.data;
-  const plan = data?.ok ? syncPlan({ macOnly: data.macOnly, vmOnly: data.vmOnly, macModified: mac.modified, vmModified: vm.modified }) : null;
+  const plan = data?.ok ? syncPlan({ macOnly: data.macOnly, vmOnly: data.vmOnly, macModified: mac.modified, vmModified: vm.modified }, host) : null;
   const direction = plan?.kind === "mac-ahead" ? "to-vm" : plan?.kind === "vm-ahead" ? "to-mac" : null;
 
   const sync = async () => {
@@ -60,16 +62,16 @@ export function TwinSyncCard({ mac, vm, vmReachable, onSynced }: TwinSyncCardPro
     <div className="mt-3 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-[var(--hairline)] bg-[var(--inset)] px-3.5 py-2.5">
       <div className="min-w-0 text-xs leading-snug">
         {!vmReachable ? (
-          <span className="text-[var(--text-secondary)]">Connect to the VM to compare the two copies.</span>
+          <span className="text-[var(--text-secondary)]">Connect to {host} to compare the two copies.</span>
         ) : comparison.isPending || comparison.isFetching ? (
-          <span className="text-[var(--text-secondary)]">Comparing the Mac and VM copies…</span>
+          <span className="text-[var(--text-secondary)]">Comparing the Mac and {host} copies…</span>
         ) : data && !data.ok ? (
           <span className="text-[var(--warn)]">{data.error}</span>
         ) : plan ? (
           <>
             <span className={tone}>{message ?? plan.message}</span>
             {direction !== null && !message && ((direction === "to-vm" && mac.modified > 0) || (direction === "to-mac" && vm.modified > 0)) && (
-              <span className="mt-0.5 block text-[var(--text-secondary)]">{`Unsaved changes are saved as a WIP commit on the ${direction === "to-vm" ? "Mac" : "VM"} first.`}</span>
+              <span className="mt-0.5 block text-[var(--text-secondary)]">{`Unsaved changes are saved as a WIP commit on the ${direction === "to-vm" ? "Mac" : host} first.`}</span>
             )}
           </>
         ) : (
@@ -78,7 +80,7 @@ export function TwinSyncCard({ mac, vm, vmReachable, onSynced }: TwinSyncCardPro
       </div>
       {direction !== null && !comparison.isFetching && (
         <Button variant="primary" onClick={() => void sync()} disabled={busy} className="shrink-0 !px-4 !py-1.5">
-          {busy ? "Syncing…" : direction === "to-vm" ? "Sync to the VM" : "Sync to the Mac"}
+          {busy ? "Syncing…" : direction === "to-vm" ? `Sync to ${host}` : "Sync to the Mac"}
         </Button>
       )}
     </div>

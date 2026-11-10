@@ -23,7 +23,7 @@ export function StatusPill() {
   const link = useLinkStatus();
   const host = useHostName();
   const health: Health = link.state === "approval" ? "warn" : link.state === "offline" ? "down" : connection.health;
-  const label = link.state === "approval" ? "needs approval" : link.state === "offline" && connection.health === "ok" ? "can't reach VM" : LABEL[health];
+  const label = link.state === "approval" ? "needs approval" : link.state === "offline" && connection.health === "ok" ? `can't reach ${host}` : LABEL[health];
 
   return (
     <div className="flex items-center gap-2 whitespace-nowrap rounded-full border border-[var(--hairline)] bg-[var(--glass)] px-3 py-1.5">

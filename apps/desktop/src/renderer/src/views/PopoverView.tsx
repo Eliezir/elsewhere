@@ -1,3 +1,4 @@
+import { useHostKind, useHostName } from "@/lib/useHost";
 import { motion } from "motion/react";
 import { useEffect, useMemo, type ReactNode } from "react";
 import type { VmPort } from "@vmc/shared";
@@ -10,7 +11,7 @@ import { useLinkStatus, useProjectIcons, useTasks, useVmPorts, useVmSnapshot } f
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { groupPorts } from "@/lib/ports";
 import { groupTasks } from "@/lib/taskModel";
-import { useHostName } from "@/lib/useHost";
+
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
@@ -93,8 +94,9 @@ export function PopoverView() {
   const { connection, usage, vm, idle } = model;
   const link = useLinkStatus();
   const host = useHostName();
+  const kind = useHostKind();
   const health: Health = link.state === "approval" ? "warn" : link.state === "offline" ? "down" : connection.health;
-  const headline = link.state === "approval" ? "Tailscale SSH needs your approval" : link.state === "offline" ? "Can't reach the VM" : connection.headline;
+  const headline = link.state === "approval" ? "Tailscale SSH needs your approval" : link.state === "offline" ? `Can't reach ${host}` : connection.headline;
   const ports = useVmPorts();
   const snapshot = useVmSnapshot();
   const projectPorts = (ports.data?.ports ?? []).filter((port) => port.kind === "project");
@@ -127,11 +129,11 @@ export function PopoverView() {
             {headline}
           </motion.div>
         </div>
-        {idle?.atRisk && <Pill tone="warn">idle risk</Pill>}
+        {kind === "vm" && idle?.atRisk && <Pill tone="warn">idle risk</Pill>}
       </header>
       {link.state === "approval" && link.approvalUrl !== null && (
         <div className="mx-3 mb-1 mt-1 rounded-2xl border border-[var(--warn)]/40 bg-[var(--inset)] px-3.5 py-2.5">
-          <div className="mb-2 text-xs leading-snug text-[var(--warn)]">Tailscale SSH needs your approval before it lets this Mac in. Ports and the VM stay disconnected until you approve.</div>
+          <div className="mb-2 text-xs leading-snug text-[var(--warn)]">Tailscale SSH needs your approval before it lets this Mac in. Ports and {host} stay disconnected until you approve.</div>
           <ApproveSshButton url={link.approvalUrl} />
         </div>
       )}
@@ -154,7 +156,7 @@ export function PopoverView() {
             <NoUsage />
           )}
         </Card>
-        <Card index={1} title="VM health" to="overview" action={vm && <Pill>{`${connection.latencyMs ?? "–"} ms`}</Pill>}>
+        <Card index={1} title={`${host} health`} to="overview" action={vm && <Pill>{`${connection.latencyMs ?? "–"} ms`}</Pill>}>
           {vm ? (
             <div className="flex gap-4">
               <Stat label="CPU" value={String(vm.cpu)} unit="%" percent={vm.cpu} color="var(--ok)" />
@@ -162,7 +164,7 @@ export function PopoverView() {
               <Stat label="Disk" value={String(Math.round((vm.diskUsedGb / vm.diskTotalGb) * 100))} unit="%" percent={(vm.diskUsedGb / vm.diskTotalGb) * 100} color="var(--ok)" />
             </div>
           ) : (
-            <p className="text-xs text-[var(--text-muted)]">{reachable ? "VM health isn't available yet." : `${connection.headline}.`}</p>
+            <p className="text-xs text-[var(--text-muted)]">{reachable ? `${host} health isn't available yet.` : `${connection.headline}.`}</p>
           )}
         </Card>
         {taskGroups.length > 0 && (
@@ -202,7 +204,7 @@ export function PopoverView() {
               )}
             </div>
           ) : (
-            <p className="text-xs text-[var(--text-muted)]">{reachable ? "Nothing is running on the VM." : "Ports show up once the VM is reachable."}</p>
+            <p className="text-xs text-[var(--text-muted)]">{reachable ? `Nothing is running on ${host}.` : `Ports show up once ${host} is reachable.`}</p>
           )}
         </Card>
       </main>

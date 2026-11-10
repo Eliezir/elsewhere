@@ -1,3 +1,4 @@
+import { useHostName } from "@/lib/useHost";
 import { useIdleHealth, useQueueTasks, useUsage, useWorktrees } from "@/data/hooks";
 import type { IdleHealth, Location, UsageData, VmHealth } from "@/data/types";
 import { useTailscaleStatus } from "@/lib/queries";
@@ -42,6 +43,7 @@ export function useOverviewModel(): OverviewModel {
   const { data: idle } = useIdleHealth();
   const { data: tasks = [] } = useQueueTasks();
 
+  const host = useHostName();
   const health = healthOf(status);
   const vm = snapshot.data;
 
@@ -49,7 +51,7 @@ export function useOverviewModel(): OverviewModel {
     phase: status === undefined ? "loading" : "ready",
     connection: {
       health,
-      headline: describe(status),
+      headline: describe(status, host),
       selfName: status?.selfName ?? null,
       dnsName: status?.vm?.dnsName ?? null,
       ip: status?.vm?.ip ?? null,

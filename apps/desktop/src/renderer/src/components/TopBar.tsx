@@ -1,3 +1,4 @@
+import { useHostKind, useHostName } from "@/lib/useHost";
 import { Tabs } from "@base-ui/react/tabs";
 import { motion } from "motion/react";
 import mark from "@/assets/mark.png";
@@ -9,6 +10,8 @@ interface TopBarProps {
 }
 
 export function TopBar({ active }: TopBarProps) {
+  const host = useHostName();
+  const kind = useHostKind();
   return (
     <header className={`drag grid h-[52px] shrink-0 grid-cols-[1fr_auto_1fr] items-center ${window.api.platform === "darwin" ? "pl-[84px] pr-4" : "pl-5 pr-[150px]"}`}>
       <span className="flex items-center gap-3 whitespace-nowrap text-[13px] font-medium">
@@ -19,7 +22,7 @@ export function TopBar({ active }: TopBarProps) {
         aria-label="Sections"
         className="no-drag flex gap-1 rounded-full border border-[var(--hairline)] bg-[var(--glass-strong)] p-1"
       >
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => item.id !== "queue" || kind === "vm").map((item) => {
           const selected = item.id === active;
           return (
             <Tabs.Tab
@@ -34,7 +37,7 @@ export function TopBar({ active }: TopBarProps) {
                   transition={{ type: "spring", stiffness: 500, damping: 38 }}
                 />
               )}
-              <span className="relative">{item.label}</span>
+              <span className="relative">{item.id === "vm" ? host : item.label}</span>
             </Tabs.Tab>
           );
         })}

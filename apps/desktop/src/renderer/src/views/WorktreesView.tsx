@@ -1,3 +1,4 @@
+import { useHostName } from "@/lib/useHost";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
@@ -20,8 +21,9 @@ export function WorktreesView() {
   const { worktrees, mac, vm } = useWorktrees();
   const icons = useProjectIcons().data ?? {};
   const tools = useTools().data;
+  const host = useHostName();
   const t3Threads = useT3Threads(worktrees.filter((tree) => tree.location === "mac").map((tree) => tree.path)).data ?? {};
-  const originFor = (tree: Worktree): Origin => originOf(tree, t3Threads[tree.path] !== undefined);
+  const originFor = (tree: Worktree): Origin => originOf(tree, t3Threads[tree.path] !== undefined, host);
   const [settings] = useSettings();
   const [names, setName] = useWorktreeNames();
   const sizes = useWorktreeSizes(worktrees, vm.data?.reachable ?? false).data?.sizes ?? {};

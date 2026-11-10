@@ -1,9 +1,11 @@
+import { useHostName } from "@/lib/useHost";
 import { useState } from "react";
 import { Button } from "@/components/controls";
 import { useSettings } from "@/lib/settings";
 
-export function VmTerminalButton({ path = null, mode = "shell", label = "Open a terminal on the VM", disabled = false, className = "" }: { path?: string | null; mode?: "shell" | "claude"; label?: string; disabled?: boolean; className?: string }) {
+export function VmTerminalButton({ path = null, mode = "shell", label, disabled = false, className = "" }: { path?: string | null; mode?: "shell" | "claude"; label?: string; disabled?: boolean; className?: string }) {
   const [settings] = useSettings();
+  const host = useHostName();
   const [problem, setProblem] = useState<string | null>(null);
 
   const open = () => {
@@ -16,7 +18,7 @@ export function VmTerminalButton({ path = null, mode = "shell", label = "Open a 
   return (
     <span className={`inline-flex flex-col gap-1 ${className}`}>
       <Button onClick={open} disabled={disabled} className="whitespace-nowrap !py-1.5">
-        {label}
+        {label ?? `Open a terminal on ${host}`}
       </Button>
       {problem && <span className="text-[11px] text-[var(--warn)]">{problem}</span>}
     </span>

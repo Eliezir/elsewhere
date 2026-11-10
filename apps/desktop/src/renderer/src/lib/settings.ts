@@ -8,6 +8,7 @@ export interface HostProfile {
   user: string;
   vmRepos: string;
   mac: string;
+  kind?: "vm" | "pc";
 }
 
 export interface Settings {
