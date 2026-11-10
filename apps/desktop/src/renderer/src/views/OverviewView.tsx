@@ -1,6 +1,7 @@
 import { useHostKind, useHostName } from "@/lib/useHost";
 import { ClaudeMark } from "@/components/ClaudeMark";
 import { AreaChart, BigNumber, DayBars, HalfGauge, Meter } from "@/components/charts";
+import { GamingModeCard } from "@/components/GamingModeCard";
 import { QueueHero } from "@/components/QueueHero";
 import { Pill, Tile } from "@/components/Tile";
 import { WorktreeAccordion } from "@/components/WorktreeAccordion";
@@ -133,6 +134,7 @@ export function OverviewView() {
       <div className="col-span-3 flex min-h-0 flex-col gap-3">
         <WorktreeAccordion model={model} />
         {kind === "vm" && <QueueHero model={model} />}
+        {kind === "pc" && <GamingModeCard />}
       </div>
     </div>
   );

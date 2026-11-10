@@ -4,6 +4,7 @@ import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResu
 import type { UsageSnapshot } from "./usage";
 import type { HostAppInput, HostAppResult } from "./hostApp";
 import type { LanMouseInput, LanMouseStatus } from "./lanMouse";
+import type { GamingInput, GamingResult } from "./pcMode";
 import type { TaskContent, TaskCreateInput, TaskCreateResult, TaskEntry, TaskWriteInput } from "./tasks";
 import type { ShutdownArm, ShutdownStatus, ShutdownTarget } from "./shutdown";
 import type { VmTarget } from "./worktree";
@@ -56,6 +57,7 @@ export const IPC = {
   shutdownStatus: "shutdown:status",
   hostApp: "host:app",
   lanMouse: "lanmouse:control",
+  gamingMode: "pcmode:gaming",
   tasksScan: "tasks:scan",
   tasksRead: "tasks:read",
   tasksWrite: "tasks:write",
@@ -107,6 +109,7 @@ export interface Api {
   openLocalPort(port: number): Promise<boolean>;
   getVmStorage(input: VmStorageInput): Promise<VmStorage>;
   getMacStorage(): Promise<VmStorage>;
+  startGamingMode(input: GamingInput): Promise<GamingResult>;
   controlLanMouse(input: LanMouseInput): Promise<LanMouseStatus>;
   controlHostApp(input: HostAppInput): Promise<HostAppResult>;
   scanTasks(repos: string[]): Promise<TaskEntry[]>;

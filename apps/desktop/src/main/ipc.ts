@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, clipboard, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, ShutdownArmSchema, HostAppInputSchema, LanMouseInputSchema, TasksScanInputSchema, TaskFileInputSchema, TaskWriteInputSchema, TaskCreateInputSchema, ShutdownTargetSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, ShutdownArmSchema, HostAppInputSchema, LanMouseInputSchema, GamingInputSchema, TasksScanInputSchema, TaskFileInputSchema, TaskWriteInputSchema, TaskCreateInputSchema, ShutdownTargetSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -21,6 +21,7 @@ import { getVmStorage } from "./services/vmStorage";
 import { getMacStorage } from "./services/macStorage";
 import { controlHostApp } from "./services/hostApp";
 import { lanMouse } from "./services/lanMouse";
+import { startGamingMode } from "./services/pcMode";
 import { createTask, readTask, scanTasks, writeTask } from "./services/tasks";
 import { armShutdown, disarmShutdown, getShutdownStatus } from "./services/shutdown";
 import { deleteWorktree, prune } from "./services/cleanup";
@@ -99,6 +100,10 @@ export function registerIpc(actions: IpcActions): void {
     return true;
   });
   ipcMain.handle(IPC.vmStorage, (_event, input: unknown) => getVmStorage(VmStorageInputSchema.parse(input).target));
+  ipcMain.handle(IPC.gamingMode, (_event, input: unknown) => {
+    const parsed = GamingInputSchema.parse(input);
+    return startGamingMode(parsed.target, parsed.force === true);
+  });
   ipcMain.handle(IPC.lanMouse, (_event, input: unknown) => lanMouse.control(LanMouseInputSchema.parse(input)));
   ipcMain.handle(IPC.hostApp, (_event, input: unknown) => {
     const parsed = HostAppInputSchema.parse(input);
