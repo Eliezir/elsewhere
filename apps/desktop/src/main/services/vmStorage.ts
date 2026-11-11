@@ -3,7 +3,7 @@ import { describeSshFailure, runSsh } from "./ssh";
 
 export const STORAGE_SCRIPT = `
 H="$HOME"
-df -kP / 2>/dev/null | awk 'NR==2{print "@@DISK",$2,$3}'
+df -kP / 2>/dev/null | awk 'NR==2{print "@@DISK",$2,$3,$4}'
 du -sk -x "$H"/* "$H"/.[!.]* 2>/dev/null | sed 's/^/@@H /'
 du -sk -x "$H"/Developer/worktrees/*/* 2>/dev/null | sed 's/^/@@W /'
 du -sk -x "$H"/Developer/.vmc/* 2>/dev/null | sed 's/^/@@V /'
@@ -16,10 +16,10 @@ export function parseStorage(output: string): Omit<VmStorage, "reachable" | "err
   let diskTotalBytes = 0;
   const entries: StorageEntry[] = [];
   for (const line of output.split("\n")) {
-    const disk = /^@@DISK (\d+) (\d+)/.exec(line);
+    const disk = /^@@DISK (\d+) (\d+)(?: (\d+))?/.exec(line);
     if (disk?.[1] && disk[2]) {
       diskTotalBytes = Number(disk[1]) * 1024;
-      diskUsedBytes = Number(disk[2]) * 1024;
+      diskUsedBytes = disk[3] ? diskTotalBytes - Number(disk[3]) * 1024 : Number(disk[2]) * 1024;
       continue;
     }
     const row = /^(@@[HWV]) (\d+)\s+(\/.+)$/.exec(line);
