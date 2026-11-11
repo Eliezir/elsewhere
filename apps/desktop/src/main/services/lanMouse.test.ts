@@ -6,7 +6,7 @@ function fake(initial: boolean) {
   const calls: string[] = [];
   const exec: Exec = async (args) => {
     calls.push(args.join(" "));
-    if (args[1] === "list") return { ok: true, stdout: `id 0: 192.168.0.36:4242 (right) active: ${active}, ips: {192.168.0.36}\n`, stderr: "" };
+    if (args[1] === "list") return { ok: true, stdout: `id 0: 192.168.1.42:4242 (right) active: ${active}, ips: {192.168.1.42}\n`, stderr: "" };
     active = args[1] === "activate";
     return { ok: true, stdout: "", stderr: "" };
   };
@@ -32,7 +32,7 @@ function clock() {
 
 describe("lan mouse control", () => {
   it("reads the client list", () => {
-    expect(parseClients("id 0: 192.168.0.36:4242 (right) active: true, ips: {192.168.0.36}\nid 3: pc (left) active: false, ips: {}")).toEqual([
+    expect(parseClients("id 0: 192.168.1.42:4242 (right) active: true, ips: {192.168.1.42}\nid 3: pc (left) active: false, ips: {}")).toEqual([
       { id: 0, active: true },
       { id: 3, active: false },
     ]);
