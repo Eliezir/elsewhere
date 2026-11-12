@@ -5,18 +5,17 @@ import { useEffect, useState, type ReactNode } from "react";
 import { TopBar } from "@/components/TopBar";
 import { NAV_ITEMS, isNavId, type NavId } from "@/lib/nav";
 import { NavProvider } from "@/lib/nav-context";
+import { activeOf } from "@/lib/hosts";
 import { useSettings } from "@/lib/settings";
 import { OverviewView } from "@/views/OverviewView";
 import { PopoverView } from "@/views/PopoverView";
 import { SettingsView } from "@/views/SettingsView";
 import { StorageView } from "@/views/StorageView";
-import { VmView } from "@/views/VmView";
 import { WorktreesView } from "@/views/WorktreesView";
 
 const VIEWS: Record<NavId, ReactNode> = {
   overview: <OverviewView />,
   worktrees: <WorktreesView />,
-  vm: <VmView />,
   storage: <StorageView />,
   settings: <SettingsView />,
 };
@@ -27,12 +26,12 @@ function MainWindow() {
 
   useEffect(() => {
     const target = VmTargetSchema.safeParse({ host: settings.host.trim(), user: settings.user.trim() });
-    void window.api.setForwardConfig({ target: target.success ? target.data : null, autoForward: settings.autoForward });
-  }, [settings.host, settings.user, settings.autoForward]);
+    void window.api.setForwardConfig({ target: target.success ? target.data : null, autoForward: settings.autoForward, name: activeOf(settings).name.trim() || undefined });
+  }, [settings]);
 
   useEffect(() => {
-    void window.api.setAppPrefs({ startAtLogin: settings.startAtLogin, runInBackground: settings.runInBackground, showInMenuBar: settings.showInMenuBar, hideFromDock: settings.hideFromDock });
-  }, [settings.startAtLogin, settings.runInBackground, settings.showInMenuBar, settings.hideFromDock]);
+    void window.api.setAppPrefs({ startAtLogin: settings.startAtLogin, runInBackground: settings.runInBackground, showInMenuBar: settings.showInMenuBar, hideFromDock: settings.hideFromDock, notifyUnreachable: settings.notifyUnreachable, notifyDisk: settings.notifyDisk, notifyPorts: settings.notifyPorts, diskWarn: settings.diskWarn });
+  }, [settings.startAtLogin, settings.runInBackground, settings.showInMenuBar, settings.hideFromDock, settings.notifyUnreachable, settings.notifyDisk, settings.notifyPorts, settings.diskWarn]);
 
   useEffect(
     () =>

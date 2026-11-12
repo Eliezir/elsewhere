@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { ForwardConfigSchema, type ForwardConfig, type LinkStatus } from "@vmc/shared";
 import { stopStaleForwards } from "./forwards";
 import { getLinkStatus, setLinkStatus } from "./link";
+import { notifier } from "./notifications";
 import { getVmPorts } from "./vmPorts";
 
 const POLL_MS = 6000;
@@ -14,6 +15,10 @@ let timer: ReturnType<typeof setInterval> | null = null;
 
 function configFile(): string {
   return join(process.env.VMC_HOME ?? join(homedir(), ".vm-companion"), "forward-config.json");
+}
+
+export function getForwardConfig(): ForwardConfig {
+  return config;
 }
 
 export async function setForwardConfig(next: ForwardConfig): Promise<void> {
@@ -55,7 +60,12 @@ async function tick(): Promise<void> {
   if (running) return;
   running = true;
   try {
-    setLinkStatus(linkFromPorts(await getVmPorts(config.target, config.autoForward)));
+    const result = await getVmPorts(config.target, config.autoForward);
+    const link = linkFromPorts(result);
+    setLinkStatus(link);
+    const name = config.name ?? "The host";
+    notifier.handleLink(link, name);
+    notifier.handlePorts(result.ports, name);
   } catch {
     return;
   } finally {

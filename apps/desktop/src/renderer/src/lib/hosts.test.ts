@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeOf, addHost, editActive, findHostRepo, hostKind, profilesOf, removeActive, selectHost, syncActive } from "./hosts";
+import { activeOf, addHost, editActive, enabledProfiles, findHostRepo, hostKind, profilesOf, setHostEnabled, removeActive, selectHost, syncActive } from "./hosts";
 
 type Fields = Parameters<typeof profilesOf>[0];
 
@@ -66,5 +66,22 @@ describe("host kind", () => {
   it("guesses a PC when a MAC address is saved and a VM when not", () => {
     expect(hostKind({ mac: "aa:bb:cc:dd:ee:ff" })).toBe("pc");
     expect(hostKind({ mac: "  " })).toBe("vm");
+  });
+});
+
+describe("enabling and disabling machines", () => {
+  const two = { host: "pc", user: "u", vmRepos: "", activeHostId: "pc", hosts: [{ id: "pc", name: "PC", host: "pc", user: "u", vmRepos: "", mac: "" }, { id: "vm", name: "VM", host: "vm", user: "u", vmRepos: "", mac: "" }] };
+
+  it("turns a machine off without removing it", () => {
+    const off = { ...two, ...setHostEnabled(two, "vm", false) };
+    expect(profilesOf(off)).toHaveLength(2);
+    expect(enabledProfiles(off).map((profile) => profile.id)).toEqual(["pc"]);
+    const on = { ...off, ...setHostEnabled(off, "vm", true) };
+    expect(enabledProfiles(on)).toHaveLength(2);
+  });
+
+  it("never turns off the primary machine", () => {
+    expect(setHostEnabled(two, "pc", false)).toEqual({});
+    expect(enabledProfiles(two)).toHaveLength(2);
   });
 });

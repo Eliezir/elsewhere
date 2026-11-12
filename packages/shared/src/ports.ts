@@ -58,6 +58,7 @@ export type KillPortResult = z.infer<typeof KillPortResultSchema>;
 export const ForwardConfigSchema = z.object({
   target: VmTargetSchema.nullable(),
   autoForward: z.boolean(),
+  name: z.string().max(80).optional(),
 });
 export type ForwardConfig = z.infer<typeof ForwardConfigSchema>;
 
@@ -76,6 +77,10 @@ export const AppPrefsSchema = z.object({
   runInBackground: z.boolean(),
   showInMenuBar: z.boolean(),
   hideFromDock: z.boolean().default(false),
+  notifyUnreachable: z.boolean().default(true),
+  notifyDisk: z.boolean().default(true),
+  notifyPorts: z.boolean().default(true),
+  diskWarn: z.number().int().min(50).max(95).default(80),
 });
 export type AppPrefs = z.infer<typeof AppPrefsSchema>;
 

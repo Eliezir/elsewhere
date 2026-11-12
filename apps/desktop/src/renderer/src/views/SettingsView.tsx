@@ -1,7 +1,7 @@
 import { useHostName } from "@/lib/useHost";
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
-import { HostSwitcher } from "@/components/HostSwitcher";
+import { HostSwitcher, OtherMachines } from "@/components/HostSwitcher";
 import { HostAppsCard } from "@/components/HostAppsCard";
 import { ShutdownCard } from "@/components/ShutdownCard";
 import { VmTerminalButton } from "@/components/TerminalButtons";
@@ -75,6 +75,7 @@ export function SettingsView() {
             </div>
             {snapshot?.approvalUrl && <ApproveSshButton url={snapshot.approvalUrl} />}
           </div>
+        <OtherMachines />
         </Tile>
         <Tile className="col-span-6" index={1} title="Tailscale" action={<Pill tone={tailscale.connected ? "ok" : "warn"}>{tailscaleLabel}</Pill>}>
           <div className="flex min-h-0 flex-1 flex-col">
@@ -94,7 +95,7 @@ export function SettingsView() {
                   <span className="flex min-w-0 items-center gap-2">
                     <span className={`size-2 shrink-0 rounded-full ${tailscale.connected && peer.online ? "bg-[var(--ok)]" : "bg-white/25"}`} />
                     <span className="truncate">{peer.name}</span>
-                    {peer.isVm && <Pill tone="ok">VM</Pill>}
+                    {peer.isVm && <Pill tone="ok">Primary</Pill>}
                   </span>
                   <span className="shrink-0 text-[11px] text-[var(--text-secondary)]">{`${peer.os ?? ""}${peer.os && peer.ip ? " · " : ""}${peer.ip ?? ""}`}</span>
                 </div>
@@ -113,14 +114,18 @@ export function SettingsView() {
         </Tile>
       <Tile className="col-span-6" index={3} title="Thresholds">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <SliderRow label="Disk warning" hint={`Alert when the ${host} disk is fuller than this.`} value={settings.diskWarn} min={50} max={95} onChange={(diskWarn) => update({ diskWarn })} />
+          <SliderRow label="Disk warning" hint={`Alert when this Mac or ${host} is fuller than this.`} value={settings.diskWarn} min={50} max={95} onChange={(diskWarn) => update({ diskWarn })} />
           <SliderRow label="Stale after" hint="Worktrees idle this long are suggested for clean-up." value={settings.staleDays} min={7} max={180} unit=" days" onChange={(staleDays) => update({ staleDays })} />
         </div>
       </Tile>
       <Tile className="col-span-6" index={4} title="Notifications">
         <div className="min-h-0 flex-1 overflow-y-auto">
           <ToggleRow label={`${host} unreachable`} checked={settings.notifyUnreachable} onChange={(notifyUnreachable) => update({ notifyUnreachable })} />
-          <ToggleRow label="Disk almost full" checked={settings.notifyDisk} onChange={(notifyDisk) => update({ notifyDisk })} />
+          <ToggleRow label="Disk almost full" hint={`This Mac and ${host}, once a day at most`} checked={settings.notifyDisk} onChange={(notifyDisk) => update({ notifyDisk })} />
+          <ToggleRow label="Port can't be forwarded" hint="A dev server on the host that this Mac couldn't open" checked={settings.notifyPorts} onChange={(notifyPorts) => update({ notifyPorts })} />
+          <div className="pt-2">
+            <Button onClick={() => void window.api.sendTestNotification()}>Send a test notification</Button>
+          </div>
         </div>
       </Tile>
       <Tile className="col-span-6" index={5} title="General">

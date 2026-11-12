@@ -1,6 +1,6 @@
-import { Button, Segmented, TextField } from "@/components/controls";
+import { Button, Segmented, TextField, ToggleRow } from "@/components/controls";
 import { WakeButton } from "@/components/WakeButton";
-import { activeOf, addHost, editActive, hostKind, profilesOf, removeActive, selectHost } from "@/lib/hosts";
+import { activeOf, addHost, editActive, hostKind, profilesOf, removeActive, selectHost, setHostEnabled } from "@/lib/hosts";
 import { useSettings } from "@/lib/settings";
 
 const KINDS = [
@@ -34,6 +34,29 @@ export function HostSwitcher() {
         <TextField label="MAC address (for Wake)" placeholder="aa:bb:cc:dd:ee:ff" value={active.mac} onChange={(event) => update(editActive(settings, { mac: event.target.value }))} />
       </div>
       {active.mac.trim() !== "" && <WakeButton mac={active.mac} />}
+    </div>
+  );
+}
+
+export function OtherMachines() {
+  const [settings, update] = useSettings();
+  const profiles = profilesOf(settings);
+  const active = activeOf(settings);
+  if (profiles.length < 2) return null;
+  return (
+    <div className="mt-3 border-t border-white/5 pt-2">
+      <div className="text-xs text-[var(--text-secondary)]">Other machines</div>
+      {profiles
+        .filter((profile) => profile.id !== active.id)
+        .map((profile) => (
+          <ToggleRow
+            key={profile.id}
+            label={profile.name || "Host"}
+            hint="Shown in Storage while this is on. Turn it off to keep it saved without using it."
+            checked={profile.enabled !== false}
+            onChange={(enabled) => update(setHostEnabled(settings, profile.id, enabled))}
+          />
+        ))}
     </div>
   );
 }

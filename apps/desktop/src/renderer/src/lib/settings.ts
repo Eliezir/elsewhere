@@ -9,6 +9,7 @@ export interface HostProfile {
   vmRepos: string;
   mac: string;
   kind?: "vm" | "pc";
+  enabled?: boolean;
 }
 
 export interface Settings {
@@ -26,6 +27,7 @@ export interface Settings {
   shutdownMode: "shutdown" | "sleep";
   notifyUnreachable: boolean;
   notifyDisk: boolean;
+  notifyPorts: boolean;
   startAtLogin: boolean;
   showInMenuBar: boolean;
   hideFromDock: boolean;
@@ -48,6 +50,7 @@ export const DEFAULT_SETTINGS: Settings = {
   shutdownMode: "shutdown",
   notifyUnreachable: true,
   notifyDisk: true,
+  notifyPorts: true,
   startAtLogin: false,
   showInMenuBar: true,
   hideFromDock: false,

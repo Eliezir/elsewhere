@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, clipboard, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, ClaudeDesktopOpenSchema, AppPrefsSchema, ForwardConfigSchema, IPC, PortPinSchema, ShutdownArmSchema, HostAppInputSchema, LanMouseInputSchema, GamingInputSchema, ShutdownTargetSchema, TwinSyncInputSchema, KillPortSchema, LocalPortSchema, PortForwardToggleSchema, VmPortsInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, AppPrefsSchema, ForwardConfigSchema, IPC, ShutdownArmSchema, HostAppInputSchema, LanMouseInputSchema, GamingInputSchema, ShutdownTargetSchema, TwinSyncInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -10,16 +10,14 @@ import { connectTailscale, disconnectTailscale } from "./services/tailscaleContr
 import { openMacTerminal, openVmTerminal } from "./services/terminal";
 import { getVmSnapshot } from "./services/vm";
 import { compareTwins } from "./services/move/twin";
-import { setForward, setPortPin } from "./services/forwards";
 import { refreshLink, setForwardConfig } from "./services/forwardLoop";
 import { getLinkStatus } from "./services/link";
 import { setPrefs } from "./services/prefs";
-import { openInClaudeDesktop } from "./services/claudeDesktop";
-import { getVmPorts, killVmPort } from "./services/vmPorts";
 import { getVmStorage } from "./services/vmStorage";
 import { getMacStorage } from "./services/macStorage";
 import { controlHostApp } from "./services/hostApp";
 import { lanMouse } from "./services/lanMouse";
+import { sendTestNotification } from "./services/notifications";
 import { startGamingMode } from "./services/pcMode";
 import { armShutdown, disarmShutdown, getShutdownStatus } from "./services/shutdown";
 import { deleteWorktree, prune } from "./services/cleanup";
@@ -63,39 +61,16 @@ export function registerIpc(actions: IpcActions): void {
     const parsed = VmInputSchema.parse(input);
     return getVmSnapshot(parsed.target, parsed.repos);
   });
-  ipcMain.handle(IPC.vmPorts, (_event, input: unknown) => {
-    const parsed = VmPortsInputSchema.parse(input);
-    return getVmPorts(parsed.target, parsed.autoForward);
-  });
-  ipcMain.handle(IPC.vmPortForward, async (_event, input: unknown) => {
-    const parsed = PortForwardToggleSchema.parse(input);
-    await setForward(parsed.target, parsed.port, parsed.enabled);
-    return getVmPorts(parsed.target, false);
-  });
-  ipcMain.handle(IPC.claudeDesktopOpen, (_event, input: unknown) => {
-    const parsed = ClaudeDesktopOpenSchema.parse(input);
-    return openInClaudeDesktop(parsed.target, parsed.path, parsed.sessionId);
-  });
   ipcMain.handle(IPC.linkStatus, () => getLinkStatus());
   ipcMain.handle(IPC.linkRefresh, () => refreshLink());
   ipcMain.handle(IPC.appPrefs, (_event, input: unknown) => setPrefs(AppPrefsSchema.parse(input)));
-  ipcMain.handle(IPC.portPin, (_event, input: unknown) => setPortPin(PortPinSchema.parse(input)));
   ipcMain.handle(IPC.forwardConfig, (_event, input: unknown) => setForwardConfig(ForwardConfigSchema.parse(input)));
-  ipcMain.handle(IPC.vmPortKill, (_event, input: unknown) => {
-    const parsed = KillPortSchema.parse(input);
-    return killVmPort(parsed.target, parsed.port, parsed.force);
-  });
-  ipcMain.handle(IPC.openLocalPort, async (_event, port: unknown) => {
-    const parsed = LocalPortSchema.safeParse(port);
-    if (!parsed.success) return false;
-    await shell.openExternal(`http://localhost:${parsed.data}`);
-    return true;
-  });
   ipcMain.handle(IPC.vmStorage, (_event, input: unknown) => getVmStorage(VmStorageInputSchema.parse(input).target));
   ipcMain.handle(IPC.gamingMode, (_event, input: unknown) => {
     const parsed = GamingInputSchema.parse(input);
     return startGamingMode(parsed.target, parsed.force === true);
   });
+  ipcMain.handle(IPC.notifyTest, () => sendTestNotification());
   ipcMain.handle(IPC.lanMouse, (_event, input: unknown) => lanMouse.control(LanMouseInputSchema.parse(input)));
   ipcMain.handle(IPC.hostApp, (_event, input: unknown) => {
     const parsed = HostAppInputSchema.parse(input);

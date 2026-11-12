@@ -1,5 +1,7 @@
 import { stopAllForwards } from "./services/forwards";
+import { startDiskWatch, stopDiskWatch } from "./services/diskWatch";
 import { startForwardLoop, stopForwardLoop } from "./services/forwardLoop";
+import { installNotifications } from "./services/notifications";
 import { getLinkStatus, linkTooltip, onLinkChange, trayIconName } from "./services/link";
 import { getPrefs, hidesFromDock, keepsRunningInBackground, loadPrefs, onPrefsChange } from "./services/prefs";
 import type { LinkState } from "@vmc/shared";
@@ -85,7 +87,7 @@ function syncTray(popover: BrowserWindow): void {
     created.popUpContextMenu(
       Menu.buildFromTemplate([
         { label: "Open Elsewhere", click: () => showMainWindow() },
-        { label: "Ports", click: () => showMainWindow("vm") },
+        { label: "Storage", click: () => showMainWindow("storage") },
         { type: "separator" },
         { label: "Quit Elsewhere", click: quitForReal },
       ]),
@@ -101,7 +103,9 @@ void app.whenReady().then(async () => {
   await loadPrefs();
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
   registerIpc({ openMainWindow: showMainWindow });
+  installNotifications((section) => showMainWindow(section));
   startForwardLoop();
+  startDiskWatch();
   const popover = createPopover();
   syncTray(popover);
   onLinkChange((status) => {
@@ -139,5 +143,6 @@ app.on("before-quit", (event) => {
     return;
   }
   stopForwardLoop();
+  stopDiskWatch();
   stopAllForwards();
 });

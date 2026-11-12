@@ -1,16 +1,13 @@
 import { useHostKind, useHostName } from "@/lib/useHost";
 import { motion } from "motion/react";
-import { useMemo, type ReactNode } from "react";
-import type { VmPort } from "@vmc/shared";
+import { type ReactNode } from "react";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { LanMouseQuick } from "@/components/LanMouseQuick";
 import { PopoverGamingMode } from "@/components/PopoverGamingMode";
 import { Button } from "@/components/controls";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import { useLinkStatus, useProjectIcons, useVmPorts, useVmSnapshot } from "@/data/hooks";
+import { useLinkStatus } from "@/data/hooks";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
-import { groupPorts } from "@/lib/ports";
 
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
@@ -24,24 +21,6 @@ const DOT: Record<Health, string> = {
   down: "bg-[var(--down)]",
   unknown: "bg-[var(--text-muted)]",
 };
-
-const MAX_GROUPS = 3;
-const MAX_CHIPS = 3;
-
-function PortChip({ port }: { port: VmPort }) {
-  const forwarded = port.state === "active" || port.state === "remapped";
-  return (
-    <button
-      type="button"
-      onClick={() => forwarded && port.localPort !== null && void window.api.openLocalPort(port.localPort)}
-      title={forwarded ? `Open localhost:${port.localPort}` : "Not forwarded"}
-      className={`no-drag flex cursor-default items-center gap-1.5 rounded-full border border-[var(--hairline)] bg-[var(--inset)] px-2 py-0.5 text-[11px] tabular-nums outline-none transition-colors duration-200 ${forwarded ? "hover:bg-white/10" : "text-[var(--text-muted)]"}`}
-    >
-      <span aria-hidden="true" className={`size-1.5 rounded-full ${forwarded ? "bg-[var(--ok)]" : "bg-white/25"}`} />
-      {port.port}
-    </button>
-  );
-}
 
 function open(section?: NavId) {
   void window.api.openMainWindow(section);
@@ -89,18 +68,12 @@ function Stat({ label, value, unit, percent, color }: { label: string; value: st
 
 export function PopoverView() {
   const model = useOverviewModel();
-  const icons = useProjectIcons().data ?? {};
   const { connection, vm } = model;
   const link = useLinkStatus();
   const host = useHostName();
   const kind = useHostKind();
   const health: Health = link.state === "approval" ? "warn" : link.state === "offline" ? "down" : connection.health;
   const headline = link.state === "approval" ? "Tailscale SSH needs your approval" : link.state === "offline" ? `Can't reach ${host}` : connection.headline;
-  const ports = useVmPorts();
-  const snapshot = useVmSnapshot();
-  const projectPorts = (ports.data?.ports ?? []).filter((port) => port.kind === "project");
-  const groups = useMemo(() => groupPorts(projectPorts, snapshot.data?.worktrees ?? []), [projectPorts, snapshot.data]);
-  const projectCount = groups.length;
   const reachable = link.state === "unknown" ? connection.health === "ok" : link.state === "ok";
 
   return (
@@ -159,40 +132,11 @@ export function PopoverView() {
             <LanMouseQuick />
           </Card>
         )}
-        <Card index={5} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>
-          {groups.length > 0 ? (
-            <div className="space-y-2.5">
-              {groups.slice(0, MAX_GROUPS).map((group) => (
-                <div key={group.key} className="flex items-center gap-2.5">
-                  <ProjectIcon repo={group.repo} icon={icons[group.repo]?.icon} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate leading-tight">{`${group.repo} · ${group.name}`}</div>
-                    {group.branch !== null && <div className="truncate text-[11px] leading-tight text-[var(--text-secondary)]">{group.branch}</div>}
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    {group.ports.slice(0, MAX_CHIPS).map((port) => (
-                      <PortChip key={port.port} port={port} />
-                    ))}
-                    {group.ports.length > MAX_CHIPS && <span className="self-center text-[11px] text-[var(--text-secondary)]">{`+${group.ports.length - MAX_CHIPS}`}</span>}
-                  </div>
-                </div>
-              ))}
-              {groups.length > MAX_GROUPS && (
-                <button type="button" onClick={() => open("vm")} className="no-drag cursor-default text-xs text-[var(--text-secondary)] outline-none transition-colors duration-200 hover:text-[var(--text-primary)]">
-                  {`+${groups.length - MAX_GROUPS} more`}
-                </button>
-              )}
-            </div>
-          ) : (
-            <p className="text-xs text-[var(--text-muted)]">{reachable ? `Nothing is running on ${host}.` : `Ports show up once ${host} is reachable.`}</p>
-          )}
-        </Card>
       </main>
       <footer className="flex gap-2 border-t border-[var(--hairline)] p-3">
         <Button variant="primary" onClick={() => open()} className="flex-1">
           Open Elsewhere
         </Button>
-        <Button onClick={() => open("vm")}>Ports</Button>
       </footer>
     </div>
   );

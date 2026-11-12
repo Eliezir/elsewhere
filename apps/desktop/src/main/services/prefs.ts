@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { AppPrefsSchema, type AppPrefs } from "@vmc/shared";
 
-const DEFAULTS: AppPrefs = { startAtLogin: false, runInBackground: true, showInMenuBar: true, hideFromDock: false };
+const DEFAULTS: AppPrefs = { startAtLogin: false, runInBackground: true, showInMenuBar: true, hideFromDock: false, notifyUnreachable: true, notifyDisk: true, notifyPorts: true, diskWarn: 80 };
 
 let prefs: AppPrefs = DEFAULTS;
 const listeners = new Set<(prefs: AppPrefs) => void>();

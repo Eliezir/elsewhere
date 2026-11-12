@@ -33,6 +33,16 @@ export function selectHost(settings: HostFields, id: string): Partial<Settings> 
   return { activeHostId: id, host: target.host, user: target.user, vmRepos: target.vmRepos };
 }
 
+export function enabledProfiles(settings: HostFields): HostProfile[] {
+  const active = activeOf(settings).id;
+  return profilesOf(settings).filter((profile) => profile.enabled !== false || profile.id === active);
+}
+
+export function setHostEnabled(settings: HostFields, id: string, enabled: boolean): Partial<Settings> {
+  if (id === activeOf(settings).id) return {};
+  return { hosts: profilesOf(settings).map((profile) => (profile.id === id ? { ...profile, enabled } : profile)) };
+}
+
 export type HostKind = "vm" | "pc";
 
 export function hostKind(profile: Pick<HostProfile, "kind" | "mac">): HostKind {

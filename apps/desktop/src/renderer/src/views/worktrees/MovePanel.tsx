@@ -3,7 +3,6 @@ import { useState } from "react";
 import { MoveRequestSchema, planMove, type MoveDirection, type MoveProgress, type MoveRequest, type MoveResult } from "@vmc/shared";
 import { Button, ToggleRow } from "@/components/controls";
 import { OpenInRemoteT3Button } from "@/components/OpenInRemoteT3Button";
-import { OpenVmInClaudeButton } from "@/components/OpenVmInClaudeButton";
 import type { VmSnapshot, Worktree } from "@/data/types";
 import { counterpartOf } from "@/lib/worktrees";
 import { findHostRepo } from "@/lib/hosts";
@@ -65,7 +64,6 @@ export function HostActions({ tree, all, vm }: Omit<MovePanelProps, "onMoved">) 
       <OpenInRemoteT3Button tree={vmTree} reachable={reachable} />
       {reachable && (
         <>
-          <OpenVmInClaudeButton tree={vmTree} vmReachable={reachable} />
           <div className="flex gap-2">
             <Button onClick={() => openTerminal("shell")} className="flex-1 !py-1.5">
               {`Open on ${host}`}

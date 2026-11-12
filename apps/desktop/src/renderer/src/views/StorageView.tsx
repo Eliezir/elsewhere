@@ -6,7 +6,7 @@ import { Button } from "@/components/controls";
 import { Pill, Tile } from "@/components/Tile";
 import { useHostStorage, useMacStorage } from "@/data/hooks";
 import { formatBytes } from "@/lib/format";
-import { profilesOf } from "@/lib/hosts";
+import { enabledProfiles } from "@/lib/hosts";
 import { useSettings } from "@/lib/settings";
 import { changeOver, formatChange, homeRelative, loadHistory, recordSample, saveHistory, type StorageSample } from "@/lib/storageHistory";
 
@@ -97,7 +97,7 @@ function RemoteCard({ id, name, host, user, index }: { id: string; name: string;
 
 export function StorageView() {
   const [settings] = useSettings();
-  const hosts = profilesOf(settings).filter((profile) => profile.host.trim() !== "");
+  const hosts = enabledProfiles(settings).filter((profile) => profile.host.trim() !== "");
   return (
     <div className="grid h-full auto-rows-min grid-cols-1 gap-3 overflow-y-auto pb-1 xl:grid-cols-2">
       <MacCard />

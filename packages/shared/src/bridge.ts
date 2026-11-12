@@ -5,9 +5,8 @@ import type { HostAppInput, HostAppResult } from "./hostApp";
 import type { LanMouseInput, LanMouseStatus } from "./lanMouse";
 import type { GamingInput, GamingResult } from "./pcMode";
 import type { ShutdownArm, ShutdownStatus, ShutdownTarget } from "./shutdown";
-import type { VmTarget } from "./worktree";
-import type { AppPrefs, ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput, WakeInput, WakeResult } from "./ports";
-import type { ClaudeDesktopOpenResult, T3Threads, ToolOpenInput, ToolOpenResult, RemoteT3Input, RemoteT3Result, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
+import type { AppPrefs, ForwardConfig, LinkStatus, VmStorage, VmStorageInput, WakeInput, WakeResult } from "./ports";
+import type { T3Threads, ToolOpenInput, ToolOpenResult, RemoteT3Input, RemoteT3Result, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
 
 export const IPC = {
   tailscaleStatus: "tailscale:status",
@@ -27,7 +26,6 @@ export const IPC = {
   projectIcons: "icons:get",
   sizes: "worktrees:sizes",
   toolsInfo: "tools:info",
-  claudeDesktopOpen: "tools:claude-desktop-open",
   t3Threads: "tools:t3-threads",
   toolOpen: "tools:open",
   reveal: "tools:reveal",
@@ -38,20 +36,16 @@ export const IPC = {
   iconClear: "icons:clear",
   tailscaleConnect: "tailscale:connect",
   tailscaleDisconnect: "tailscale:disconnect",
-  vmPorts: "vm:ports",
-  vmPortForward: "vm:port-forward",
-  vmPortKill: "vm:port-kill",
   forwardConfig: "vm:forward-config",
-  portPin: "vm:port-pin",
   appPrefs: "app:prefs",
   linkStatus: "vm:link-status",
   linkRefresh: "vm:link-refresh",
   linkChanged: "vm:link-changed",
-  openLocalPort: "app:open-local-port",
   vmStorage: "vm:storage",
   macStorage: "storage:mac",
   shutdownStatus: "shutdown:status",
   hostApp: "host:app",
+  notifyTest: "app:notify-test",
   lanMouse: "lanmouse:control",
   gamingMode: "pcmode:gaming",
   shutdownArm: "shutdown:arm",
@@ -75,7 +69,6 @@ export interface Api {
   getProjectIcons(input: IconInput): Promise<ProjectIcons>;
   getTools(): Promise<ToolsInfo>;
   getT3Threads(paths: string[]): Promise<T3Threads>;
-  openInClaudeDesktop(input: { target: VmTarget; path: string; sessionId?: string | undefined }): Promise<ClaudeDesktopOpenResult>;
   openInTool(input: ToolOpenInput): Promise<ToolOpenResult>;
   revealInFinder(path: string): Promise<boolean>;
   getWorktreeSizes(input: SizeInput): Promise<SizeResult>;
@@ -86,20 +79,16 @@ export interface Api {
   clearProjectIcon(repo: string): Promise<void>;
   connectTailscale(): Promise<TailscaleControlResult>;
   disconnectTailscale(): Promise<TailscaleControlResult>;
-  getVmPorts(input: VmPortsInput): Promise<VmPorts>;
-  setPortForward(input: PortForwardToggle): Promise<VmPorts>;
-  killVmPort(input: KillPortInput): Promise<KillPortResult>;
   setForwardConfig(input: ForwardConfig): Promise<void>;
-  setPortPin(input: PortPin): Promise<void>;
   setAppPrefs(input: AppPrefs): Promise<void>;
   getLinkStatus(): Promise<LinkStatus>;
   refreshLinkStatus(): Promise<LinkStatus>;
   onLinkStatus(listener: (status: LinkStatus) => void): () => void;
-  openLocalPort(port: number): Promise<boolean>;
   getVmStorage(input: VmStorageInput): Promise<VmStorage>;
   getMacStorage(): Promise<VmStorage>;
   startGamingMode(input: GamingInput): Promise<GamingResult>;
   controlLanMouse(input: LanMouseInput): Promise<LanMouseStatus>;
+  sendTestNotification(): Promise<boolean>;
   controlHostApp(input: HostAppInput): Promise<HostAppResult>;
   getShutdownStatus(input: ShutdownTarget): Promise<ShutdownStatus>;
   armShutdown(input: ShutdownArm): Promise<ShutdownStatus>;
