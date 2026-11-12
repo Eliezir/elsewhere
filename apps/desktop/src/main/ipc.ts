@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 import { BrowserWindow, clipboard, dialog, ipcMain, shell } from "electron";
 import { TAILSCALE_APP } from "./config";
-import { DeleteRequestSchema, AppPrefsSchema, ForwardConfigSchema, IPC, ShutdownArmSchema, HostAppInputSchema, LanMouseInputSchema, GamingInputSchema, ShutdownTargetSchema, TwinSyncInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
+import { DeleteRequestSchema, AppPrefsSchema, ForwardConfigSchema, IPC, ShutdownArmSchema, HostAppInputSchema, LanMouseInputSchema, GamingInputSchema, PowerInputSchema, ShutdownTargetSchema, TwinSyncInputSchema, VmStorageInputSchema, PathsInputSchema, ToolOpenInputSchema, IconInputSchema, IconRepoSchema, PruneInputSchema, SizeInputSchema, MacInputSchema, MoveRequestSchema, TerminalInputSchema, VmInputSchema, WakeInputSchema, RemoteT3InputSchema, type DeleteResult, type MoveResult } from "@vmc/shared";
 import { runMove, writeMoveRecord, defaultRecordDir } from "./services/move/flow";
 import { sshRemote } from "./services/move/remote";
 import { isAllowedLoginUrl } from "./services/urls";
@@ -19,6 +19,7 @@ import { controlHostApp } from "./services/hostApp";
 import { lanMouse } from "./services/lanMouse";
 import { sendTestNotification } from "./services/notifications";
 import { startGamingMode } from "./services/pcMode";
+import { powerAction } from "./services/power";
 import { armShutdown, disarmShutdown, getShutdownStatus } from "./services/shutdown";
 import { deleteWorktree, prune } from "./services/cleanup";
 import { clearCustomIcon, getProjectIcons, saveCustomIcon } from "./services/projectIcon";
@@ -66,6 +67,10 @@ export function registerIpc(actions: IpcActions): void {
   ipcMain.handle(IPC.appPrefs, (_event, input: unknown) => setPrefs(AppPrefsSchema.parse(input)));
   ipcMain.handle(IPC.forwardConfig, (_event, input: unknown) => setForwardConfig(ForwardConfigSchema.parse(input)));
   ipcMain.handle(IPC.vmStorage, (_event, input: unknown) => getVmStorage(VmStorageInputSchema.parse(input).target));
+  ipcMain.handle(IPC.power, (_event, input: unknown) => {
+    const parsed = PowerInputSchema.parse(input);
+    return powerAction(parsed.target, parsed.action, parsed.force === true);
+  });
   ipcMain.handle(IPC.gamingMode, (_event, input: unknown) => {
     const parsed = GamingInputSchema.parse(input);
     return startGamingMode(parsed.target, parsed.force === true);

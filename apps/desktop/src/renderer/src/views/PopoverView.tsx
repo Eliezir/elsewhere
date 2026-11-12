@@ -5,6 +5,7 @@ import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
 import { LanMouseQuick } from "@/components/LanMouseQuick";
 import { PopoverGamingMode } from "@/components/PopoverGamingMode";
+import { PowerControls } from "@/components/PowerControls";
 import { Button } from "@/components/controls";
 import { useLinkStatus } from "@/data/hooks";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
@@ -123,12 +124,17 @@ export function PopoverView() {
           )}
         </Card>
         {kind === "pc" && (
-          <Card index={2} title="PC mode" to="overview">
+          <Card index={2} title="Power" to="overview">
+            <PowerControls compact />
+          </Card>
+        )}
+        {kind === "pc" && (
+          <Card index={3} title="PC mode" to="overview">
             <PopoverGamingMode />
           </Card>
         )}
         {kind === "pc" && (
-          <Card index={3} title="Lan Mouse" to="settings">
+          <Card index={4} title="Lan Mouse" to="settings">
             <LanMouseQuick />
           </Card>
         )}

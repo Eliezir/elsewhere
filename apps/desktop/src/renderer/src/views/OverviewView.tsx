@@ -1,5 +1,6 @@
 import { AreaChart, BigNumber, Meter } from "@/components/charts";
 import { GamingModeCard } from "@/components/GamingModeCard";
+import { PowerControls } from "@/components/PowerControls";
 import { Pill, Tile } from "@/components/Tile";
 import { WorktreeAccordion } from "@/components/WorktreeAccordion";
 import { useHostKind, useHostName } from "@/lib/useHost";
@@ -70,6 +71,11 @@ export function OverviewView() {
       </div>
       <div className="col-span-3 flex min-h-0 flex-col gap-3">
         <WorktreeAccordion model={model} />
+        {kind === "pc" && (
+          <Tile index={4} title="Power">
+            <PowerControls />
+          </Tile>
+        )}
         {kind === "pc" && <GamingModeCard />}
       </div>
     </div>

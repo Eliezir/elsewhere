@@ -11,3 +11,9 @@ export const GamingResultSchema = z.object({
   error: z.string().nullable(),
 });
 export type GamingResult = z.infer<typeof GamingResultSchema>;
+
+export const PowerActionSchema = z.enum(["sleep", "shutdown", "restart"]);
+export type PowerAction = z.infer<typeof PowerActionSchema>;
+
+export const PowerInputSchema = z.object({ target: VmTargetSchema, action: PowerActionSchema, force: z.boolean().optional() });
+export type PowerInput = z.infer<typeof PowerInputSchema>;

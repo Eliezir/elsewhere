@@ -3,7 +3,7 @@ import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
 import type { HostAppInput, HostAppResult } from "./hostApp";
 import type { LanMouseInput, LanMouseStatus } from "./lanMouse";
-import type { GamingInput, GamingResult } from "./pcMode";
+import type { GamingInput, GamingResult, PowerInput } from "./pcMode";
 import type { ShutdownArm, ShutdownStatus, ShutdownTarget } from "./shutdown";
 import type { AppPrefs, ForwardConfig, LinkStatus, VmStorage, VmStorageInput, WakeInput, WakeResult } from "./ports";
 import type { T3Threads, ToolOpenInput, ToolOpenResult, RemoteT3Input, RemoteT3Result, ToolsInfo, DeleteRequest, DeleteResult, IconChoiceResult, IconInput, ProjectIcons, PruneInput, PruneResult, SizeInput, SizeResult, VmInput, VmSnapshot, Worktree, TerminalInput } from "./worktree";
@@ -48,6 +48,7 @@ export const IPC = {
   notifyTest: "app:notify-test",
   lanMouse: "lanmouse:control",
   gamingMode: "pcmode:gaming",
+  power: "pcmode:power",
   shutdownArm: "shutdown:arm",
   shutdownDisarm: "shutdown:disarm",
 } as const;
@@ -86,6 +87,7 @@ export interface Api {
   onLinkStatus(listener: (status: LinkStatus) => void): () => void;
   getVmStorage(input: VmStorageInput): Promise<VmStorage>;
   getMacStorage(): Promise<VmStorage>;
+  powerAction(input: PowerInput): Promise<GamingResult>;
   startGamingMode(input: GamingInput): Promise<GamingResult>;
   controlLanMouse(input: LanMouseInput): Promise<LanMouseStatus>;
   sendTestNotification(): Promise<boolean>;

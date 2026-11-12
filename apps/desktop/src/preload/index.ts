@@ -18,6 +18,7 @@ const api: Api = {
   setForwardConfig: (input) => ipcRenderer.invoke(IPC.forwardConfig, input),
   getVmStorage: (input) => ipcRenderer.invoke(IPC.vmStorage, input),
   getMacStorage: () => ipcRenderer.invoke(IPC.macStorage),
+  powerAction: (input) => ipcRenderer.invoke(IPC.power, input),
   startGamingMode: (input) => ipcRenderer.invoke(IPC.gamingMode, input),
   controlLanMouse: (input) => ipcRenderer.invoke(IPC.lanMouse, input),
   sendTestNotification: () => ipcRenderer.invoke(IPC.notifyTest),
