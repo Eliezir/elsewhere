@@ -1,5 +1,7 @@
 # Elsewhere: Electron app for working on a remote dev VM
 
+> Historical. This is the original brief from 2026-10-14. Elsewhere has since become a connection and power-control app for a dev PC (see the README). Usage meters, the queue and the idle gauge described below were removed.
+
 Status: feature list agreed in discussion 2026-10-14; nothing built yet. Start in a FRESH session; read this file plus the memory note `oracle-remote-dev-vm`.
 
 ## Context

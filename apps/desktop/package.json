@@ -34,7 +34,7 @@
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.4"
   },
-  "description": "Elsewhere: work on a remote dev VM as if it were next to you",
+  "description": "Elsewhere: control your dev PC from your Mac, with power, gaming mode, shared keyboard and mouse and background port forwarding",
   "author": "Eliezir",
   "homepage": "https://github.com/Eliezir/elsewhere"
 }

@@ -112,7 +112,7 @@ header.nav {
 .meter { height: 6px; border-radius: 999px; background: oklch(1 0 0 / 0.1); overflow: hidden; margin-top: 14px; }
 .meter i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
 .muted { color: var(--text-secondary); font-size: 12px; margin-top: 8px; }
-.span4 { grid-column: span 4; } .span5 { grid-column: span 5; } .span7 { grid-column: span 7; } .span8 { grid-column: span 8; }
+.span4 { grid-column: span 4; } .span5 { grid-column: span 5; } .span6 { grid-column: span 6; } .span7 { grid-column: span 7; } .span8 { grid-column: span 8; }
 
 .row { display: flex; align-items: center; gap: 14px; padding: 10px 14px; margin-bottom: 8px; border-radius: 16px; background: oklch(1 0 0 / 0.04); }
 .row b { width: 56px; font-size: 20px; font-weight: 500; }
@@ -243,3 +243,5 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 @media (prefers-reduced-motion: reduce) {
   .steps-mini i.run, .mbtn.hold i { animation: none; }
 }
+.mbtn.hold.calm { background: oklch(1 0 0 / 0.07); border-color: oklch(1 0 0 / 0.12); color: inherit; }
+.mbtn.hold.calm i { background: oklch(0.68 0.19 285 / 0.55); }

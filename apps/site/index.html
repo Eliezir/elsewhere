@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Elsewhere</title>
-  <meta name="description" content="Work on a remote dev VM as if it were next to you. Worktrees, project moves, port forwarding, storage and Claude usage in one macOS app." />
+  <meta name="description" content="Control your dev PC from your Mac. Wake, sleep, shut down or switch it to gaming mode, share your keyboard and mouse, and keep dev-server ports forwarded in the background." />
   <meta name="theme-color" content="#0b0716" />
   <meta property="og:title" content="Elsewhere" />
-  <meta property="og:description" content="Work on a remote dev VM as if it were next to you." />
+  <meta property="og:description" content="Control your dev PC from your Mac: power, gaming mode, shared keyboard and mouse, and ports that just work." />
   <meta property="og:image" content="https://eliezir.github.io/elsewhere/assets/social-preview.png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://eliezir.github.io/elsewhere/" />
@@ -32,8 +32,8 @@
   <main id="top">
     <section class="hero wrap">
       <img class="icon" src="assets/icon.png" alt="Elsewhere app icon" />
-      <h1>Work <span>somewhere else</span>,<br />stay right here.</h1>
-      <p class="lead">A desktop app for running your projects on a remote dev VM. Send a project over with its Claude sessions, forward its ports automatically, and keep an eye on storage and usage.</p>
+      <h1>Your dev PC,<br /><span>one click away</span>.</h1>
+      <p class="lead">A desktop app that connects your Mac to the machine you build on. See if it is online, wake it, put it to sleep or shut it down, switch it to gaming mode, share your keyboard and mouse, and let dev-server ports forward themselves in the background.</p>
       <div class="cta">
         <a class="btn primary" href="#download">Download</a>
         <a class="btn" href="https://github.com/Eliezir/elsewhere">View on GitHub</a>
@@ -43,38 +43,30 @@
       <div class="window reveal" aria-label="Elsewhere app preview">
         <div class="window-bar">
           <i class="dot r"></i><i class="dot y"></i><i class="dot g"></i>
-          <div class="tabs"><span>Overview</span><span>Worktrees</span><span class="on">VM</span><span>Usage</span><span>Queue</span><span>Settings</span></div>
+          <div class="tabs"><span class="on">Overview</span><span>Worktrees</span><span>Storage</span><span>Settings</span></div>
         </div>
         <div class="window-body">
           <div class="tile span7">
-            <h3>Running on the VM <span class="pill">3 listening</span></h3>
-            <div class="row"><b>5173</b><div>web · feature-login<span>localhost:5173 on this Mac</span></div><span class="pill ok">Forwarded</span></div>
-            <div class="row"><b>3001</b><div>api · feature-login<span>localhost:3001 on this Mac</span></div><span class="pill ok">Forwarded</span></div>
-            <div class="row"><b>3773</b><div>editor server<span>localhost:23773 · 3773 is busy on this Mac</span></div><span class="pill ok">Forwarded</span></div>
+            <h3>Dev PC <span class="pill ok">Connected</span></h3>
+            <div class="row"><div>Connection<span>Over Tailscale · checked a few seconds ago</span></div><span class="pill ok">Online</span></div>
+            <div class="row"><div>CPU<span>12% now</span></div></div>
+            <div class="row"><div>Disk<span>212 GB free of 465 GB</span></div></div>
+            <div class="meter"><i style="width: 54%"></i></div>
           </div>
           <div class="tile span5">
-            <h3>Storage <span class="pill">Rescan</span></h3>
-            <div class="muted" style="margin:0">7.5 GB used of 96 GB</div>
-            <div class="meter"><i style="width: 8%"></i></div>
-            <div class="row" style="margin-top:16px"><div>~/Developer/worktrees/app/login<span>55 MB</span></div></div>
-            <div class="row"><div>~/Developer/worktrees/app/billing<span>55 MB</span></div></div>
-            <div class="row"><div>~/Developer/.vmc/app.git<span>50 MB</span></div></div>
+            <h3>Power</h3>
+            <div class="btnrow"><a class="mbtn">Sleep</a><a class="mbtn">Shut down</a><a class="mbtn">Restart</a></div>
+            <div class="muted">Hold to confirm. Wake works from sleep or off.</div>
           </div>
-          <div class="tile span4">
-            <h3>5-hour usage <span class="pill">resets in 3h 12m</span></h3>
-            <div class="big">42<small>%</small></div>
-            <div class="meter"><i style="width: 42%"></i></div>
+          <div class="tile span6">
+            <h3>PC mode <span class="pill">Dev</span></h3>
+            <div class="muted" style="margin:0">Stop the dev environment while you game. It comes back on its own the next time the PC starts.</div>
+            <div class="holdrow"><a class="mbtn hold calm"><i></i><span>Hold to start gaming mode</span></a></div>
           </div>
-          <div class="tile span4">
-            <h3>Weekly capacity <span class="pill">resets in 1d 6h</span></h3>
-            <div class="big">47<small>%</small></div>
-            <div class="meter"><i style="width: 47%"></i></div>
-            <div class="muted">45% likely unused</div>
-          </div>
-          <div class="tile span4">
-            <h3>Idle health <span class="pill ok">healthy</span></h3>
-            <div class="big">34<small>%</small></div>
-            <div class="muted">7-day CPU against the 20% line</div>
+          <div class="tile span6">
+            <h3>Lan Mouse <span class="pill ok">Ready</span></h3>
+            <div class="muted" style="margin:0">Use this Mac's keyboard and mouse on the PC.</div>
+            <div class="btnrow"><a class="mbtn primary">Open on the PC</a><a class="mbtn">Use for 15 min</a></div>
           </div>
         </div>
       </div>
@@ -82,127 +74,120 @@
 
     <section class="block wrap" id="features">
       <div class="eyebrow">What it does</div>
-      <h2 class="reveal">Everything about your VM, in one calm window.</h2>
-      <p class="sub reveal">Elsewhere talks to your VM over the SSH connection you already have. No agent to install and nothing exposed to the internet.</p>
+      <h2 class="reveal">Everything about reaching your PC, in one calm window.</h2>
+      <p class="sub reveal">Elsewhere talks to your machine over the SSH and Tailscale connection you already have. No agent to install and nothing exposed to the internet.</p>
 
       <div class="rows">
         <article class="frow reveal">
           <div class="ftext">
-            <div class="kicker">Send and sync</div>
-            <h3>Move work to the VM and back, and see when a copy is stale.</h3>
-            <p>Send a worktree with its branch, unsaved changes and Claude sessions. When the Mac and VM copies drift apart, Elsewhere shows which side is ahead and offers a one-click sync in the safe direction. It only fast-forwards, so nothing is overwritten.</p>
+            <div class="kicker">Power</div>
+            <h3>Wake it, sleep it, shut it down, from anywhere in the house.</h3>
+            <p>Send a Wake-on-LAN packet when the PC is asleep or off, and put it to sleep, shut it down or restart it when you are done. Every action that takes the machine away asks for a deliberate press and hold, so a stray click never ends a session.</p>
             <ul class="ticks">
-              <li>Unsaved work is committed as a WIP commit first</li>
-              <li>Refuses to guess when both sides changed</li>
-              <li>Claude sessions copied with their paths rewritten</li>
+              <li>Wake, Sleep, Shut down and Restart in one card</li>
+              <li>Live connection status, so the buttons match the PC's real state</li>
+              <li>Optional shut down or sleep when the PC has been idle for a while</li>
             </ul>
           </div>
           <div class="fvisual">
             <div class="tile mock">
-              <h3>lisbon <span class="pill">Mac</span></h3>
-              <div class="sync">
-                <div>The Mac copy is ahead of the VM copy by 21 unsaved changes.<span>Unsaved changes are saved as a WIP commit on the Mac first.</span></div>
-                <a class="mbtn primary">Sync to the VM</a>
-              </div>
-              <div class="steps-mini">
-                <div><i class="ok"></i>Check the VM connection</div>
-                <div><i class="ok"></i>Commit 21 modified files as a WIP commit</div>
-                <div><i class="ok"></i>Push the branch over SSH</div>
-                <div><i class="run"></i>Copy 1 Claude session, paths rewritten</div>
-              </div>
+              <h3>Power <span class="pill ok">Online</span></h3>
+              <div class="btnrow"><a class="mbtn">Sleep</a><a class="mbtn">Shut down</a><a class="mbtn">Restart</a></div>
+              <p class="mini dimmed">Press and hold to confirm</p>
+              <div class="holdrow"><a class="mbtn">Keep it on</a><a class="mbtn hold"><i></i><span>Hold to shut down</span></a></div>
             </div>
           </div>
         </article>
 
         <article class="frow flip reveal">
           <div class="ftext">
-            <div class="kicker">Ports</div>
-            <h3>Every dev server on the VM, forwarded to your Mac on its own.</h3>
-            <p>Elsewhere watches what is listening on the VM, groups it by project and branch, and opens a tunnel for each one in the background. If a port is already taken on your Mac it picks another and tells you which link to use. Pin a number you want to keep.</p>
+            <div class="kicker">Gaming mode</div>
+            <h3>Dev mode for work, gaming mode for the rest of the night.</h3>
+            <p>One switch stops the development environment so the PC is all yours for games, then it returns to dev mode on its own the next time the machine starts. Elsewhere waits if something is still busy, so it never pulls the floor from under a running job.</p>
             <ul class="ticks">
-              <li>Open, copy the link, pin a port, stop forwarding</li>
-              <li>Kill a server on the VM, with a confirm and a force step</li>
-              <li>System services are listed read only</li>
+              <li>Hold to start, so it is never an accident</li>
+              <li>Skips the switch while work is running</li>
+              <li>Back in dev mode after every boot</li>
             </ul>
           </div>
           <div class="fvisual">
             <div class="tile mock">
-              <h3>Running on the VM <span class="pill">1 project</span></h3>
-              <div class="proj"><span class="avatar">A</span><div>app · lisbon<span>feature/new-pipeline-ui</span></div><span class="pill">2 ports</span></div>
-              <div class="row"><b>5173</b><div>apps/studio<span>localhost:25173 · use this link, not :5173, which is busy here (node in other-project)</span></div></div>
-              <div class="btnrow"><a class="mbtn">Open</a><a class="mbtn">Copy link</a><a class="mbtn">Pin port</a><a class="mbtn">Stop forwarding</a><a class="mbtn danger">Kill</a></div>
-              <div class="row"><b>3001</b><div>apps/api<span>localhost:3001 on this Mac</span></div></div>
+              <h3>PC mode <span class="pill">Dev</span></h3>
+              <div class="seg"><span class="on">Dev</span><span>Gaming</span></div>
+              <p class="mini">Stop the dev environment on the PC?</p>
+              <p class="mini dimmed">Nothing is running right now, so it is safe to switch.</p>
+              <div class="holdrow"><a class="mbtn">Stay in dev</a><a class="mbtn hold calm"><i></i><span>Hold to start gaming</span></a></div>
             </div>
           </div>
         </article>
 
         <article class="frow reveal">
           <div class="ftext">
-            <div class="kicker">Keep it running</div>
-            <h3>Close the laptop. The agent keeps going.</h3>
-            <p>Claude runs on the VM inside a named tmux session, so it keeps working when your Mac sleeps. Resume any copied conversation from a button, and reattach later from any device that can SSH in. Open a worktree in Claude Desktop over SSH with a catch-up prompt already filled in.</p>
+            <div class="kicker">Keyboard and mouse</div>
+            <h3>One keyboard, one mouse, two computers.</h3>
+            <p>Elsewhere drives Lan Mouse on both machines, so your Mac's keyboard and mouse can move onto the PC's screen. Open it on the PC from the app or the menu bar, borrow it for 15 minutes, and release it with a shortcut when you want the cursor back.</p>
             <ul class="ticks">
-              <li>Resume a specific conversation, not just the latest</li>
-              <li>Reattach from a phone or another PC over Tailscale</li>
-              <li>Open in Claude Desktop with the folder path copied</li>
+              <li>Open and close Lan Mouse on the PC remotely</li>
+              <li>Use for 15 minutes, then hand control back</li>
+              <li>Set up from the app, with a release shortcut</li>
             </ul>
           </div>
           <div class="fvisual">
             <div class="tile mock">
-              <h3>Claude sessions</h3>
-              <div class="sess"><span>Pick up where the earlier conversation stopped</span><em>35 lines · 2 min ago</em><a class="mbtn">Resume</a></div>
-              <div class="sess"><span>Okay, lets start by looking into those issues</span><em>88,500 lines · 5 min ago</em><a class="mbtn">Resume</a></div>
-              <div class="term">
-                <div><b>$</b> tmux attach -t cc-lisbon</div>
-                <div class="dim">claude · feature/new-pipeline-ui · running</div>
+              <h3>Lan Mouse <span class="pill ok">Ready</span></h3>
+              <div class="sync">
+                <div>Use this Mac's keyboard and mouse on the PC.<span>Move the cursor off the left edge to cross over.</span></div>
+                <a class="mbtn primary">Use for 15 min</a>
               </div>
-              <a class="mbtn wide">Open in Claude Desktop <em class="tag">Test</em></a>
+              <div class="steps-mini">
+                <div><i class="ok"></i>Open on the PC</div>
+                <div><i class="ok"></i>Fingerprint authorized</div>
+                <div><i class="run"></i>Release with the shortcut</div>
+              </div>
             </div>
           </div>
         </article>
 
         <article class="frow flip reveal">
           <div class="ftext">
-            <div class="kicker">Clean up safely</div>
-            <h3>Delete the right copy, with a deliberate press.</h3>
-            <p>When a worktree is on both machines you choose which copy to delete: the Mac, the VM or both. Git refuses if there are uncommitted changes, and forcing it takes a press and hold, not a stray click. See what each project costs on the VM before you decide.</p>
+            <div class="kicker">In the background</div>
+            <h3>Ports forward themselves, and you hear about it when something needs you.</h3>
+            <p>Elsewhere watches what is listening on the PC, groups it by project and branch, and opens a tunnel for each dev server without a settings screen to manage. If a port is taken on your Mac it picks another one. Native notifications tell you when the PC goes offline, comes back, or a disk is nearly full.</p>
             <ul class="ticks">
-              <li>Mac copy, VM copy or both, in one step</li>
-              <li>Hold to delete anyway when changes would be lost</li>
-              <li>Disk use by project and by folder</li>
+              <li>Nothing to configure: forwards appear and disappear on their own</li>
+              <li>Notifications for offline, back online, low disk and port conflicts</li>
+              <li>Menu bar popover with health, power and quick actions</li>
             </ul>
           </div>
           <div class="fvisual">
             <div class="tile mock">
-              <h3>Delete a copy</h3>
-              <div class="seg"><span class="on">Mac copy</span><span>VM copy</span><span>Both</span></div>
-              <p class="mini">Delete lisbon from the Mac and free 5.1 GB?</p>
-              <div class="meter"><i style="width: 70%"></i></div>
-              <p class="mini dimmed">~/Developer/worktrees/app/lisbon · 1.7 GB on the VM</p>
-              <div class="holdrow"><a class="mbtn">Keep it</a><a class="mbtn hold"><i></i><span>Hold to delete anyway</span></a></div>
+              <h3>Notifications</h3>
+              <div class="row"><div>Dev PC is back<span>Online again over Tailscale</span></div><span class="pill ok">now</span></div>
+              <div class="row"><div>Disk almost full<span>Dev PC has 9 GB left</span></div><span class="pill">2 h</span></div>
+              <div class="row"><div>Port 5173 is busy on this Mac<span>Use localhost:25173 instead</span></div><span class="pill">5 h</span></div>
             </div>
           </div>
         </article>
       </div>
 
       <div class="grid3 more">
-        <div class="feature reveal"><div class="ico">✦</div><h3>Claude usage</h3><p>Your 5-hour and weekly limits, reset timers and how much capacity is likely to go unused, with the Claude mark on each card.</p></div>
-        <div class="feature reveal"><div class="ico">❖</div><h3>Every worktree, labelled</h3><p>See where each one came from: Conductor, T3 Code, a Claude agent or by hand. Open it in the right tool, with stale and merged ones flagged.</p></div>
-        <div class="feature reveal"><div class="ico">◐</div><h3>Menu bar and Tailscale</h3><p>A popover with usage, VM health and your running projects' ports. Connection state, approval prompts and reconnecting without leaving the app.</p></div>
+        <div class="feature reveal"><div class="ico">❖</div><h3>Worktrees, labelled</h3><p>Send a project to the PC with its branch, unsaved changes and Claude sessions, and see where each worktree came from. Sync only fast-forwards, so nothing is overwritten.</p></div>
+        <div class="feature reveal"><div class="ico">◐</div><h3>Storage at a glance</h3><p>See what each machine spends on projects and caches, and clean up the right copy with a press and hold.</p></div>
         <div class="feature reveal"><div class="ico">⌘</div><h3>Claude Code mods</h3><p>The <code>workbench</code> mod brings the Ports pane, with Kill, and a status line into Claude Code and the Desktop Code tab. Install it from this repository.</p></div>
+        <div class="feature reveal"><div class="ico">⇄</div><h3>More than one machine</h3><p>Add a second host, such as a VM, and switch which one is primary. Each machine can be turned on or off from Settings.</p></div>
         <div class="feature reveal"><div class="ico">◧</div><h3>Private by design</h3><p>No servers of ours, no account, no analytics. It uses your own SSH and Tailscale, and never opens a public port.</p></div>
-        <div class="feature reveal"><div class="ico">⇪</div><h3>macOS and Windows</h3><p>A native Electron app for Apple Silicon and Intel Macs, and a preview build for Windows 10 and 11.</p></div>
+        <div class="feature reveal"><div class="ico">⇪</div><h3>macOS and Windows</h3><p>A native Electron app for Apple Silicon and Intel Macs, and a preview build for Windows 10 and 11. Lan Mouse control is for macOS.</p></div>
       </div>
     </section>
 
     <section class="block wrap" id="how">
       <div class="eyebrow">How it works</div>
-      <h2 class="reveal">From your laptop to the VM in four steps.</h2>
+      <h2 class="reveal">From your laptop to your PC in four steps.</h2>
       <div class="steps">
-        <div class="step reveal"><h3>Connect</h3><p>Enter your VM's Tailscale host name and user in Settings.</p></div>
-        <div class="step reveal"><h3>Send</h3><p>Pick a worktree and send it. Elsewhere pushes the branch and copies the Claude sessions.</p></div>
-        <div class="step reveal"><h3>Work</h3><p>Open it in T3 Code or a terminal on the VM. Ports forward on their own.</p></div>
-        <div class="step reveal"><h3>Bring back</h3><p>Pull the result home with a fast-forward only merge. Nothing is overwritten.</p></div>
+        <div class="step reveal"><h3>Connect</h3><p>Enter the PC's Tailscale host name and user in Settings. Add its MAC address to enable Wake.</p></div>
+        <div class="step reveal"><h3>Check</h3><p>The Overview and the menu bar show if the PC is online, how busy it is and how much disk is left.</p></div>
+        <div class="step reveal"><h3>Control</h3><p>Wake it, switch to gaming mode, borrow the keyboard and mouse, or send it to sleep.</p></div>
+        <div class="step reveal"><h3>Forget it</h3><p>Ports forward on their own and notifications speak up only when something needs you.</p></div>
       </div>
     </section>
 
@@ -223,7 +208,7 @@
 
     <section class="wrap">
       <div class="final reveal">
-        <h2>Ready to work elsewhere?</h2>
+        <h2>Ready to reach your PC?</h2>
         <p>The builds are not signed yet. On macOS, right-click the app and choose Open the first time. On Windows, choose More info, then Run anyway.</p>
         <div class="cta" style="margin:0">
           <a class="btn primary" href="#download">Download</a>
