@@ -1,6 +1,6 @@
 import type { PowerAction } from "@vmc/shared";
 import { useEffect, useState } from "react";
-import { useVmSnapshot } from "@/data/hooks";
+import { useLinkStatus } from "@/data/hooks";
 import { activeOf } from "./hosts";
 import { useSettings } from "./settings";
 
@@ -18,21 +18,19 @@ export const POWER_LABEL: Record<PowerAction, { verb: string; ing: string }> = {
 export function usePower() {
   const [settings] = useSettings();
   const profile = activeOf(settings);
-  const snapshot = useVmSnapshot();
-  const reachable = snapshot.data?.reachable === true;
+  const link = useLinkStatus();
+  const reachable = link.state === "ok";
   const [step, setStep] = useState<PowerStep>({ kind: "idle" });
   const [pending, setPending] = useState<{ action: PowerAction; at: number } | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const { refetch } = snapshot;
 
   useEffect(() => {
     if (pending === null) return;
     const timer = window.setInterval(() => {
       setNow(Date.now());
-      void refetch();
     }, TICK_MS);
     return () => window.clearInterval(timer);
-  }, [pending, refetch]);
+  }, [pending]);
 
   useEffect(() => {
     if (pending !== null && now - pending.at >= GRACE_MS) setPending(null);

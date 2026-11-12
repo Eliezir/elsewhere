@@ -1,27 +1,25 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/controls";
-import { useVmSnapshot } from "@/data/hooks";
+import { useLinkStatus } from "@/data/hooks";
 
 const WAIT_MS = 120000;
 const POLL_MS = 4000;
 
 type Phase = { kind: "idle" } | { kind: "waiting"; since: number } | { kind: "error"; message: string };
 
-export function WakeButton({ mac }: { mac: string }) {
-  const vm = useVmSnapshot();
+export function WakeButton({ mac, primary = false }: { mac: string; primary?: boolean }) {
+  const link = useLinkStatus();
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [now, setNow] = useState(() => Date.now());
-  const reachable = vm.data?.reachable === true;
-  const { refetch } = vm;
+  const reachable = link.state === "ok";
 
   useEffect(() => {
     if (phase.kind !== "waiting") return;
     const timer = window.setInterval(() => {
       setNow(Date.now());
-      void refetch();
     }, POLL_MS);
     return () => window.clearInterval(timer);
-  }, [phase, refetch]);
+  }, [phase]);
 
   useEffect(() => {
     if (phase.kind !== "waiting") return;
@@ -45,7 +43,7 @@ export function WakeButton({ mac }: { mac: string }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <Button onClick={() => void wake()} disabled={!validMac || waiting || reachable}>
+      <Button variant={primary ? "primary" : "ghost"} onClick={() => void wake()} disabled={!validMac || waiting || reachable}>
         {reachable ? "Awake" : waiting ? `Waking… ${seconds}s` : "Wake"}
       </Button>
       {phase.kind === "error" && <p className="max-w-56 text-[11px] leading-snug text-[var(--warn)]">{phase.message}</p>}

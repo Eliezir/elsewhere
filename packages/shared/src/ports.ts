@@ -59,6 +59,7 @@ export const ForwardConfigSchema = z.object({
   target: VmTargetSchema.nullable(),
   autoForward: z.boolean(),
   name: z.string().max(80).optional(),
+  mac: z.string().max(32).optional(),
 });
 export type ForwardConfig = z.infer<typeof ForwardConfigSchema>;
 

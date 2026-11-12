@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useVmSnapshot } from "@/data/hooks";
+import { useLinkStatus } from "@/data/hooks";
 import { activeOf } from "./hosts";
 import { useSettings } from "./settings";
 
@@ -39,22 +39,20 @@ function save(value: Saved): void {
 export function useGamingMode() {
   const [settings] = useSettings();
   const profile = activeOf(settings);
-  const snapshot = useVmSnapshot();
-  const reachable = snapshot.data?.reachable === true;
+  const link = useLinkStatus();
+  const reachable = link.state === "ok";
   const [saved, setSaved] = useState<Saved>(load);
   const [step, setStep] = useState<GamingStep>({ kind: "idle" });
   const [now, setNow] = useState(() => Date.now());
-  const { refetch } = snapshot;
   const inGrace = saved.mode === "gaming" && now - saved.at < GRACE_MS;
 
   useEffect(() => {
     if (saved.mode !== "gaming") return;
     const timer = window.setInterval(() => {
       setNow(Date.now());
-      void refetch();
     }, TICK_MS);
     return () => window.clearInterval(timer);
-  }, [saved.mode, refetch]);
+  }, [saved.mode]);
 
   useEffect(() => {
     if (saved.mode !== "gaming" || !reachable || inGrace) return;

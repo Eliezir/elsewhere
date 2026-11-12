@@ -1,7 +1,8 @@
 import { stopAllForwards } from "./services/forwards";
 import { startDiskWatch, stopDiskWatch } from "./services/diskWatch";
-import { startForwardLoop, stopForwardLoop } from "./services/forwardLoop";
+import { getForwardConfig, startForwardLoop, stopForwardLoop } from "./services/forwardLoop";
 import { installNotifications } from "./services/notifications";
+import { wakeHost } from "./services/wake";
 import { getLinkStatus, linkTooltip, onLinkChange, trayIconName } from "./services/link";
 import { getPrefs, hidesFromDock, keepsRunningInBackground, loadPrefs, onPrefsChange } from "./services/prefs";
 import type { LinkState } from "@vmc/shared";
@@ -87,6 +88,7 @@ function syncTray(popover: BrowserWindow): void {
     created.popUpContextMenu(
       Menu.buildFromTemplate([
         { label: "Open Elsewhere", click: () => showMainWindow() },
+        ...(getForwardConfig().mac ? [{ label: `Wake ${getForwardConfig().name ?? "the PC"}`, click: () => void wakeHost(getForwardConfig().mac ?? "") }] : []),
         { label: "Storage", click: () => showMainWindow("storage") },
         { type: "separator" },
         { label: "Quit Elsewhere", click: quitForReal },

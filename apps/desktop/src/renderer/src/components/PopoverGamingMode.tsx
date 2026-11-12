@@ -31,7 +31,7 @@ export function PopoverGamingMode() {
               Cancel
             </button>
           )}
-          <HoldButton onConfirm={() => void start(busy)} disabled={!reachable || working} holdingLabel="Keep holding…" className="!px-3 !py-1 text-xs">
+          <HoldButton tone={busy ? "danger" : "neutral"} onConfirm={() => void start(busy)} disabled={!reachable || working} holdingLabel="Keep holding…" className="!px-3 !py-1 text-xs">
             {busy ? "Hold to stop anyway" : "Hold to start"}
           </HoldButton>
         </div>

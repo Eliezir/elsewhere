@@ -11,6 +11,7 @@ import { useLinkStatus } from "@/data/hooks";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
+import { useTailscaleControl } from "@/lib/tailscale";
 import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
 import type { Health } from "@/lib/status";
@@ -71,6 +72,7 @@ export function PopoverView() {
   const model = useOverviewModel();
   const { connection, vm } = model;
   const link = useLinkStatus();
+  const tailscale = useTailscaleControl();
   const host = useHostName();
   const kind = useHostKind();
   const health: Health = link.state === "approval" ? "warn" : link.state === "offline" ? "down" : connection.health;
@@ -106,7 +108,7 @@ export function PopoverView() {
       {link.state === "offline" && connection.health === "ok" && (
         <div className="mx-3 mb-1 mt-1 rounded-2xl border border-[var(--down)]/40 bg-[var(--inset)] px-3.5 py-2.5 text-xs leading-snug text-[var(--down)]">{link.message ?? "Can't reach the VM."}</div>
       )}
-      {connection.health !== "ok" && !vm && link.state !== "approval" && (
+      {connection.health !== "ok" && !vm && link.state !== "approval" && !tailscale.connected && (
         <div className="mx-3 mb-1 mt-1 rounded-2xl border border-[var(--hairline)] bg-[var(--inset)] px-3.5 py-2.5">
           <ConnectTailscaleButton />
         </div>

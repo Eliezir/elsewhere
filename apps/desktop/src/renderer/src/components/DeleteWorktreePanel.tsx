@@ -172,7 +172,7 @@ export function DeleteWorktreePanel({ tree, twin, vmReachable, sizes, onDeleted 
               >
                 Keep it
               </Button>
-              <HoldButton onConfirm={() => void runQueue(pending, true)} disabled={busy} holdingLabel="Keep holding…" className="flex-1 !py-1.5">
+              <HoldButton tone="danger" onConfirm={() => void runQueue(pending, true)} disabled={busy} holdingLabel="Keep holding…" className="flex-1 !py-1.5">
                 {busy ? "Deleting…" : "Hold to delete anyway"}
               </HoldButton>
             </div>

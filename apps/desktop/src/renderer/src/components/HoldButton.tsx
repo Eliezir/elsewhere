@@ -7,9 +7,10 @@ interface HoldButtonProps {
   durationMs?: number;
   disabled?: boolean;
   className?: string;
+  tone?: "neutral" | "danger";
 }
 
-export function HoldButton({ children, holdingLabel, onConfirm, durationMs = 1200, disabled = false, className = "" }: HoldButtonProps) {
+export function HoldButton({ children, holdingLabel, onConfirm, durationMs = 1200, disabled = false, className = "", tone = "neutral" }: HoldButtonProps) {
   const [holding, setHolding] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirm = useRef(onConfirm);
@@ -60,11 +61,11 @@ export function HoldButton({ children, holdingLabel, onConfirm, durationMs = 120
       onKeyUp={(event) => {
         if (event.key === " " || event.key === "Enter") cancel();
       }}
-      className={`no-drag relative cursor-default select-none overflow-hidden rounded-full bg-[var(--down)]/85 px-4 py-2 text-white outline-none transition-[filter] duration-200 hover:brightness-110 focus-visible:shadow-[0_0_0_3px_oklch(0.68_0.2_20/0.45)] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-[var(--text-muted)] ${className}`}
+      className={`no-drag relative cursor-default select-none overflow-hidden rounded-full px-4 py-2 outline-none transition-[background-color,filter] duration-200 focus-visible:shadow-[0_0_0_3px_oklch(0.62_0.24_285/0.45)] disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-[var(--text-muted)] ${tone === "danger" ? "bg-[var(--down)]/85 text-white hover:brightness-110" : "border border-[var(--hairline)] bg-white/5 text-[var(--text-primary)] hover:bg-white/10"} ${className}`}
     >
       <span
         aria-hidden="true"
-        className="absolute inset-0 origin-left bg-black/35"
+        className={`absolute inset-0 origin-left ${tone === "danger" ? "bg-black/35" : "bg-[var(--accent)]/45"}`}
         style={{ transform: holding ? "scaleX(1)" : "scaleX(0)", transition: holding ? `transform ${durationMs}ms linear` : "transform 250ms ease-out" }}
       />
       <span className="relative">{holding ? (holdingLabel ?? children) : children}</span>

@@ -26,7 +26,7 @@ function MainWindow() {
 
   useEffect(() => {
     const target = VmTargetSchema.safeParse({ host: settings.host.trim(), user: settings.user.trim() });
-    void window.api.setForwardConfig({ target: target.success ? target.data : null, autoForward: settings.autoForward, name: activeOf(settings).name.trim() || undefined });
+    void window.api.setForwardConfig({ target: target.success ? target.data : null, autoForward: settings.autoForward, name: activeOf(settings).name.trim() || undefined, mac: activeOf(settings).mac.trim() || undefined });
   }, [settings]);
 
   useEffect(() => {
