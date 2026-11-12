@@ -1,25 +1,22 @@
 import { useHostKind, useHostName } from "@/lib/useHost";
 import { motion } from "motion/react";
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { VmPort } from "@vmc/shared";
 import mark from "@/assets/mark.png";
 import { Meter } from "@/components/charts";
-import { ClaudeMark } from "@/components/ClaudeMark";
 import { LanMouseQuick } from "@/components/LanMouseQuick";
 import { PopoverGamingMode } from "@/components/PopoverGamingMode";
 import { Button } from "@/components/controls";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { useLinkStatus, useProjectIcons, useTasks, useVmPorts, useVmSnapshot } from "@/data/hooks";
+import { useLinkStatus, useProjectIcons, useVmPorts, useVmSnapshot } from "@/data/hooks";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { groupPorts } from "@/lib/ports";
-import { groupTasks } from "@/lib/taskModel";
 
 import { ConnectTailscaleButton } from "@/components/ConnectTailscaleButton";
 import { Pill } from "@/components/Tile";
 import type { NavId } from "@/lib/nav";
 import type { Health } from "@/lib/status";
 import { useOverviewModel } from "./overview/model";
-import { NoUsage } from "./overview/parts";
 
 const DOT: Record<Health, string> = {
   ok: "bg-[var(--ok)]",
@@ -93,7 +90,7 @@ function Stat({ label, value, unit, percent, color }: { label: string; value: st
 export function PopoverView() {
   const model = useOverviewModel();
   const icons = useProjectIcons().data ?? {};
-  const { connection, usage, vm, idle } = model;
+  const { connection, vm } = model;
   const link = useLinkStatus();
   const host = useHostName();
   const kind = useHostKind();
@@ -104,12 +101,6 @@ export function PopoverView() {
   const projectPorts = (ports.data?.ports ?? []).filter((port) => port.kind === "project");
   const groups = useMemo(() => groupPorts(projectPorts, snapshot.data?.worktrees ?? []), [projectPorts, snapshot.data]);
   const projectCount = groups.length;
-  const tasks = useTasks();
-  const taskGroups = useMemo(() => groupTasks(tasks.data ?? []).filter((group) => group.open > 0), [tasks.data]);
-  const openItems = taskGroups.reduce((sum, group) => sum + group.open, 0);
-  useEffect(() => {
-    void window.api.setTaskBadge(openItems);
-  }, [openItems]);
   const reachable = link.state === "unknown" ? connection.health === "ok" : link.state === "ok";
 
   return (
@@ -131,7 +122,6 @@ export function PopoverView() {
             {headline}
           </motion.div>
         </div>
-        {kind === "vm" && idle?.atRisk && <Pill tone="warn">idle risk</Pill>}
       </header>
       {link.state === "approval" && link.approvalUrl !== null && (
         <div className="mx-3 mb-1 mt-1 rounded-2xl border border-[var(--warn)]/40 bg-[var(--inset)] px-3.5 py-2.5">
@@ -148,16 +138,6 @@ export function PopoverView() {
         </div>
       )}
       <main className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2">
-        <Card index={0} title="Claude usage" icon={<ClaudeMark />} to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
-          {usage && (usage.fiveHour !== null || usage.weekly !== null) ? (
-            <div className="flex gap-5">
-              <Stat label="5-hour" value={usage.fiveHour === null ? "–" : String(usage.fiveHour)} unit="%" percent={usage.fiveHour ?? 0} color="var(--accent)" />
-              <Stat label="Weekly" value={usage.weekly === null ? "–" : String(usage.weekly)} unit="%" percent={usage.weekly ?? 0} color="var(--accent)" />
-            </div>
-          ) : (
-            <NoUsage />
-          )}
-        </Card>
         <Card index={1} title={`${host} health`} to="overview" action={vm && <Pill>{`${connection.latencyMs ?? "–"} ms`}</Pill>}>
           {vm ? (
             <div className="flex gap-4">
@@ -177,18 +157,6 @@ export function PopoverView() {
         {kind === "pc" && (
           <Card index={3} title="Lan Mouse" to="settings">
             <LanMouseQuick />
-          </Card>
-        )}
-        {taskGroups.length > 0 && (
-          <Card index={4} title="Tasks" to="tasks" action={<Pill>{`${openItems} open`}</Pill>}>
-            <div className="space-y-1.5">
-              {taskGroups.slice(0, 3).map((group) => (
-                <button key={group.key} type="button" onClick={() => open("tasks")} className="no-drag flex w-full cursor-default items-center justify-between gap-3 text-left outline-none">
-                  <span className="min-w-0 truncate">{group.key}</span>
-                  <span className="shrink-0 text-[11px] tabular-nums text-[var(--text-secondary)]">{`${group.open} open`}</span>
-                </button>
-              ))}
-            </div>
           </Card>
         )}
         <Card index={5} title="Ports" to="vm" action={<Pill>{`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}</Pill>}>

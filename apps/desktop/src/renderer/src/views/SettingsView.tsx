@@ -1,4 +1,4 @@
-import { useHostKind, useHostName } from "@/lib/useHost";
+import { useHostName } from "@/lib/useHost";
 import { Button, FIELD, SliderRow, TextField, ToggleRow } from "@/components/controls";
 import { ApproveSshButton } from "@/components/ApproveSshButton";
 import { HostSwitcher } from "@/components/HostSwitcher";
@@ -41,7 +41,6 @@ function RepoField({ label, hint, value, onChange }: { label: string; hint: stri
 
 export function SettingsView() {
   const host = useHostName();
-  const kind = useHostKind();
   const [settings, update] = useSettings();
   const { connection } = useOverviewModel();
   const vm = useVmSnapshot();
@@ -115,18 +114,13 @@ export function SettingsView() {
       <Tile className="col-span-6" index={3} title="Thresholds">
         <div className="min-h-0 flex-1 overflow-y-auto">
           <SliderRow label="Disk warning" hint={`Alert when the ${host} disk is fuller than this.`} value={settings.diskWarn} min={50} max={95} onChange={(diskWarn) => update({ diskWarn })} />
-          {kind === "vm" && (<SliderRow label="Idle risk line" hint="Oracle reclaims a VM under this for seven days." value={settings.idleLine} min={5} max={40} onChange={(idleLine) => update({ idleLine })} />)}
           <SliderRow label="Stale after" hint="Worktrees idle this long are suggested for clean-up." value={settings.staleDays} min={7} max={180} unit=" days" onChange={(staleDays) => update({ staleDays })} />
-          <SliderRow label="Pacer cap" hint="Hold queued tasks above this 5-hour usage." value={settings.pacerCap} min={30} max={100} onChange={(pacerCap) => update({ pacerCap })} />
         </div>
       </Tile>
       <Tile className="col-span-6" index={4} title="Notifications">
         <div className="min-h-0 flex-1 overflow-y-auto">
           <ToggleRow label={`${host} unreachable`} checked={settings.notifyUnreachable} onChange={(notifyUnreachable) => update({ notifyUnreachable })} />
           <ToggleRow label="Disk almost full" checked={settings.notifyDisk} onChange={(notifyDisk) => update({ notifyDisk })} />
-          {kind === "vm" && (<ToggleRow label="Idle risk" hint="Before Oracle can reclaim the VM." checked={settings.notifyIdle} onChange={(notifyIdle) => update({ notifyIdle })} />)}
-          <ToggleRow label="Weekly allowance going unused" checked={settings.notifyWeekly} onChange={(notifyWeekly) => update({ notifyWeekly })} />
-          <ToggleRow label="Morning digest" hint="Summary of what the queue finished overnight." checked={settings.notifyDigest} onChange={(notifyDigest) => update({ notifyDigest })} />
         </div>
       </Tile>
       <Tile className="col-span-6" index={5} title="General">

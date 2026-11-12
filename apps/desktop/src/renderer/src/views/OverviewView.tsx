@@ -1,42 +1,22 @@
-import { useHostKind, useHostName } from "@/lib/useHost";
-import { ClaudeMark } from "@/components/ClaudeMark";
-import { AreaChart, BigNumber, DayBars, HalfGauge, Meter } from "@/components/charts";
+import { AreaChart, BigNumber, Meter } from "@/components/charts";
 import { GamingModeCard } from "@/components/GamingModeCard";
-import { QueueHero } from "@/components/QueueHero";
 import { Pill, Tile } from "@/components/Tile";
 import { WorktreeAccordion } from "@/components/WorktreeAccordion";
+import { useHostKind, useHostName } from "@/lib/useHost";
 import { useOverviewModel } from "./overview/model";
-import { Loadable, NoUsage, Unavailable } from "./overview/parts";
+import { Loadable, Unavailable } from "./overview/parts";
 
 export function OverviewView() {
   const host = useHostName();
   const kind = useHostKind();
   const model = useOverviewModel();
-  const { usage, vm, idle } = model;
+  const { vm } = model;
+  const diskRatio = vm ? vm.diskUsedGb / vm.diskTotalGb : 0;
 
   return (
     <div className="grid h-full grid-cols-12 gap-3">
-      <div className="col-span-9 grid min-h-0 grid-cols-3 grid-rows-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3">
-        <Tile index={0} title="5-hour usage" icon={<ClaudeMark />} to="usage" action={usage?.fiveHourResets && <Pill>{`resets in ${usage.fiveHourResets}`}</Pill>}>
-          <Loadable model={model}>
-            {usage && usage.fiveHour !== null ? (
-              <div className="flex min-h-0 flex-1 flex-col justify-between">
-                <BigNumber value={String(usage.fiveHour)} unit="%" />
-                <div className="my-3 min-h-0 flex-1">
-                  {usage.fiveHourSeries.length >= 2 ? (
-                    <AreaChart values={usage.fiveHourSeries} color="var(--accent)" />
-                  ) : (
-                    <p className="text-xs text-[var(--text-muted)]">Collecting samples…</p>
-                  )}
-                </div>
-                <Meter value={usage.fiveHour} />
-              </div>
-            ) : (
-              <NoUsage />
-            )}
-          </Loadable>
-        </Tile>
-        <Tile index={1} title="CPU load" action={vm && <Pill>{`${vm.cores} cores`}</Pill>}>
+      <div className="col-span-9 grid min-h-0 grid-cols-2 grid-rows-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3">
+        <Tile index={0} title="CPU load" action={vm && <Pill>{`${vm.cores} cores`}</Pill>}>
           <Loadable model={model}>
             {vm ? (
               <div className="flex min-h-0 flex-1 flex-col justify-between">
@@ -56,41 +36,20 @@ export function OverviewView() {
             )}
           </Loadable>
         </Tile>
-        {kind === "pc" ? (
-          <Tile index={2} title="Disk" action={vm && <Pill tone={vm.diskUsedGb / vm.diskTotalGb >= 0.8 ? "warn" : "ok"}>{`${vm.diskTotalGb - vm.diskUsedGb} GB free`}</Pill>}>
-            <Loadable model={model}>
-              {vm ? (
-                <div className="flex min-h-0 flex-1 flex-col justify-between">
-                  <BigNumber value={String(Math.round((vm.diskUsedGb / vm.diskTotalGb) * 100))} unit="%" tone={vm.diskUsedGb / vm.diskTotalGb >= 0.8 ? "warn" : undefined} />
-                  <p className="my-3 flex-1 text-xs leading-relaxed text-[var(--text-secondary)]">{`${vm.diskUsedGb} of ${vm.diskTotalGb} GB used on ${host}.`}</p>
-                  <Meter value={(vm.diskUsedGb / vm.diskTotalGb) * 100} color={vm.diskUsedGb / vm.diskTotalGb >= 0.8 ? "var(--warn)" : "var(--ok)"} />
-                </div>
-              ) : (
-                <Unavailable model={model} what={`${host} disk`} />
-              )}
-            </Loadable>
-          </Tile>
-        ) : (
-          <Tile index={2} title="Idle health" action={idle?.atRisk ? <Pill tone="warn">at risk</Pill> : idle ? <Pill tone="ok">healthy</Pill> : undefined}>
-            <Loadable model={model}>
-              {idle ? (
-                <div className="flex min-h-0 flex-1 flex-col justify-between">
-                  <BigNumber value={String(idle.sevenDayCpu)} unit="%" tone={idle.atRisk ? "warn" : undefined} />
-                  <p className="my-3 flex-1 text-xs leading-relaxed text-[var(--text-secondary)]">
-                    Oracle can reclaim the VM when CPU, network and memory stay under {idle.threshold}% for seven days.
-                  </p>
-                  <div>
-                    <DayBars days={idle.days} />
-                    <div className="mt-2 text-xs text-[var(--text-secondary)]">7-day CPU against the {idle.threshold}% line</div>
-                  </div>
-                </div>
-              ) : (
-                <Unavailable model={model} what="Idle health" />
-              )}
-            </Loadable>
-          </Tile>
-        )}
-        <Tile index={3} title={`${host} load · recent samples`} className="col-span-2" action={model.connection.latencyMs !== null && <Pill>{`${model.connection.latencyMs} ms`}</Pill>}>
+        <Tile index={1} title="Disk" action={vm && <Pill tone={diskRatio >= 0.8 ? "warn" : "ok"}>{`${vm.diskTotalGb - vm.diskUsedGb} GB free`}</Pill>}>
+          <Loadable model={model}>
+            {vm ? (
+              <div className="flex min-h-0 flex-1 flex-col justify-between">
+                <BigNumber value={String(Math.round(diskRatio * 100))} unit="%" tone={diskRatio >= 0.8 ? "warn" : undefined} />
+                <p className="my-3 flex-1 text-xs leading-relaxed text-[var(--text-secondary)]">{`${vm.diskUsedGb} of ${vm.diskTotalGb} GB used on ${host}.`}</p>
+                <Meter value={diskRatio * 100} color={diskRatio >= 0.8 ? "var(--warn)" : "var(--ok)"} />
+              </div>
+            ) : (
+              <Unavailable model={model} what={`${host} disk`} />
+            )}
+          </Loadable>
+        </Tile>
+        <Tile index={2} title={`${host} load · recent samples`} className="col-span-2" action={model.connection.latencyMs !== null && <Pill>{`${model.connection.latencyMs} ms`}</Pill>}>
           <Loadable model={model}>
             {vm ? (
               <div className="flex min-h-0 flex-1 flex-col">
@@ -108,32 +67,9 @@ export function OverviewView() {
             )}
           </Loadable>
         </Tile>
-        <Tile index={4} title="Weekly capacity" icon={<ClaudeMark />} to="usage" action={usage?.weeklyResets && <Pill>{`resets in ${usage.weeklyResets}`}</Pill>}>
-          <Loadable model={model}>
-            {usage && usage.weekly !== null ? (
-              <div className="flex min-h-0 flex-1 flex-col items-center justify-between">
-                <div className="flex w-full flex-1 items-center justify-center">
-                  <HalfGauge value={usage.weekly} />
-                </div>
-                <div className="flex w-full justify-between text-xs">
-                  <span>
-                    <span className="text-lg font-medium">{usage.weekly}%</span> <span className="text-[var(--text-secondary)]">used</span>
-                  </span>
-                  <span className="text-right">
-                    <span className="text-lg font-medium">{usage.unused === null ? "–" : `${usage.unused}%`}</span>{" "}
-                    <span className="text-[var(--text-secondary)]">likely unused</span>
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <NoUsage />
-            )}
-          </Loadable>
-        </Tile>
       </div>
       <div className="col-span-3 flex min-h-0 flex-col gap-3">
         <WorktreeAccordion model={model} />
-        {kind === "vm" && <QueueHero model={model} />}
         {kind === "pc" && <GamingModeCard />}
       </div>
     </div>

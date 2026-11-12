@@ -20,17 +20,12 @@ export interface Settings {
   hosts: HostProfile[];
   activeHostId: string;
   diskWarn: number;
-  idleLine: number;
-  pacerCap: number;
   staleDays: number;
   shutdownIdle: number;
   shutdownGrace: number;
   shutdownMode: "shutdown" | "sleep";
   notifyUnreachable: boolean;
   notifyDisk: boolean;
-  notifyIdle: boolean;
-  notifyWeekly: boolean;
-  notifyDigest: boolean;
   startAtLogin: boolean;
   showInMenuBar: boolean;
   hideFromDock: boolean;
@@ -47,17 +42,12 @@ export const DEFAULT_SETTINGS: Settings = {
   hosts: [],
   activeHostId: "default",
   diskWarn: 80,
-  idleLine: 20,
-  pacerCap: 80,
   staleDays: 30,
   shutdownIdle: 20,
   shutdownGrace: 120,
   shutdownMode: "shutdown",
   notifyUnreachable: true,
   notifyDisk: true,
-  notifyIdle: true,
-  notifyWeekly: true,
-  notifyDigest: false,
   startAtLogin: false,
   showInMenuBar: true,
   hideFromDock: false,

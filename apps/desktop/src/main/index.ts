@@ -8,10 +8,8 @@ import { app, BrowserWindow, Menu, nativeImage, nativeTheme, powerMonitor, Tray 
 import { IPC } from "@vmc/shared";
 import { runScreenshotDebug } from "./debug";
 import { registerIpc } from "./ipc";
-import { refreshUsage } from "./services/usage";
 import { createMainWindow, createPopover, togglePopover } from "./windows";
 
-const USAGE_POLL_MS = 5 * 60 * 1000;
 
 const userDataPath = app.getPath("userData");
 app.setName("Elsewhere");
@@ -71,11 +69,6 @@ function trayImage(state: LinkState): Electron.NativeImage {
 }
 
 let tray: Tray | null = null;
-let badge = 0;
-
-function applyBadge(): void {
-  if (process.platform === "darwin") tray?.setTitle(badge > 0 ? ` ${badge}` : "");
-}
 
 function syncTray(popover: BrowserWindow): void {
   const wanted = getPrefs().showInMenuBar || screenshotPath !== undefined;
@@ -99,7 +92,6 @@ function syncTray(popover: BrowserWindow): void {
     ),
   );
   tray = created;
-  applyBadge();
 }
 
 void app.whenReady().then(async () => {
@@ -108,18 +100,8 @@ void app.whenReady().then(async () => {
   });
   await loadPrefs();
   app.dock?.setIcon(nativeImage.createFromPath(join(app.getAppPath(), "resources/icon.png")));
-  registerIpc({
-    openMainWindow: showMainWindow,
-    setBadge: (count) => {
-      badge = count;
-      applyBadge();
-    },
-  });
+  registerIpc({ openMainWindow: showMainWindow });
   startForwardLoop();
-  if (screenshotPath === undefined) {
-    void refreshUsage();
-    setInterval(() => void refreshUsage(), USAGE_POLL_MS);
-  }
   const popover = createPopover();
   syncTray(popover);
   onLinkChange((status) => {

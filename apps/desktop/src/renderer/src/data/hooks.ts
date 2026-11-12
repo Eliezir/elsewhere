@@ -2,25 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { VmTargetSchema, type LinkStatus } from "@vmc/shared";
 import { splitLines, useSettings } from "@/lib/settings";
-import { toUsageData } from "@/lib/usage";
-import { SAMPLE_IDLE, SAMPLE_PACER, SAMPLE_TASKS } from "./mock";
 import type { Worktree } from "./types";
 
-function useSample<T>(key: string, value: T) {
-  return useQuery({ queryKey: ["sample", key], queryFn: () => Promise.resolve(value), staleTime: Infinity });
-}
-
-export function useUsage() {
-  return useQuery({
-    queryKey: ["usage"],
-    queryFn: () => window.api.getUsage(),
-    refetchInterval: 15000,
-    select: (snapshot) => toUsageData(snapshot, Math.floor(Date.now() / 1000)),
-  });
-}
-export const useIdleHealth = () => useSample("idle", SAMPLE_IDLE);
-export const useQueueTasks = () => useSample("tasks", SAMPLE_TASKS);
-export const usePacer = () => useSample("pacer", SAMPLE_PACER);
 
 export function useMacWorktrees() {
   const [settings] = useSettings();
@@ -152,18 +135,6 @@ export function useShutdownStatus(host: string, user: string) {
     enabled: VmTargetSchema.safeParse(target).success,
     refetchInterval: 15000,
     staleTime: 5000,
-    retry: false,
-  });
-}
-
-export function useTasks() {
-  const [settings] = useSettings();
-  const repos = splitLines(settings.macRepos);
-  return useQuery({
-    queryKey: ["tasks", repos],
-    queryFn: () => window.api.scanTasks(repos),
-    refetchInterval: 5000,
-    staleTime: 2000,
     retry: false,
   });
 }

@@ -8,11 +8,8 @@ import { NavProvider } from "@/lib/nav-context";
 import { useSettings } from "@/lib/settings";
 import { OverviewView } from "@/views/OverviewView";
 import { PopoverView } from "@/views/PopoverView";
-import { QueueView } from "@/views/QueueView";
 import { SettingsView } from "@/views/SettingsView";
 import { StorageView } from "@/views/StorageView";
-import { TasksView } from "@/views/TasksView";
-import { UsageView } from "@/views/UsageView";
 import { VmView } from "@/views/VmView";
 import { WorktreesView } from "@/views/WorktreesView";
 
@@ -21,9 +18,6 @@ const VIEWS: Record<NavId, ReactNode> = {
   worktrees: <WorktreesView />,
   vm: <VmView />,
   storage: <StorageView />,
-  tasks: <TasksView />,
-  usage: <UsageView />,
-  queue: <QueueView />,
   settings: <SettingsView />,
 };
 

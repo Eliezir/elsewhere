@@ -1,6 +1,6 @@
 import { useHostName } from "@/lib/useHost";
-import { useIdleHealth, useQueueTasks, useUsage, useWorktrees } from "@/data/hooks";
-import type { IdleHealth, Location, UsageData, VmHealth } from "@/data/types";
+import { useWorktrees } from "@/data/hooks";
+import type { Location, VmHealth } from "@/data/types";
 import { useTailscaleStatus } from "@/lib/queries";
 import { describe, healthOf, type Health } from "@/lib/status";
 
@@ -20,28 +20,16 @@ export interface WorktreeModel {
   location: Location;
 }
 
-export interface JobModel {
-  title: string;
-  state: "running" | "waiting";
-  detail: string;
-}
-
 export interface OverviewModel {
   phase: "loading" | "ready";
   connection: ConnectionModel;
-  usage: UsageData | null;
   vm: VmHealth | null;
-  idle: IdleHealth | null;
   worktrees: readonly WorktreeModel[];
-  queue: readonly JobModel[];
 }
 
 export function useOverviewModel(): OverviewModel {
   const { data: status } = useTailscaleStatus();
-  const { data: usage } = useUsage();
   const { worktrees: trees, vm: snapshot } = useWorktrees();
-  const { data: idle } = useIdleHealth();
-  const { data: tasks = [] } = useQueueTasks();
 
   const host = useHostName();
   const health = healthOf(status);
@@ -57,23 +45,12 @@ export function useOverviewModel(): OverviewModel {
       ip: status?.vm?.ip ?? null,
       latencyMs: vm?.latencyMs ?? null,
     },
-    usage: usage ?? null,
     vm: vm?.health ?? null,
-    idle: vm?.reachable ? (idle ?? null) : null,
     worktrees: trees.map((tree) => ({
         name: tree.name,
         repo: tree.repo,
         detail: `${tree.branch ?? "detached"} · ${tree.modified > 0 ? `${tree.modified} modified` : "clean"}`,
         location: tree.location,
       })),
-    queue: vm?.reachable
-      ? tasks
-          .filter((task) => task.state === "running" || task.state === "waiting")
-          .map((task) => ({
-            title: task.title,
-            state: task.state === "running" ? ("running" as const) : ("waiting" as const),
-            detail: task.state === "running" ? `${task.repo} · ${task.estimate}` : "waits for headroom",
-          }))
-      : [],
   };
 }

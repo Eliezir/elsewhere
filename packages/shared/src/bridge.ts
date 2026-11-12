@@ -1,11 +1,9 @@
 import type { TailscaleStatus } from "./status";
 import type { TailscaleControlResult } from "./status";
 import type { MoveProgress, MoveRequest, MoveResult, TwinSyncInput, TwinSyncResult } from "./move";
-import type { UsageSnapshot } from "./usage";
 import type { HostAppInput, HostAppResult } from "./hostApp";
 import type { LanMouseInput, LanMouseStatus } from "./lanMouse";
 import type { GamingInput, GamingResult } from "./pcMode";
-import type { TaskContent, TaskCreateInput, TaskCreateResult, TaskEntry, TaskWriteInput } from "./tasks";
 import type { ShutdownArm, ShutdownStatus, ShutdownTarget } from "./shutdown";
 import type { VmTarget } from "./worktree";
 import type { AppPrefs, ForwardConfig, LinkStatus, PortPin, KillPortInput, KillPortResult, PortForwardToggle, VmPorts, VmPortsInput, VmStorage, VmStorageInput, WakeInput, WakeResult } from "./ports";
@@ -15,8 +13,6 @@ export const IPC = {
   tailscaleStatus: "tailscale:status",
   openMainWindow: "window:open-main",
   navigate: "window:navigate",
-  usage: "usage:get",
-  usageRefresh: "usage:refresh",
   macWorktrees: "worktrees:mac",
   vmSnapshot: "vm:snapshot",
   moveStart: "move:start",
@@ -58,11 +54,6 @@ export const IPC = {
   hostApp: "host:app",
   lanMouse: "lanmouse:control",
   gamingMode: "pcmode:gaming",
-  tasksScan: "tasks:scan",
-  tasksRead: "tasks:read",
-  tasksWrite: "tasks:write",
-  tasksCreate: "tasks:create",
-  tasksBadge: "tasks:badge",
   shutdownArm: "shutdown:arm",
   shutdownDisarm: "shutdown:disarm",
 } as const;
@@ -70,8 +61,6 @@ export const IPC = {
 export interface Api {
   platform: string;
   getTailscaleStatus(vmName?: string): Promise<TailscaleStatus>;
-  getUsage(): Promise<UsageSnapshot>;
-  refreshUsage(): Promise<UsageSnapshot>;
   getMacWorktrees(repos: string[]): Promise<Worktree[]>;
   getVmSnapshot(input: VmInput): Promise<VmSnapshot>;
   startMove(request: MoveRequest): Promise<MoveResult>;
@@ -112,11 +101,6 @@ export interface Api {
   startGamingMode(input: GamingInput): Promise<GamingResult>;
   controlLanMouse(input: LanMouseInput): Promise<LanMouseStatus>;
   controlHostApp(input: HostAppInput): Promise<HostAppResult>;
-  scanTasks(repos: string[]): Promise<TaskEntry[]>;
-  readTask(file: string): Promise<TaskContent>;
-  writeTask(input: TaskWriteInput): Promise<TaskContent>;
-  createTask(input: TaskCreateInput): Promise<TaskCreateResult>;
-  setTaskBadge(count: number): Promise<void>;
   getShutdownStatus(input: ShutdownTarget): Promise<ShutdownStatus>;
   armShutdown(input: ShutdownArm): Promise<ShutdownStatus>;
   disarmShutdown(input: ShutdownTarget): Promise<ShutdownStatus>;
