@@ -76,11 +76,12 @@ export function PowerControls({ compact = false }: { compact?: boolean }) {
             <span className="flex flex-col items-center gap-1">
               <Icon action={action} />
               {POWER_LABEL[action].verb}
+              <span className="text-[9px] font-normal uppercase leading-none tracking-wider text-[var(--text-muted)]">hold</span>
             </span>
           </HoldButton>
         ))}
       </div>
-      <p className={step.kind === "error" ? "text-[11px] leading-snug text-[var(--warn)]" : note}>{step.kind === "error" ? step.message : "Hold a button to confirm. Shut down and restart warn on the PC for 30 s."}</p>
+      <p className={step.kind === "error" ? "text-[11px] leading-snug text-[var(--warn)]" : note}>{step.kind === "error" ? step.message : "Press and hold a button for about a second. Shut down and restart warn on the PC for 30 s."}</p>
     </div>
   );
 }
